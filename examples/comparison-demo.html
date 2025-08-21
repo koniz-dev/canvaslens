@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanvasLens - Image Comparison Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .viewer-section {
+            flex: 1;
+        }
+        
+        .controls-section {
+            width: 350px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .viewer-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        input[type="url"], input[type="range"], input[type="color"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="color"] {
+            height: 40px;
+            padding: 2px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 2px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: #6c757d;
+        }
+        
+        button.secondary:hover {
+            background: #545b62;
+        }
+        
+        .slider-controls {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .slider-controls button {
+            flex: 1;
+        }
+        
+        .comparison-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .info-panel {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .info-panel h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+        
+        .image-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .image-card {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .image-card h5 {
+            margin: 0 0 5px 0;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .image-card p {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+        
+        .sample-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .sample-image {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .sample-image:hover {
+            background: #e9ecef;
+        }
+        
+        .sample-image h5 {
+            margin: 0 0 5px 0;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .sample-image p {
+            margin: 0;
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CanvasLens - Image Comparison Demo</h1>
+            <p>Module 4: Interactive Before/After Image Comparison with Slider</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="viewer-section">
+                <div class="viewer-container">
+                    <div id="viewer" style="width: 100%; height: 700px;"></div>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <div class="instructions">
+                    <h4>🔄 How to Use:</h4>
+                    <ul>
+                        <li><strong>Drag Slider:</strong> Click and drag the white slider to reveal before/after</li>
+                        <li><strong>Mouse Wheel:</strong> Zoom in/out on the comparison</li>
+                        <li><strong>Drag Image:</strong> Pan around when zoomed in</li>
+                        <li><strong>Double Click:</strong> Reset view to fit images</li>
+                    </ul>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📁 Load Images</h3>
+                    
+                    <label for="beforeUrl">Before Image URL:</label>
+                    <input type="url" id="beforeUrl" placeholder="Enter before image URL">
+                    
+                    <label for="afterUrl" style="margin-top: 10px;">After Image URL:</label>
+                    <input type="url" id="afterUrl" placeholder="Enter after image URL">
+                    
+                    <button onclick="loadImages()" style="margin-top: 10px;">Load Images</button>
+                    
+                    <div class="sample-images">
+                        <div class="sample-image" onclick="loadSampleImages('landscape')">
+                            <h5>🌄 Landscape</h5>
+                            <p>Before/After landscape</p>
+                        </div>
+                        <div class="sample-image" onclick="loadSampleImages('portrait')">
+                            <h5>👤 Portrait</h5>
+                            <p>Before/After portrait</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🎚️ Slider Controls</h3>
+                    <div class="slider-controls">
+                        <button onclick="showMoreBefore()">← Before</button>
+                        <button onclick="resetSlider()">Reset</button>
+                        <button onclick="showMoreAfter()">After →</button>
+                    </div>
+                    
+                    <label for="sliderPosition">Slider Position:</label>
+                    <input type="range" id="sliderPosition" min="0" max="100" value="50" class="comparison-slider" oninput="setSliderPosition()">
+                    <span id="sliderValue">50%</span>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🔍 Zoom Controls</h3>
+                    <div class="slider-controls">
+                        <button onclick="zoomOut()">-</button>
+                        <button onclick="resetView()">Reset</button>
+                        <button onclick="zoomIn()">+</button>
+                    </div>
+                    
+                    <label for="zoomSlider">Zoom Level:</label>
+                    <input type="range" id="zoomSlider" min="0.1" max="10" step="0.1" value="1" class="comparison-slider" oninput="zoomToSlider()">
+                    <span id="zoomLevel">100%</span>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🎨 Slider Style</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label for="sliderColor">Color:</label>
+                            <input type="color" id="sliderColor" value="#ffffff" onchange="updateSliderStyle()">
+                        </div>
+                        <div>
+                            <label for="sliderWidth">Width:</label>
+                            <input type="number" id="sliderWidth" value="4" min="1" max="10" onchange="updateSliderStyle()">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📊 Info</h3>
+                    <div class="info-panel">
+                        <h4>Current State:</h4>
+                        <p id="sliderInfo">Slider: 50%</p>
+                        <p id="zoomInfo">Zoom: 100%</p>
+                        <p id="statusInfo">Status: Ready</p>
+                    </div>
+                    
+                    <div class="image-info">
+                        <div class="image-card">
+                            <h5>Before Image</h5>
+                            <p id="beforeInfo">Not loaded</p>
+                        </div>
+                        <div class="image-card">
+                            <h5>After Image</h5>
+                            <p id="afterInfo">Not loaded</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="status" class="status info">
+                    Ready to load before/after images for comparison!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { ComparisonViewer } from '../dist/index.js';
+        
+        let comparisonViewer;
+        
+        // Initialize ComparisonViewer
+        const container = document.getElementById('viewer');
+        comparisonViewer = new ComparisonViewer(
+            container,
+            { width: container.clientWidth, height: 700 },
+            {},
+            {
+                sliderPosition: 50,
+                sliderWidth: 4,
+                sliderColor: '#ffffff'
+            },
+            {
+                enableZoom: true,
+                enablePan: true,
+                maxZoom: 10,
+                minZoom: 0.1
+            }
+        );
+        
+        // Set event handlers
+        comparisonViewer.setEventHandlers({
+            onSliderChange: (position) => {
+                updateSliderInfo(position);
+                updateInfo();
+            },
+            onZoomChange: (scale) => {
+                updateZoomInfo(scale);
+                updateInfo();
+            }
+        });
+        
+        // Setup continuous rendering
+        function render() {
+            comparisonViewer.render();
+            requestAnimationFrame(render);
+        }
+        render();
+        
+        // Global functions for the demo
+        window.loadImages = async () => {
+            const beforeUrl = document.getElementById('beforeUrl').value.trim();
+            const afterUrl = document.getElementById('afterUrl').value.trim();
+            
+            if (!beforeUrl || !afterUrl) {
+                showStatus('Please enter both before and after image URLs', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Loading images...', 'info');
+                await comparisonViewer.loadImages(beforeUrl, afterUrl);
+                showStatus('Images loaded successfully!', 'success');
+                updateImageInfo();
+            } catch (error) {
+                showStatus(`Failed to load images: ${error.message}`, 'error');
+            }
+        };
+        
+        window.loadSampleImages = async (type) => {
+            try {
+                showStatus('Loading sample images...', 'info');
+                
+                let beforeUrl, afterUrl;
+                if (type === 'landscape') {
+                    beforeUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop';
+                    afterUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop&sat=-50&brightness=0.8';
+                } else if (type === 'portrait') {
+                    beforeUrl = 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&h=1200&fit=crop';
+                    afterUrl = 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=800&h=1200&fit=crop&contrast=1.2&saturation=1.5';
+                }
+                
+                await comparisonViewer.loadImages(beforeUrl, afterUrl);
+                showStatus('Sample images loaded!', 'success');
+                updateImageInfo();
+            } catch (error) {
+                showStatus(`Failed to load sample images: ${error.message}`, 'error');
+            }
+        };
+        
+        window.setSliderPosition = () => {
+            const slider = document.getElementById('sliderPosition');
+            const position = parseInt(slider.value);
+            comparisonViewer.setSliderPosition(position);
+        };
+        
+        window.showMoreBefore = () => {
+            comparisonViewer.showMoreBefore();
+            updateSliderInfo(comparisonViewer.getSliderPosition());
+        };
+        
+        window.showMoreAfter = () => {
+            comparisonViewer.showMoreAfter();
+            updateSliderInfo(comparisonViewer.getSliderPosition());
+        };
+        
+        window.resetSlider = () => {
+            comparisonViewer.resetSlider();
+            updateSliderInfo(comparisonViewer.getSliderPosition());
+        };
+        
+        window.zoomIn = () => {
+            comparisonViewer.zoomIn(1.2);
+        };
+        
+        window.zoomOut = () => {
+            comparisonViewer.zoomOut(1.2);
+        };
+        
+        window.resetView = () => {
+            comparisonViewer.resetView();
+        };
+        
+        window.zoomToSlider = () => {
+            const slider = document.getElementById('zoomSlider');
+            const scale = parseFloat(slider.value);
+            comparisonViewer.zoomTo(scale);
+        };
+        
+        window.updateSliderStyle = () => {
+            const color = document.getElementById('sliderColor').value;
+            const width = parseInt(document.getElementById('sliderWidth').value);
+            
+            comparisonViewer.updateComparisonOptions({
+                sliderColor: color,
+                sliderWidth: width
+            });
+        };
+        
+        function updateSliderInfo(position) {
+            const slider = document.getElementById('sliderPosition');
+            const value = document.getElementById('sliderValue');
+            
+            slider.value = position;
+            value.textContent = `${position}%`;
+        }
+        
+        function updateZoomInfo(scale) {
+            const zoomSlider = document.getElementById('zoomSlider');
+            const zoomLevel = document.getElementById('zoomLevel');
+            const percentage = Math.round(scale * 100);
+            
+            zoomSlider.value = scale;
+            zoomLevel.textContent = `${percentage}%`;
+        }
+        
+        function updateImageInfo() {
+            const beforeImage = comparisonViewer.getBeforeImage();
+            const afterImage = comparisonViewer.getAfterImage();
+            
+            const beforeInfo = document.getElementById('beforeInfo');
+            const afterInfo = document.getElementById('afterInfo');
+            
+            if (beforeImage) {
+                beforeInfo.textContent = `${beforeImage.naturalSize.width}x${beforeImage.naturalSize.height}`;
+            } else {
+                beforeInfo.textContent = 'Not loaded';
+            }
+            
+            if (afterImage) {
+                afterInfo.textContent = `${afterImage.naturalSize.width}x${afterImage.naturalSize.height}`;
+            } else {
+                afterInfo.textContent = 'Not loaded';
+            }
+        }
+        
+        function updateInfo() {
+            const sliderInfo = document.getElementById('sliderInfo');
+            const zoomInfo = document.getElementById('zoomInfo');
+            const statusInfo = document.getElementById('statusInfo');
+            
+            const sliderPosition = comparisonViewer.getSliderPosition();
+            const zoomLevel = comparisonViewer.getZoomLevel();
+            const isReady = comparisonViewer.isReady();
+            
+            sliderInfo.textContent = `Slider: ${sliderPosition}%`;
+            zoomInfo.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+            statusInfo.textContent = `Status: ${isReady ? 'Ready' : 'Loading...'}`;
+        }
+        
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            comparisonViewer.resize(container.clientWidth, 700);
+        });
+        
+        // Load sample images on start
+        setTimeout(() => {
+            loadSampleImages('landscape');
+        }, 1000);
+        
+        // Update info panel periodically
+        setInterval(updateInfo, 500);
+    </script>
+</body>
+</html>

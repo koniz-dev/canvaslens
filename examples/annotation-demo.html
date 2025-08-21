@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanvasLens - Annotation Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .viewer-section {
+            flex: 1;
+        }
+        
+        .controls-section {
+            width: 350px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .viewer-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        input[type="file"], input[type="url"], input[type="range"], input[type="color"], input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        input[type="color"] {
+            height: 40px;
+            padding: 2px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 2px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        button.active {
+            background: #28a745;
+        }
+        
+        button.active:hover {
+            background: #218838;
+        }
+        
+        button.secondary {
+            background: #6c757d;
+        }
+        
+        button.secondary:hover {
+            background: #545b62;
+        }
+        
+        button.danger {
+            background: #dc3545;
+        }
+        
+        button.danger:hover {
+            background: #c82333;
+        }
+        
+        .tool-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .tool-buttons button {
+            padding: 12px 8px;
+            font-size: 18px;
+        }
+        
+        .style-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .info-panel {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .info-panel h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+        
+        .annotation-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .annotation-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .annotation-item:last-child {
+            border-bottom: none;
+        }
+        
+        .annotation-item.selected {
+            background: #e3f2fd;
+        }
+        
+        .annotation-info {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .annotation-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .annotation-actions button {
+            padding: 4px 8px;
+            font-size: 12px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CanvasLens - Annotation Demo</h1>
+            <p>Module 3: Interactive Annotations with Rectangle, Arrow, and Text Tools</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="viewer-section">
+                <div class="viewer-container">
+                    <div id="viewer" style="width: 100%; height: 700px;"></div>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <div class="instructions">
+                    <h4>🎨 How to Use:</h4>
+                    <ul>
+                        <li><strong>Select Tool:</strong> Click tool buttons or use R/A/T keys</li>
+                        <li><strong>Draw:</strong> Click and drag to create annotations</li>
+                        <li><strong>Text:</strong> Click to place text, type, then press Enter</li>
+                        <li><strong>Select:</strong> Click on annotations to select them</li>
+                        <li><strong>Delete:</strong> Select annotation and press Delete key</li>
+                        <li><strong>Zoom/Pan:</strong> Mouse wheel to zoom, drag to pan</li>
+                    </ul>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📁 Load Image</h3>
+                    <label for="imageUrl">Image URL:</label>
+                    <input type="url" id="imageUrl" placeholder="Enter image URL">
+                    <button onclick="loadFromUrl()">Load from URL</button>
+                    
+                    <label for="imageFile" style="margin-top: 10px;">Or upload file:</label>
+                    <input type="file" id="imageFile" accept="image/*" onchange="loadFromFile(event)">
+                    
+                    <button onclick="loadSampleImage()" style="margin-top: 10px;">Load Sample Image</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🛠 Annotation Tools</h3>
+                    <div class="tool-buttons">
+                        <button id="rectTool" onclick="selectTool('rect')" class="active">⬜<br>Rectangle</button>
+                        <button id="arrowTool" onclick="selectTool('arrow')">↗<br>Arrow</button>
+                        <button id="textTool" onclick="selectTool('text')">T<br>Text</button>
+                    </div>
+                    <p style="font-size: 12px; color: #666; margin: 5px 0;">
+                        Keyboard shortcuts: R (Rectangle), A (Arrow), T (Text)
+                    </p>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🎨 Style Settings</h3>
+                    <div class="style-controls">
+                        <div>
+                            <label for="strokeColor">Stroke Color:</label>
+                            <input type="color" id="strokeColor" value="#ff0000" onchange="updateStyle()">
+                        </div>
+                        <div>
+                            <label for="strokeWidth">Stroke Width:</label>
+                            <input type="number" id="strokeWidth" value="2" min="1" max="10" onchange="updateStyle()">
+                        </div>
+                    </div>
+                    
+                    <label for="fillColor">Fill Color (optional):</label>
+                    <input type="color" id="fillColor" value="#ff000040" onchange="updateStyle()">
+                    <label>
+                        <input type="checkbox" id="enableFill" onchange="updateStyle()"> Enable Fill
+                    </label>
+                    
+                    <div style="margin-top: 10px;">
+                        <label for="fontSize">Text Size:</label>
+                        <input type="number" id="fontSize" value="16" min="8" max="48" onchange="updateStyle()">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📋 Annotations</h3>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <button onclick="clearAllAnnotations()" class="danger">Clear All</button>
+                        <button onclick="exportAnnotations()" class="secondary">Export</button>
+                        <button onclick="importAnnotations()" class="secondary">Import</button>
+                    </div>
+                    <div id="annotationList" class="annotation-list">
+                        <p style="text-align: center; color: #666; margin: 0;">No annotations</p>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📊 Info</h3>
+                    <div class="info-panel">
+                        <h4>Current State:</h4>
+                        <p id="toolInfo">Tool: Rectangle</p>
+                        <p id="zoomInfo">Zoom: 100%</p>
+                        <p id="annotationCount">Annotations: 0</p>
+                        <p id="selectedInfo">Selected: None</p>
+                    </div>
+                </div>
+                
+                <div id="status" class="status info">
+                    Ready to load an image and start annotating!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { CanvasLens } from '../dist/index.js';
+        
+        let canvasLens;
+        let annotationManager;
+        let selectedAnnotationId = null;
+        
+        // Initialize CanvasLens with all features enabled
+        const container = document.getElementById('viewer');
+        canvasLens = new CanvasLens({
+            container,
+            width: container.clientWidth,
+            height: 700,
+            backgroundColor: '#f0f0f0',
+            enableZoom: true,
+            enablePan: true,
+            enableAnnotations: true,
+            maxZoom: 10,
+            minZoom: 0.1
+        });
+        
+        // Get annotation manager
+        annotationManager = canvasLens.getAnnotationManager();
+        
+        // Set event handlers
+        canvasLens.setEventHandlers({
+            onImageLoad: (imageData) => {
+                showStatus(`Image loaded! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
+                updateInfo();
+            },
+            onZoomChange: (scale) => {
+                updateInfo();
+            },
+            onAnnotationAdd: (annotation) => {
+                updateAnnotationList();
+                updateInfo();
+                showStatus(`Added ${annotation.type} annotation`, 'success');
+            },
+            onAnnotationRemove: (annotationId) => {
+                updateAnnotationList();
+                updateInfo();
+                showStatus('Annotation removed', 'info');
+            }
+        });
+        
+        // Setup continuous rendering for smooth annotations
+        function render() {
+            canvasLens.getImageViewer().render();
+            requestAnimationFrame(render);
+        }
+        render();
+        
+        // Global functions for the demo
+        window.loadFromUrl = async () => {
+            const url = document.getElementById('imageUrl').value.trim();
+            if (!url) {
+                showStatus('Please enter a valid image URL', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Loading image...', 'info');
+                await canvasLens.loadImage(url);
+            } catch (error) {
+                showStatus(`Failed to load image: ${error.message}`, 'error');
+            }
+        };
+        
+        window.loadFromFile = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showStatus('Please select a valid image file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    canvasLens.loadImageElement(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        window.loadSampleImage = async () => {
+            try {
+                showStatus('Loading sample image...', 'info');
+                await canvasLens.loadImage('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop');
+            } catch (error) {
+                showStatus(`Failed to load sample image: ${error.message}`, 'error');
+            }
+        };
+        
+        window.selectTool = (toolType) => {
+            if (!annotationManager) return;
+            
+            // Update tool manager
+            const toolManager = annotationManager.getToolManager();
+            toolManager.selectTool(toolType);
+            
+            // Update UI
+            document.querySelectorAll('.tool-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(toolType + 'Tool').classList.add('active');
+            
+            updateInfo();
+        };
+        
+        window.updateStyle = () => {
+            if (!annotationManager) return;
+            
+            const strokeColor = document.getElementById('strokeColor').value;
+            const strokeWidth = parseInt(document.getElementById('strokeWidth').value);
+            const fillColor = document.getElementById('enableFill').checked 
+                ? document.getElementById('fillColor').value 
+                : undefined;
+            const fontSize = parseInt(document.getElementById('fontSize').value);
+            
+            annotationManager.updateStyle({
+                strokeColor,
+                strokeWidth,
+                fillColor,
+                fontSize,
+                fontFamily: 'Arial, sans-serif'
+            });
+        };
+        
+        window.clearAllAnnotations = () => {
+            if (!annotationManager) return;
+            
+            if (confirm('Are you sure you want to clear all annotations?')) {
+                annotationManager.clearAll();
+                selectedAnnotationId = null;
+            }
+        };
+        
+        window.exportAnnotations = () => {
+            if (!annotationManager) return;
+            
+            const jsonData = annotationManager.exportAnnotations();
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'annotations.json';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+            showStatus('Annotations exported successfully', 'success');
+        };
+        
+        window.importAnnotations = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const success = annotationManager.importAnnotations(e.target.result);
+                        if (success) {
+                            showStatus('Annotations imported successfully', 'success');
+                        } else {
+                            showStatus('Failed to import annotations', 'error');
+                        }
+                    } catch (error) {
+                        showStatus(`Import error: ${error.message}`, 'error');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        };
+        
+        function updateAnnotationList() {
+            if (!annotationManager) return;
+            
+            const listContainer = document.getElementById('annotationList');
+            const annotations = annotationManager.getAllAnnotations();
+            
+            if (annotations.length === 0) {
+                listContainer.innerHTML = '<p style="text-align: center; color: #666; margin: 0;">No annotations</p>';
+                return;
+            }
+            
+            listContainer.innerHTML = annotations.map(annotation => `
+                <div class="annotation-item ${selectedAnnotationId === annotation.id ? 'selected' : ''}" 
+                     onclick="selectAnnotation('${annotation.id}')">
+                    <div>
+                        <strong>${annotation.type.toUpperCase()}</strong>
+                        <div class="annotation-info">
+                            ${annotation.type === 'text' && annotation.data?.text 
+                                ? `"${annotation.data.text}"` 
+                                : `${annotation.points.length} points`}
+                        </div>
+                    </div>
+                    <div class="annotation-actions">
+                        <button onclick="deleteAnnotation('${annotation.id}')" class="danger">×</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        window.selectAnnotation = (annotationId) => {
+            selectedAnnotationId = annotationId;
+            updateAnnotationList();
+            updateInfo();
+        };
+        
+        window.deleteAnnotation = (annotationId) => {
+            if (annotationManager) {
+                annotationManager.removeAnnotation(annotationId);
+                if (selectedAnnotationId === annotationId) {
+                    selectedAnnotationId = null;
+                }
+            }
+        };
+        
+        function updateInfo() {
+            const toolInfo = document.getElementById('toolInfo');
+            const zoomInfo = document.getElementById('zoomInfo');
+            const annotationCount = document.getElementById('annotationCount');
+            const selectedInfo = document.getElementById('selectedInfo');
+            
+            if (annotationManager) {
+                const toolManager = annotationManager.getToolManager();
+                const currentTool = toolManager.getCurrentToolType();
+                toolInfo.textContent = `Tool: ${currentTool ? currentTool.charAt(0).toUpperCase() + currentTool.slice(1) : 'None'}`;
+                
+                const count = annotationManager.getAnnotationCount();
+                annotationCount.textContent = `Annotations: ${count}`;
+                
+                selectedInfo.textContent = selectedAnnotationId ? `Selected: ${selectedAnnotationId}` : 'Selected: None';
+            }
+            
+            const zoomLevel = canvasLens.getZoomLevel();
+            const percentage = Math.round(zoomLevel * 100);
+            zoomInfo.textContent = `Zoom: ${percentage}%`;
+        }
+        
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvasLens.resize(container.clientWidth, 700);
+        });
+        
+        // Load sample image on start
+        setTimeout(() => {
+            loadSampleImage();
+        }, 1000);
+        
+        // Update info panel periodically
+        setInterval(updateInfo, 500);
+    </script>
+</body>
+</html>

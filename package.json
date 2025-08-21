@@ -1,0 +1,47 @@
+{
+  "name": "canvaslens",
+  "version": "1.0.0",
+  "description": "A powerful HTML5 Canvas-based image viewing and annotation library",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "canvas",
+    "image-viewer",
+    "annotation",
+    "zoom",
+    "pan",
+    "image-comparison",
+    "typescript",
+    "html5-canvas",
+    "before-after",
+    "image-annotation"
+  ],
+  "author": "CanvasLens Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/canvaslens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/canvaslens/issues"
+  },
+  "homepage": "https://github.com/yourusername/canvaslens#readme",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

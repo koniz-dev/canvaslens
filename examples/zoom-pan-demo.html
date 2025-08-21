@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CanvasLens - Zoom & Pan Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        
+        .viewer-section {
+            flex: 1;
+        }
+        
+        .controls-section {
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .viewer-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        input[type="file"], input[type="url"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 2px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        button.secondary {
+            background: #6c757d;
+        }
+        
+        button.secondary:hover {
+            background: #545b62;
+        }
+        
+        .zoom-controls {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .zoom-controls button {
+            flex: 1;
+        }
+        
+        .zoom-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .info-panel {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .info-panel h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .info-panel p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>CanvasLens - Zoom & Pan Demo</h1>
+            <p>Module 2: Interactive Zoom and Pan with Mouse Controls</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="viewer-section">
+                <div class="viewer-container">
+                    <div id="viewer" style="width: 100%; height: 600px;"></div>
+                </div>
+            </div>
+            
+            <div class="controls-section">
+                <div class="instructions">
+                    <h4>🎮 How to Use:</h4>
+                    <ul>
+                        <li><strong>Mouse Wheel:</strong> Zoom in/out</li>
+                        <li><strong>Left Click + Drag:</strong> Pan around</li>
+                        <li><strong>Double Click:</strong> Reset view</li>
+                    </ul>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📁 Load Image</h3>
+                    <label for="imageUrl">Image URL:</label>
+                    <input type="url" id="imageUrl" placeholder="Enter image URL">
+                    <button onclick="loadFromUrl()">Load from URL</button>
+                    
+                    <label for="imageFile" style="margin-top: 10px;">Or upload file:</label>
+                    <input type="file" id="imageFile" accept="image/*" onchange="loadFromFile(event)">
+                    
+                    <button onclick="loadSampleImage()" style="margin-top: 10px;">Load Sample Image</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🔍 Zoom Controls</h3>
+                    <div class="zoom-controls">
+                        <button onclick="zoomOut()">-</button>
+                        <button onclick="resetZoom()">Reset</button>
+                        <button onclick="zoomIn()">+</button>
+                    </div>
+                    
+                    <label for="zoomSlider">Zoom Level:</label>
+                    <input type="range" id="zoomSlider" min="0.1" max="10" step="0.1" value="1" class="zoom-slider" oninput="zoomToSlider()">
+                    <span id="zoomLevel">100%</span>
+                    
+                    <div style="margin-top: 10px;">
+                        <button onclick="fitToView()">Fit to View</button>
+                        <button onclick="resetView()" class="secondary">Reset View</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📊 Info</h3>
+                    <div class="info-panel">
+                        <h4>Current State:</h4>
+                        <p id="zoomInfo">Zoom: 100%</p>
+                        <p id="panInfo">Pan: (0, 0)</p>
+                        <p id="imageInfo">No image loaded</p>
+                    </div>
+                </div>
+                
+                <div id="status" class="status info">
+                    Ready to load an image. Try the sample image or upload your own!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { CanvasLens } from '../dist/index.js';
+        
+        // Initialize CanvasLens with zoom/pan enabled
+        const container = document.getElementById('viewer');
+        const canvasLens = new CanvasLens({
+            container,
+            width: container.clientWidth,
+            height: 600,
+            backgroundColor: '#f0f0f0',
+            enableZoom: true,
+            enablePan: true,
+            maxZoom: 10,
+            minZoom: 0.1
+        });
+        
+        // Set event handlers
+        canvasLens.setEventHandlers({
+            onImageLoad: (imageData) => {
+                showStatus(`Image loaded! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
+                updateInfo();
+            },
+            onZoomChange: (scale) => {
+                updateZoomInfo(scale);
+                updateInfo();
+            },
+            onPanChange: (offset) => {
+                updatePanInfo(offset);
+                updateInfo();
+            }
+        });
+        
+        // Global functions for the demo
+        window.loadFromUrl = async () => {
+            const url = document.getElementById('imageUrl').value.trim();
+            if (!url) {
+                showStatus('Please enter a valid image URL', 'error');
+                return;
+            }
+            
+            try {
+                showStatus('Loading image...', 'info');
+                await canvasLens.loadImage(url);
+            } catch (error) {
+                showStatus(`Failed to load image: ${error.message}`, 'error');
+            }
+        };
+        
+        window.loadFromFile = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showStatus('Please select a valid image file', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    canvasLens.loadImageElement(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+        
+        window.loadSampleImage = async () => {
+            try {
+                showStatus('Loading sample image...', 'info');
+                // Using a high-resolution sample image
+                await canvasLens.loadImage('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2000&h=1500&fit=crop');
+            } catch (error) {
+                showStatus(`Failed to load sample image: ${error.message}`, 'error');
+            }
+        };
+        
+        window.zoomIn = () => {
+            canvasLens.zoomIn(1.2);
+        };
+        
+        window.zoomOut = () => {
+            canvasLens.zoomOut(1.2);
+        };
+        
+        window.resetZoom = () => {
+            canvasLens.zoomTo(1);
+        };
+        
+        window.zoomToSlider = () => {
+            const slider = document.getElementById('zoomSlider');
+            const scale = parseFloat(slider.value);
+            canvasLens.zoomTo(scale);
+        };
+        
+        window.fitToView = () => {
+            canvasLens.fitToView();
+        };
+        
+        window.resetView = () => {
+            canvasLens.resetView();
+        };
+        
+        function updateZoomInfo(scale: number) {
+            const zoomLevel = document.getElementById('zoomLevel');
+            const slider = document.getElementById('zoomSlider');
+            const percentage = Math.round(scale * 100);
+            
+            zoomLevel.textContent = `${percentage}%`;
+            slider.value = scale.toString();
+        }
+        
+        function updatePanInfo(offset: { x: number; y: number }) {
+            const panInfo = document.getElementById('panInfo');
+            panInfo.textContent = `Pan: (${Math.round(offset.x)}, ${Math.round(offset.y)})`;
+        }
+        
+        function updateInfo() {
+            const imageInfo = document.getElementById('imageInfo');
+            if (canvasLens.isImageLoaded()) {
+                const imageData = canvasLens.getImageViewer().getImageData();
+                if (imageData) {
+                    imageInfo.textContent = `Image: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`;
+                }
+            } else {
+                imageInfo.textContent = 'No image loaded';
+            }
+        }
+        
+        function showStatus(message: string, type: string) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvasLens.resize(container.clientWidth, 600);
+        });
+        
+        // Double click to reset view
+        container.addEventListener('dblclick', () => {
+            canvasLens.resetView();
+        });
+        
+        // Update info panel periodically
+        setInterval(updateInfo, 100);
+    </script>
+</body>
+</html>
