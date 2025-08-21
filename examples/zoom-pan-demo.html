@@ -4,193 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Zoom & Pan Demo</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .main-content {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        
-        .viewer-section {
-            flex: 1;
-        }
-        
-        .controls-section {
-            width: 300px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            position: sticky;
-            top: 20px;
-        }
-        
-        .viewer-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .control-group {
-            margin-bottom: 20px;
-        }
-        
-        .control-group h3 {
-            margin: 0 0 10px 0;
-            color: #333;
-            font-size: 16px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-            font-size: 14px;
-        }
-        
-        input[type="file"], input[type="url"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 2px;
-            transition: background-color 0.2s;
-        }
-        
-        button:hover {
-            background: #0056b3;
-        }
-        
-        button:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        button.secondary {
-            background: #6c757d;
-        }
-        
-        button.secondary:hover {
-            background: #545b62;
-        }
-        
-        .zoom-controls {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        
-        .zoom-controls button {
-            flex: 1;
-        }
-        
-        .zoom-slider {
-            width: 100%;
-            margin: 10px 0;
-        }
-        
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        .info-panel {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .info-panel h4 {
-            margin: 0 0 10px 0;
-            color: #495057;
-        }
-        
-        .info-panel p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .instructions h4 {
-            margin: 0 0 10px 0;
-            color: #856404;
-        }
-        
-        .instructions ul {
-            margin: 0;
-            padding-left: 20px;
-            color: #856404;
-        }
-        
-        .instructions li {
-            margin: 5px 0;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/pages/zoom.css">
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-brand">CanvasLens</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">🏠 Home</a></li>
+                <li><a href="basic-image-viewer.html">🖼️ Basic Viewer</a></li>
+                <li><a href="zoom-pan-demo.html" class="active">🔍 Zoom & Pan</a></li>
+                <li><a href="annotation-demo.html">✏️ Annotation</a></li>
+                <li><a href="comparison-demo.html">⚖️ Comparison</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
-        <div class="header">
-            <h1>CanvasLens - Zoom & Pan Demo</h1>
+        <div class="page-header">
+            <h1>🔍 Zoom & Pan Demo</h1>
             <p>Module 2: Interactive Zoom and Pan with Mouse Controls</p>
         </div>
         
@@ -258,8 +93,8 @@
         </div>
     </div>
 
-    <script type="module">
-        import { CanvasLens } from '../dist/index.js';
+    <script src="../dist/canvaslens-bundle.js"></script>
+    <script>
         
         // Initialize CanvasLens with zoom/pan enabled
         const container = document.getElementById('viewer');
@@ -362,7 +197,7 @@
             canvasLens.resetView();
         };
         
-        function updateZoomInfo(scale: number) {
+        function updateZoomInfo(scale) {
             const zoomLevel = document.getElementById('zoomLevel');
             const slider = document.getElementById('zoomSlider');
             const percentage = Math.round(scale * 100);
@@ -371,7 +206,7 @@
             slider.value = scale.toString();
         }
         
-        function updatePanInfo(offset: { x: number; y: number }) {
+        function updatePanInfo(offset) {
             const panInfo = document.getElementById('panInfo');
             panInfo.textContent = `Pan: (${Math.round(offset.x)}, ${Math.round(offset.y)})`;
         }
@@ -379,16 +214,17 @@
         function updateInfo() {
             const imageInfo = document.getElementById('imageInfo');
             if (canvasLens.isImageLoaded()) {
-                const imageData = canvasLens.getImageViewer().getImageData();
-                if (imageData) {
-                    imageInfo.textContent = `Image: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`;
+
+                const imageViewer = canvasLens.getImageViewer();
+                if (imageViewer.currentImage) {
+                    imageInfo.textContent = `Image: ${imageViewer.currentImage.naturalWidth}x${imageViewer.currentImage.naturalHeight}`;
                 }
             } else {
                 imageInfo.textContent = 'No image loaded';
             }
         }
         
-        function showStatus(message: string, type: string) {
+        function showStatus(message, type) {
             const statusEl = document.getElementById('status');
             statusEl.textContent = message;
             statusEl.className = `status ${type}`;

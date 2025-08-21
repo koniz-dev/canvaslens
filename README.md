@@ -1,5 +1,10 @@
 # CanvasLens
 
+[![npm version](https://badge.fury.io/js/canvaslens.svg)](https://badge.fury.io/js/canvaslens)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/koniz-dev/canvaslens)
+
 A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript.
 
 ## Features
@@ -47,6 +52,12 @@ npm install canvaslens
 <html>
 <head>
     <title>CanvasLens Demo</title>
+    <style>
+        #viewer {
+            border: 1px solid #ccc;
+            margin: 20px;
+        }
+    </style>
 </head>
 <body>
     <div id="viewer" style="width: 800px; height: 600px;"></div>
@@ -61,7 +72,7 @@ npm install canvaslens
         });
         
         // Load an image
-        await viewer.loadImage('path/to/your/image.jpg');
+        await viewer.loadImage('https://picsum.photos/800/600');
     </script>
 </body>
 </html>
@@ -104,7 +115,7 @@ viewer.setEventHandlers({
 });
 
 // Load image from URL
-await viewer.loadImage('https://example.com/image.jpg');
+await viewer.loadImage('https://picsum.photos/1200/800');
 
 // Zoom controls
 viewer.zoomIn(1.2);           // Zoom in by 20%
@@ -280,10 +291,10 @@ src/
 ├── core/              # Core canvas functionality
 │   └── Canvas.ts
 ├── modules/           # Feature modules
-│   ├── image-viewer/  # Module 1: Basic image display ✅
-│   ├── zoom-pan/      # Module 2: Zoom and pan ✅
-│   ├── annotation/    # Module 3: Annotations ✅
-│   └── comparison/    # Module 4: Image comparison ✅
+│   ├── image-viewer/  # Module 1: Basic image display
+│   ├── zoom-pan/      # Module 2: Zoom and pan
+│   ├── annotation/    # Module 3: Annotations
+│   └── comparison/    # Module 4: Image comparison
 ├── types/             # TypeScript type definitions
 │   └── index.ts
 ├── utils/             # Utility functions
@@ -298,6 +309,37 @@ src/
 - Firefox 55+
 - Safari 12+
 - Edge 79+
+
+## Troubleshooting
+
+### Common Issues
+
+**Image not loading:**
+- Ensure the image URL is accessible and CORS-enabled
+- Check browser console for network errors
+- Try using a different image source
+
+**Canvas not rendering:**
+- Verify the container element exists and has dimensions
+- Check if the browser supports HTML5 Canvas
+- Ensure the library is properly built and imported
+
+**Annotations not working:**
+- Make sure `enableAnnotations: true` is set in options
+- Check if annotation tools are properly selected
+- Verify event handlers are correctly set up
+
+**Performance issues:**
+- Reduce image size for better performance
+- Consider using `fitToView()` for large images
+- Check zoom limits if experiencing lag during zoom
+
+### Browser Compatibility
+
+If you encounter issues in specific browsers:
+- **Safari**: Ensure you're using Safari 12+ for full feature support
+- **Mobile browsers**: Touch support may vary; consider testing on actual devices
+- **IE**: Internet Explorer is not supported; use Edge or modern browsers
 
 ## License
 

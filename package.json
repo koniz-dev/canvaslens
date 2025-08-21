@@ -13,10 +13,13 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
+    "dev": "node server.js",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:silent": "jest --silent"
   },
   "keywords": [
     "canvas",
@@ -34,14 +37,19 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/canvaslens.git"
+    "url": "https://github.com/koniz-dev/canvaslens.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/canvaslens/issues"
+    "url": "https://github.com/koniz-dev/canvaslens/issues"
   },
-  "homepage": "https://github.com/yourusername/canvaslens#readme",
+  "homepage": "https://github.com/koniz-dev/canvaslens#readme",
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.0.0"
   }
 }

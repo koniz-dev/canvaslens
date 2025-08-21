@@ -4,258 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Image Comparison Demo</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
-        
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .main-content {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        
-        .viewer-section {
-            flex: 1;
-        }
-        
-        .controls-section {
-            width: 350px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            position: sticky;
-            top: 20px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .viewer-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .control-group {
-            margin-bottom: 20px;
-        }
-        
-        .control-group h3 {
-            margin: 0 0 10px 0;
-            color: #333;
-            font-size: 16px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-            font-size: 14px;
-        }
-        
-        input[type="url"], input[type="range"], input[type="color"], input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-        
-        input[type="color"] {
-            height: 40px;
-            padding: 2px;
-        }
-        
-        button {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 2px;
-            transition: background-color 0.2s;
-        }
-        
-        button:hover {
-            background: #0056b3;
-        }
-        
-        button:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        button.secondary {
-            background: #6c757d;
-        }
-        
-        button.secondary:hover {
-            background: #545b62;
-        }
-        
-        .slider-controls {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        
-        .slider-controls button {
-            flex: 1;
-        }
-        
-        .comparison-slider {
-            width: 100%;
-            margin: 10px 0;
-        }
-        
-        .status {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        
-        .info-panel {
-            background: #e9ecef;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .info-panel h4 {
-            margin: 0 0 10px 0;
-            color: #495057;
-        }
-        
-        .info-panel p {
-            margin: 5px 0;
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-        
-        .instructions h4 {
-            margin: 0 0 10px 0;
-            color: #856404;
-        }
-        
-        .instructions ul {
-            margin: 0;
-            padding-left: 20px;
-            color: #856404;
-        }
-        
-        .instructions li {
-            margin: 5px 0;
-        }
-        
-        .image-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .image-card {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-        }
-        
-        .image-card h5 {
-            margin: 0 0 5px 0;
-            color: #495057;
-            font-size: 14px;
-        }
-        
-        .image-card p {
-            margin: 0;
-            font-size: 12px;
-            color: #6c757d;
-        }
-        
-        .sample-images {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .sample-image {
-            background: #f8f9fa;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        
-        .sample-image:hover {
-            background: #e9ecef;
-        }
-        
-        .sample-image h5 {
-            margin: 0 0 5px 0;
-            color: #495057;
-            font-size: 14px;
-        }
-        
-        .sample-image p {
-            margin: 0;
-            font-size: 12px;
-            color: #6c757d;
-        }
-    </style>
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="../assets/css/pages/comparison.css">
+
 </head>
 <body>
+    <!-- Navigation Bar -->
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <a href="../index.html" class="nav-brand">CanvasLens</a>
+            <ul class="nav-menu">
+                <li><a href="../index.html">🏠 Home</a></li>
+                <li><a href="basic-image-viewer.html">🖼️ Basic Viewer</a></li>
+                <li><a href="zoom-pan-demo.html">🔍 Zoom & Pan</a></li>
+                <li><a href="annotation-demo.html">✏️ Annotation</a></li>
+                <li><a href="comparison-demo.html" class="active">⚖️ Comparison</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
-        <div class="header">
-            <h1>CanvasLens - Image Comparison Demo</h1>
+        <div class="page-header">
+            <h1>⚖️ Image Comparison Demo</h1>
             <p>Module 4: Interactive Before/After Image Comparison with Slider</p>
         </div>
         
@@ -368,8 +139,8 @@
         </div>
     </div>
 
-    <script type="module">
-        import { ComparisonViewer } from '../dist/index.js';
+    <script src="../dist/canvaslens-bundle.js"></script>
+    <script>
         
         let comparisonViewer;
         
