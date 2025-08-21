@@ -99,6 +99,9 @@ public
 # DynamoDB Local files
 .dynamodb/
 
+# NPM configuration files
+.npmrc
+
 # TernJS port file
 .tern-port
 

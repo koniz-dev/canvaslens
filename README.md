@@ -5,45 +5,46 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/koniz-dev/canvaslens)
 
-A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript.
+A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a comprehensive solution for image viewing, zooming, panning, annotation, and before/after image comparison.
 
-## Features
+## ✨ Features
 
-- **Module 1: Basic Image Viewer**
-  - Load images from URL or file
-  - Automatic aspect ratio preservation
-  - Responsive design
-  - High-quality rendering with device pixel ratio support
+### 🖼️ **Module 1: Basic Image Viewer**
+- Load images from URL or file input
+- Automatic aspect ratio preservation
+- Responsive design with device pixel ratio support
+- High-quality rendering with proper canvas context management
 
-- **Module 2: Zoom & Pan**
-  - Mouse wheel zoom with cursor-centered zooming
-  - Drag to pan with smooth interactions
-  - Zoom limits and speed controls
-  - Fit to view and reset functionality
-  - Real-time zoom/pan state tracking
+### 🔍 **Module 2: Zoom & Pan**
+- Mouse wheel zoom with cursor-centered zooming
+- Drag to pan with smooth interactions
+- Configurable zoom limits and speed controls
+- Fit to view and reset functionality
+- Real-time zoom/pan state tracking
 
-- **Module 3: Annotations**
-  - Rectangle, arrow, and text annotation tools
-  - Interactive drawing with mouse controls
-  - Customizable styles (colors, stroke width, fonts)
-  - Selection, deletion, and management
-  - Export/import functionality
-  - Real-time preview while drawing
+### ✏️ **Module 3: Annotations**
+- Rectangle, arrow, and text annotation tools
+- Interactive drawing with mouse controls
+- Customizable styles (colors, stroke width, fonts)
+- Selection, deletion, and management
+- Export/import functionality as JSON
+- Real-time preview while drawing
+- Keyboard shortcuts (R/A/T keys)
 
-- **Module 4: Image Comparison**
-  - Interactive slider-based before/after comparison
-  - Drag slider to reveal differences
-  - Synchronized zoom and pan for both images
-  - Customizable slider appearance
-  - Real-time comparison state tracking
+### 🔄 **Module 4: Image Comparison**
+- Interactive slider-based before/after comparison
+- Drag slider to reveal differences
+- Synchronized zoom and pan for both images
+- Customizable slider appearance
+- Real-time comparison state tracking
 
-## Installation
+## 🚀 Installation
 
 ```bash
-npm install canvaslens
+npm install @koniz-dev/canvaslens
 ```
 
-## Quick Start
+## 📖 Quick Start
 
 ### Basic Usage
 
@@ -63,7 +64,7 @@ npm install canvaslens
     <div id="viewer" style="width: 800px; height: 600px;"></div>
     
     <script type="module">
-        import { CanvasLens } from 'canvaslens';
+        import { CanvasLens } from '@koniz-dev/canvaslens';
         
         const viewer = new CanvasLens({
             container: document.getElementById('viewer'),
@@ -81,7 +82,7 @@ npm install canvaslens
 ### Advanced Usage with All Features
 
 ```typescript
-import { CanvasLens } from 'canvaslens';
+import { CanvasLens } from '@koniz-dev/canvaslens';
 
 const viewer = new CanvasLens({
     container: document.getElementById('viewer'),
@@ -90,7 +91,7 @@ const viewer = new CanvasLens({
     backgroundColor: '#f0f0f0',
     enableZoom: true,
     enablePan: true,
-    enableAnnotations: true,  // Enable annotations
+    enableAnnotations: true,
     maxZoom: 10,
     minZoom: 0.1
 });
@@ -146,9 +147,12 @@ if (annotationManager) {
     // Clear all annotations
     annotationManager.clearAll();
 }
+```
 
-// Image comparison (using ComparisonViewer directly)
-import { ComparisonViewer } from 'canvaslens';
+### Image Comparison
+
+```typescript
+import { ComparisonViewer } from '@koniz-dev/canvaslens';
 
 const comparisonViewer = new ComparisonViewer(container, size, eventHandlers, {
     sliderPosition: 50,
@@ -164,13 +168,9 @@ comparisonViewer.setSliderPosition(75);  // 75% reveal
 comparisonViewer.showMoreBefore();
 comparisonViewer.showMoreAfter();
 comparisonViewer.resetSlider();
-
-// Get current state
-const zoomLevel = viewer.getZoomLevel();    // Current zoom level
-const panOffset = viewer.getPanOffset();    // Current pan offset
 ```
 
-## API Reference
+## 📚 API Reference
 
 ### CanvasLens Constructor
 
@@ -188,7 +188,7 @@ interface CanvasLensOptions {
 }
 ```
 
-### Methods
+### Core Methods
 
 #### Image Loading
 - `loadImage(url: string): Promise<void>` - Load and display an image from URL
@@ -211,13 +211,6 @@ interface CanvasLensOptions {
 #### Annotation Controls
 - `getAnnotationManager(): AnnotationManager | null` - Get annotation manager instance
 
-#### Comparison Controls
-- `ComparisonViewer` - Standalone comparison viewer class
-- `loadImages(beforeUrl, afterUrl)` - Load before/after images
-- `setSliderPosition(position)` - Set slider position (0-100)
-- `showMoreBefore()/showMoreAfter()` - Move slider
-- `resetSlider()` - Reset to center position
-
 #### State Management
 - `setEventHandlers(handlers: EventHandlers): void` - Set event handlers
 - `isImageLoaded(): boolean` - Check if an image is currently loaded
@@ -236,6 +229,8 @@ interface EventHandlers {
     onToolChange?: (tool: Tool) => void;
 }
 ```
+
+## 🎮 Controls
 
 ### Mouse Controls
 
@@ -259,58 +254,14 @@ interface EventHandlers {
 - **Reset Slider**: Center button to reset slider to 50%
 - **Zoom/Pan**: Mouse wheel to zoom, drag to pan (synchronized for both images)
 
-## Development
-
-### Building
-
-```bash
-# Install dependencies
-npm install
-
-# Build the library
-npm run build
-
-# Watch mode for development
-npm run dev
-```
-
-### Running Examples
-
-1. Build the library: `npm run build`
-2. Open examples in a web browser:
-   - `examples/basic-image-viewer.html` - Basic image display
-   - `examples/zoom-pan-demo.html` - Interactive zoom and pan demo
-   - `examples/annotation-demo.html` - Full annotation system demo
-   - `examples/comparison-demo.html` - Before/after image comparison demo
-3. Try uploading an image or loading from URL
-
-### Project Structure
-
-```
-src/
-├── core/              # Core canvas functionality
-│   └── Canvas.ts
-├── modules/           # Feature modules
-│   ├── image-viewer/  # Module 1: Basic image display
-│   ├── zoom-pan/      # Module 2: Zoom and pan
-│   ├── annotation/    # Module 3: Annotations
-│   └── comparison/    # Module 4: Image comparison
-├── types/             # TypeScript type definitions
-│   └── index.ts
-├── utils/             # Utility functions
-│   ├── coordinate.ts
-│   └── image.ts
-└── index.ts           # Main entry point
-```
-
-## Browser Support
+## 🌐 Browser Support
 
 - Chrome 60+
 - Firefox 55+
 - Safari 12+
 - Edge 79+
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
@@ -341,11 +292,13 @@ If you encounter issues in specific browsers:
 - **Mobile browsers**: Touch support may vary; consider testing on actual devices
 - **IE**: Internet Explorer is not supported; use Edge or modern browsers
 
-## License
+## 📄 License
 
-MIT License - see LICENSE file for details.
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## Contributing
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
 2. Create a feature branch
@@ -353,12 +306,15 @@ MIT License - see LICENSE file for details.
 4. Add tests if applicable
 5. Submit a pull request
 
-## Roadmap
+## 🗺️ Roadmap
 
+### ✅ Completed
 - [x] Module 1: Basic Image Viewer
 - [x] Module 2: Zoom & Pan functionality  
 - [x] Module 3: Annotation tools
 - [x] Module 4: Image comparison
+
+### 🚧 Planned
 - [ ] Performance optimizations
 - [ ] Touch support for mobile devices
 - [ ] Advanced annotation features (circle, line tools)
@@ -367,3 +323,13 @@ MIT License - see LICENSE file for details.
 - [ ] Plugin system
 - [ ] Export comparison as video/GIF
 - [ ] Multiple comparison modes (side-by-side, overlay)
+
+## 📝 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
+- **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
+- **Discussions**: [GitHub Discussions](https://github.com/koniz-dev/canvaslens/discussions)
