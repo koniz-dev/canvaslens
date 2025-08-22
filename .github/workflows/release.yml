@@ -37,11 +37,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
-        run: |
-          # Create release using GitHub CLI
-          gh release create ${{ github.ref_name }} \
-            --title "Release ${{ github.ref_name }}" \
-            --notes "Release ${{ github.ref_name }} of CanvasLens" \
-            --repo ${{ github.repository }}
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
