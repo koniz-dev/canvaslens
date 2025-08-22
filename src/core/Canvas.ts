@@ -4,6 +4,7 @@ export class Canvas {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private viewState: ViewState;
+  public annotationManager: any = null; // Reference to annotation manager
 
   constructor(container: HTMLElement, size: Size) {
     this.canvas = document.createElement('canvas');
@@ -47,15 +48,17 @@ export class Canvas {
    * Clear the entire canvas
    */
   clear(): void {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    const size = this.getSize();
+    this.ctx.clearRect(0, 0, size.width, size.height);
   }
 
   /**
    * Clear with background color
    */
   clearWithBackground(color: string): void {
+    const size = this.getSize();
     this.ctx.fillStyle = color;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, size.width, size.height);
   }
 
   /**
@@ -103,12 +106,13 @@ export class Canvas {
   }
 
   /**
-   * Get canvas size
+   * Get canvas size (CSS size, not device pixel size)
    */
   getSize(): Size {
+    const dpr = window.devicePixelRatio || 1;
     return {
-      width: this.canvas.width,
-      height: this.canvas.height
+      width: this.canvas.width / dpr,
+      height: this.canvas.height / dpr
     };
   }
 

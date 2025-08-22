@@ -58,6 +58,16 @@ export class AnnotationRenderer {
   }
 
   /**
+   * Convert world coordinates to screen coordinates
+   */
+  private worldToScreen(worldPoint: Point, viewState: any): Point {
+    return {
+      x: worldPoint.x * viewState.scale + viewState.offsetX,
+      y: worldPoint.y * viewState.scale + viewState.offsetY
+    };
+  }
+
+  /**
    * Render rectangle annotation
    */
   private renderRectangle(annotation: Annotation): void {
@@ -108,8 +118,6 @@ export class AnnotationRenderer {
 
     const start = annotation.points[0]!;
     const end = annotation.points[1]!;
-    const headLength = 15;
-    const headAngle = Math.PI / 6;
 
     // Draw line
     this.ctx.beginPath();
@@ -117,20 +125,21 @@ export class AnnotationRenderer {
     this.ctx.lineTo(end.x, end.y);
     this.ctx.stroke();
 
-    // Calculate arrow head
+    // Draw arrowhead
     const angle = Math.atan2(end.y - start.y, end.x - start.x);
+    const arrowLength = 15;
+    const arrowAngle = Math.PI / 6; // 30 degrees
 
-    // Draw arrow head
     this.ctx.beginPath();
     this.ctx.moveTo(end.x, end.y);
     this.ctx.lineTo(
-      end.x - headLength * Math.cos(angle - headAngle),
-      end.y - headLength * Math.sin(angle - headAngle)
+      end.x - arrowLength * Math.cos(angle - arrowAngle),
+      end.y - arrowLength * Math.sin(angle - arrowAngle)
     );
     this.ctx.moveTo(end.x, end.y);
     this.ctx.lineTo(
-      end.x - headLength * Math.cos(angle + headAngle),
-      end.y - headLength * Math.sin(angle + headAngle)
+      end.x - arrowLength * Math.cos(angle + arrowAngle),
+      end.y - arrowLength * Math.sin(angle + arrowAngle)
     );
     this.ctx.stroke();
   }
@@ -142,14 +151,12 @@ export class AnnotationRenderer {
     if (annotation.points.length < 2) return;
 
     this.ctx.beginPath();
-    const firstPoint = annotation.points[0]!;
-    this.ctx.moveTo(firstPoint.x, firstPoint.y);
-
+    this.ctx.moveTo(annotation.points[0]!.x, annotation.points[0]!.y);
+    
     for (let i = 1; i < annotation.points.length; i++) {
-      const point = annotation.points[i]!;
-      this.ctx.lineTo(point.x, point.y);
+      this.ctx.lineTo(annotation.points[i]!.x, annotation.points[i]!.y);
     }
-
+    
     this.ctx.stroke();
   }
 
@@ -161,24 +168,6 @@ export class AnnotationRenderer {
 
     const position = annotation.points[0]!;
     const text = annotation.data.text as string;
-
-    // Set text alignment
-    this.ctx.textAlign = 'left';
-    this.ctx.textBaseline = 'top';
-
-    // Draw text background if fillColor is specified
-    if (annotation.style.fillColor) {
-      const metrics = this.ctx.measureText(text);
-      const textHeight = annotation.style.fontSize || 16;
-      const padding = 4;
-
-      this.ctx.fillRect(
-        position.x - padding,
-        position.y - padding,
-        metrics.width + padding * 2,
-        textHeight + padding * 2
-      );
-    }
 
     // Draw text
     this.ctx.fillStyle = annotation.style.strokeColor;

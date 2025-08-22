@@ -23,6 +23,8 @@ export interface ImageData {
   naturalSize: Size;
   displaySize: Size;
   position: Point;
+  type?: string;
+  fileName?: string;
 }
 
 export interface CanvasLensOptions {

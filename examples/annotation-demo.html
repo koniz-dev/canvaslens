@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Annotation Demo</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link rel="apple-touch-icon" href="../assets/favicon.svg">
+    
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
@@ -43,12 +49,14 @@
                 <div class="instructions">
                     <h4>🎨 How to Use:</h4>
                     <ul>
-                        <li><strong>Select Tool:</strong> Click tool buttons or use R/A/T keys</li>
-                        <li><strong>Draw:</strong> Click and drag to create annotations</li>
+                        <li><strong>Zoom/Pan:</strong> Mouse wheel to zoom, drag to pan (default behavior)</li>
+                        <li><strong>Select Tool:</strong> Click tool buttons or use Alt+R/A/T keys</li>
+                        <li><strong>Draw:</strong> After selecting tool, click and drag to create annotations</li>
+                        <li><strong>Alternative Draw:</strong> Hold Ctrl + click and drag (works anytime)</li>
                         <li><strong>Text:</strong> Click to place text, type, then press Enter</li>
                         <li><strong>Select:</strong> Click on annotations to select them</li>
                         <li><strong>Delete:</strong> Select annotation and press Delete key</li>
-                        <li><strong>Zoom/Pan:</strong> Mouse wheel to zoom, drag to pan</li>
+                        <li><strong>Exit Drawing Mode:</strong> Press Esc to exit drawing mode</li>
                     </ul>
                 </div>
                 
@@ -72,7 +80,7 @@
                         <button id="textTool" onclick="selectTool('text')">T<br>Text</button>
                     </div>
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">
-                        Keyboard shortcuts: R (Rectangle), A (Arrow), T (Text)
+                        Keyboard shortcuts: Alt+R (Rectangle), Alt+A (Arrow), Alt+T (Text)
                     </p>
                 </div>
                 
@@ -89,11 +97,11 @@
                         </div>
                     </div>
                     
-                    <label for="fillColor">Fill Color (optional):</label>
-                    <input type="color" id="fillColor" value="#ff000040" onchange="updateStyle()">
-                    <label>
-                        <input type="checkbox" id="enableFill" onchange="updateStyle()"> Enable Fill
-                    </label>
+                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                        <label for="enableFill" style="margin: 0; font-size: 14px;">Fill Color:</label>
+                        <input type="checkbox" id="enableFill" onchange="updateStyle()" style="width: auto;">
+                        <input type="color" id="fillColor" value="#ff0000" onchange="updateStyle()" style="flex: 1; height: 32px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 0;">
+                    </div>
                     
                     <div style="margin-top: 10px;">
                         <label for="fontSize">Text Size:</label>
@@ -121,6 +129,8 @@
                         <p id="zoomInfo">Zoom: 100%</p>
                         <p id="annotationCount">Annotations: 0</p>
                         <p id="selectedInfo">Selected: None</p>
+                        <p id="imageFileName" style="word-break: break-all; max-width: 100%; overflow: hidden; text-overflow: ellipsis;">File Name: -</p>
+                        <p id="imageType">Type: -</p>
                     </div>
                 </div>
                 
@@ -131,8 +141,8 @@
         </div>
     </div>
 
-    <script src="../dist/canvaslens-bundle.js"></script>
-    <script>
+    <script type="module">
+        import { CanvasLens } from '../dist/index.js';
         
         let canvasLens;
         let annotationManager;
@@ -154,6 +164,14 @@
         
         // Get annotation manager
         annotationManager = canvasLens.getAnnotationManager();
+        
+        // Check if annotation manager is available
+        if (!annotationManager) {
+            console.error('Annotation manager is not available!');
+            showStatus('Warning: Annotation system is not available', 'warning');
+        } else {
+            showStatus('Annotation system ready!', 'success');
+        }
         
         // Set event handlers
         canvasLens.setEventHandlers({
@@ -220,7 +238,7 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    canvasLens.loadImageElement(img);
+                    canvasLens.loadImageElement(img, file.type, file.name);
                 };
                 img.src = e.target.result;
             };
@@ -237,19 +255,35 @@
         };
         
         window.selectTool = (toolType) => {
-            if (!annotationManager) return;
+            if (!annotationManager) {
+                console.error('Annotation manager is not available!');
+                showStatus('Error: Annotation system is not available', 'error');
+                return;
+            }
             
             // Update tool manager
             const toolManager = annotationManager.getToolManager();
-            toolManager.selectTool(toolType);
             
-            // Update UI
-            document.querySelectorAll('.tool-buttons button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(toolType + 'Tool').classList.add('active');
+            if (!toolManager) {
+                console.error('Tool manager is not available!');
+                showStatus('Error: Tool manager is not available', 'error');
+                return;
+            }
             
-            updateInfo();
+            const success = toolManager.selectTool(toolType);
+            
+            if (success) {
+                // Update UI
+                document.querySelectorAll('.tool-buttons button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById(toolType + 'Tool').classList.add('active');
+                
+                updateInfo();
+                showStatus(`Selected ${toolType} tool`, 'success');
+            } else {
+                showStatus(`Failed to select ${toolType} tool`, 'error');
+            }
         };
         
         window.updateStyle = () => {
@@ -335,22 +369,65 @@
                 return;
             }
             
-            listContainer.innerHTML = annotations.map(annotation => `
-                <div class="annotation-item ${selectedAnnotationId === annotation.id ? 'selected' : ''}" 
-                     onclick="selectAnnotation('${annotation.id}')">
-                    <div>
-                        <strong>${annotation.type.toUpperCase()}</strong>
-                        <div class="annotation-info">
-                            ${annotation.type === 'text' && annotation.data?.text 
-                                ? `"${annotation.data.text}"` 
-                                : `${annotation.points.length} points`}
+            listContainer.innerHTML = annotations.map(annotation => {
+                let infoText = '';
+                let icon = '';
+                
+                switch (annotation.type) {
+                    case 'rect':
+                        icon = '⬜';
+                        const rectWidth = Math.abs(annotation.points[1]?.x - annotation.points[0]?.x || 0);
+                        const rectHeight = Math.abs(annotation.points[1]?.y - annotation.points[0]?.y || 0);
+                        infoText = `Rectangle ${Math.round(rectWidth)}×${Math.round(rectHeight)}px`;
+                        break;
+                    case 'arrow':
+                        icon = '↗';
+                        const arrowLength = Math.sqrt(
+                            Math.pow(annotation.points[1]?.x - annotation.points[0]?.x || 0, 2) + 
+                            Math.pow(annotation.points[1]?.y - annotation.points[0]?.y || 0, 2)
+                        );
+                        infoText = `Arrow ${Math.round(arrowLength)}px`;
+                        break;
+                    case 'text':
+                        icon = 'T';
+                        infoText = annotation.data?.text ? `"${annotation.data.text}"` : 'Text';
+                        break;
+                    case 'circle':
+                        icon = '⭕';
+                        const radius = Math.sqrt(
+                            Math.pow(annotation.points[1]?.x - annotation.points[0]?.x || 0, 2) + 
+                            Math.pow(annotation.points[1]?.y - annotation.points[0]?.y || 0, 2)
+                        );
+                        infoText = `Circle r=${Math.round(radius)}px`;
+                        break;
+                    case 'line':
+                        icon = '➖';
+                        const lineLength = Math.sqrt(
+                            Math.pow(annotation.points[1]?.x - annotation.points[0]?.x || 0, 2) + 
+                            Math.pow(annotation.points[1]?.y - annotation.points[0]?.y || 0, 2)
+                        );
+                        infoText = `Line ${Math.round(lineLength)}px`;
+                        break;
+                    default:
+                        icon = '❓';
+                        infoText = `${annotation.points.length} points`;
+                }
+                
+                return `
+                    <div class="annotation-item ${selectedAnnotationId === annotation.id ? 'selected' : ''}" 
+                         onclick="selectAnnotation('${annotation.id}')">
+                        <div>
+                            <strong>${icon} ${annotation.type.toUpperCase()}</strong>
+                            <div class="annotation-info">
+                                ${infoText}
+                            </div>
+                        </div>
+                        <div class="annotation-actions">
+                            <button onclick="deleteAnnotation('${annotation.id}')" class="danger">×</button>
                         </div>
                     </div>
-                    <div class="annotation-actions">
-                        <button onclick="deleteAnnotation('${annotation.id}')" class="danger">×</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
         
         window.selectAnnotation = (annotationId) => {
@@ -373,6 +450,8 @@
             const zoomInfo = document.getElementById('zoomInfo');
             const annotationCount = document.getElementById('annotationCount');
             const selectedInfo = document.getElementById('selectedInfo');
+            const imageFileName = document.getElementById('imageFileName');
+            const imageType = document.getElementById('imageType');
             
             if (annotationManager) {
                 const toolManager = annotationManager.getToolManager();
@@ -388,6 +467,19 @@
             const zoomLevel = canvasLens.getZoomLevel();
             const percentage = Math.round(zoomLevel * 100);
             zoomInfo.textContent = `Zoom: ${percentage}%`;
+            
+            // Update image info
+            if (canvasLens.isImageLoaded()) {
+                const imageViewer = canvasLens.getImageViewer();
+                const imageData = imageViewer.getImageData();
+                if (imageData) {
+                    imageFileName.textContent = `File Name: ${imageData.fileName || 'Unknown'}`;
+                    imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
+                }
+            } else {
+                imageFileName.textContent = 'File Name: -';
+                imageType.textContent = 'Type: -';
+            }
         }
         
         function showStatus(message, type) {

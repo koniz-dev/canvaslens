@@ -52,10 +52,13 @@ export class ImageComparisonManager {
    * Setup event listeners for slider interaction
    */
   private setupEventListeners(): void {
-    this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener);
-    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
-    this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
-    this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this) as EventListener);
+    const canvasElement = this.canvas.getElement();
+    
+    // Use capture phase to handle events before zoom/pan
+    canvasElement.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
+    canvasElement.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener, true);
+    canvasElement.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener, true);
+    canvasElement.addEventListener('mouseleave', this.handleMouseUp.bind(this) as EventListener, true);
   }
 
   /**
@@ -69,12 +72,13 @@ export class ImageComparisonManager {
     
     // Check if click is near the slider
     const sliderX = (canvasSize.width * this.state.sliderPosition) / 100;
-    const tolerance = 20; // pixels
+    const tolerance = 30; // Increased tolerance for easier interaction
     
     if (Math.abs(mousePos.x - sliderX) <= tolerance) {
       this.state.isDragging = true;
       this.canvas.getElement().style.cursor = 'ew-resize';
       event.preventDefault();
+      event.stopPropagation(); // Prevent zoom/pan from handling this event
     }
   }
 
@@ -90,6 +94,9 @@ export class ImageComparisonManager {
     // Calculate new slider position
     const newPosition = Math.max(0, Math.min(100, (mousePos.x / canvasSize.width) * 100));
     this.setSliderPosition(newPosition);
+    
+    event.preventDefault();
+    event.stopPropagation(); // Prevent zoom/pan from handling this event
   }
 
   /**
@@ -99,6 +106,8 @@ export class ImageComparisonManager {
     if (this.state.isDragging) {
       this.state.isDragging = false;
       this.canvas.getElement().style.cursor = 'default';
+      event.preventDefault();
+      event.stopPropagation(); // Prevent zoom/pan from handling this event
     }
   }
 
@@ -158,6 +167,29 @@ export class ImageComparisonManager {
    */
   getSliderPosition(): number {
     return this.state.sliderPosition;
+  }
+
+  /**
+   * Show more of the before image (move slider left)
+   */
+  showMoreBefore(): void {
+    const newPosition = Math.max(0, this.state.sliderPosition - 10);
+    this.setSliderPosition(newPosition);
+  }
+
+  /**
+   * Show more of the after image (move slider right)
+   */
+  showMoreAfter(): void {
+    const newPosition = Math.min(100, this.state.sliderPosition + 10);
+    this.setSliderPosition(newPosition);
+  }
+
+  /**
+   * Reset slider to center position
+   */
+  resetSlider(): void {
+    this.setSliderPosition(50);
   }
 
   /**
@@ -289,10 +321,10 @@ export class ImageComparisonManager {
   }
 
   /**
-   * Update options
+   * Update comparison options
    */
-  updateOptions(newOptions: Partial<ComparisonOptions>): void {
-    this.options = { ...this.options, ...newOptions };
+  updateOptions(options: Partial<ComparisonOptions>): void {
+    this.options = { ...this.options, ...options };
   }
 
   /**
@@ -300,27 +332,6 @@ export class ImageComparisonManager {
    */
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
-  }
-
-  /**
-   * Reset slider to center
-   */
-  resetSlider(): void {
-    this.setSliderPosition(50);
-  }
-
-  /**
-   * Move slider to show more before image
-   */
-  showMoreBefore(): void {
-    this.setSliderPosition(this.state.sliderPosition - 10);
-  }
-
-  /**
-   * Move slider to show more after image
-   */
-  showMoreAfter(): void {
-    this.setSliderPosition(this.state.sliderPosition + 10);
   }
 
   /**

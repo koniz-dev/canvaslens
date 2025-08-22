@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Image Comparison Demo</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link rel="apple-touch-icon" href="../assets/favicon.svg">
+    
     <link rel="stylesheet" href="../assets/css/main.css">
 
 </head>
@@ -142,8 +148,8 @@
         </div>
     </div>
 
-    <script src="../dist/canvaslens-bundle.js"></script>
-    <script>
+    <script type="module">
+        import { ComparisonViewer } from '../dist/index.js';
         
         let comparisonViewer;
         
@@ -271,6 +277,8 @@
             const slider = document.getElementById('zoomSlider');
             const scale = parseFloat(slider.value);
             comparisonViewer.zoomTo(scale);
+            // Update the text immediately when slider changes
+            updateZoomInfo(scale);
         };
         
         window.updateSliderStyle = () => {
@@ -287,17 +295,21 @@
             const slider = document.getElementById('sliderPosition');
             const value = document.getElementById('sliderValue');
             
-            slider.value = position;
-            value.textContent = `${position}%`;
+            if (slider && value) {
+                slider.value = position;
+                value.textContent = `${position}%`;
+            }
         }
         
         function updateZoomInfo(scale) {
             const zoomSlider = document.getElementById('zoomSlider');
             const zoomLevel = document.getElementById('zoomLevel');
-            const percentage = Math.round(scale * 100);
             
-            zoomSlider.value = scale;
-            zoomLevel.textContent = `${percentage}%`;
+            if (zoomSlider && zoomLevel) {
+                const percentage = Math.round(scale * 100);
+                zoomSlider.value = scale;
+                zoomLevel.textContent = `${percentage}%`;
+            }
         }
         
         function updateImageInfo() {
@@ -307,15 +319,15 @@
             const beforeInfo = document.getElementById('beforeInfo');
             const afterInfo = document.getElementById('afterInfo');
             
-            if (beforeImage) {
+            if (beforeImage && beforeInfo) {
                 beforeInfo.textContent = `${beforeImage.naturalSize.width}x${beforeImage.naturalSize.height}`;
-            } else {
+            } else if (beforeInfo) {
                 beforeInfo.textContent = 'Not loaded';
             }
             
-            if (afterImage) {
+            if (afterImage && afterInfo) {
                 afterInfo.textContent = `${afterImage.naturalSize.width}x${afterImage.naturalSize.height}`;
-            } else {
+            } else if (afterInfo) {
                 afterInfo.textContent = 'Not loaded';
             }
         }
@@ -325,19 +337,23 @@
             const zoomInfo = document.getElementById('zoomInfo');
             const statusInfo = document.getElementById('statusInfo');
             
-            const sliderPosition = comparisonViewer.getSliderPosition();
-            const zoomLevel = comparisonViewer.getZoomLevel();
-            const isReady = comparisonViewer.isReady();
-            
-            sliderInfo.textContent = `Slider: ${sliderPosition}%`;
-            zoomInfo.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
-            statusInfo.textContent = `Status: ${isReady ? 'Ready' : 'Loading...'}`;
+            if (comparisonViewer) {
+                const sliderPosition = comparisonViewer.getSliderPosition();
+                const zoomLevel = comparisonViewer.getZoomLevel();
+                const isReady = comparisonViewer.isReady();
+                
+                if (sliderInfo) sliderInfo.textContent = `Slider: ${sliderPosition}%`;
+                if (zoomInfo) zoomInfo.textContent = `Zoom: ${Math.round(zoomLevel * 100)}%`;
+                if (statusInfo) statusInfo.textContent = `Status: ${isReady ? 'Ready' : 'Loading...'}`;
+            }
         }
         
         function showStatus(message, type) {
             const statusEl = document.getElementById('status');
-            statusEl.textContent = message;
-            statusEl.className = `status ${type}`;
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+            }
         }
         
         // Handle window resize

@@ -12,7 +12,7 @@ export type { AnnotationManagerOptions } from './modules/annotation/AnnotationMa
 export { AnnotationRenderer } from './modules/annotation/AnnotationRenderer';
 export { ToolManager } from './modules/annotation/ToolManager';
 export type { ToolManagerOptions } from './modules/annotation/ToolManager';
-export * from './modules/annotation/tools';
+export * from './modules/annotation/tools/index';
 export { ImageComparisonManager } from './modules/comparison/ImageComparisonManager';
 export type { ComparisonOptions, ComparisonState } from './modules/comparison/ImageComparisonManager';
 export { ComparisonViewer } from './modules/comparison/ComparisonViewer';
@@ -104,15 +104,15 @@ export class CanvasLens {
   /**
    * Load image from URL
    */
-  async loadImage(url: string): Promise<void> {
-    return this.imageViewer.loadImage(url);
+  async loadImage(url: string, type?: string, fileName?: string): Promise<void> {
+    return this.imageViewer.loadImage(url, type, fileName);
   }
 
   /**
    * Load image from HTMLImageElement
    */
-  loadImageElement(image: HTMLImageElement): void {
-    this.imageViewer.loadImageElement(image);
+  loadImageElement(image: HTMLImageElement, type?: string, fileName?: string): void {
+    this.imageViewer.loadImageElement(image, type, fileName);
   }
 
   /**
@@ -120,6 +120,8 @@ export class CanvasLens {
    */
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
+    // Update event handlers in ImageViewer as well
+    this.imageViewer.setEventHandlers(this.eventHandlers);
   }
 
   /**

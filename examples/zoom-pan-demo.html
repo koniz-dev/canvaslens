@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Zoom & Pan Demo</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link rel="apple-touch-icon" href="../assets/favicon.svg">
+    
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
@@ -86,6 +92,8 @@
                         <p id="zoomInfo">Zoom: 100%</p>
                         <p id="panInfo">Pan: (0, 0)</p>
                         <p id="imageInfo">No image loaded</p>
+                        <p id="imageFileName" style="word-break: break-all; max-width: 100%; overflow: hidden; text-overflow: ellipsis;">File Name: -</p>
+                        <p id="imageType">Type: -</p>
                     </div>
                 </div>
                 
@@ -96,8 +104,8 @@
         </div>
     </div>
 
-    <script src="../dist/canvaslens-bundle.js"></script>
-    <script>
+    <script type="module">
+        import { CanvasLens } from '../dist/index.js';
         
         // Initialize CanvasLens with zoom/pan enabled
         const container = document.getElementById('viewer');
@@ -115,14 +123,17 @@
         // Set event handlers
         canvasLens.setEventHandlers({
             onImageLoad: (imageData) => {
+                console.log('onImageLoad called:', imageData);
                 showStatus(`Image loaded! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
                 updateInfo();
             },
             onZoomChange: (scale) => {
+                console.log('onZoomChange called:', scale);
                 updateZoomInfo(scale);
                 updateInfo();
             },
             onPanChange: (offset) => {
+                console.log('onPanChange called:', offset);
                 updatePanInfo(offset);
                 updateInfo();
             }
@@ -161,11 +172,19 @@
                 return;
             }
             
+            showStatus('Loading image...', 'info');
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    canvasLens.loadImageElement(img);
+                    canvasLens.loadImageElement(img, file.type, file.name);
+                    // Update status after loading
+                    setTimeout(() => {
+                        if (canvasLens.isImageLoaded()) {
+                            const imageData = canvasLens.getImageViewer().getImageData();
+                            showStatus(`Image loaded! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
+                        }
+                    }, 100);
                 };
                 img.src = e.target.result;
             };
@@ -224,14 +243,33 @@
         
         function updateInfo() {
             const imageInfo = document.getElementById('imageInfo');
+            const imageFileName = document.getElementById('imageFileName');
+            const imageType = document.getElementById('imageType');
+            const zoomInfo = document.getElementById('zoomInfo');
+            const panInfo = document.getElementById('panInfo');
+            
             if (canvasLens.isImageLoaded()) {
-
                 const imageViewer = canvasLens.getImageViewer();
-                if (imageViewer.currentImage) {
-                    imageInfo.textContent = `Image: ${imageViewer.currentImage.naturalWidth}x${imageViewer.currentImage.naturalHeight}`;
+                const imageData = imageViewer.getImageData();
+                if (imageData) {
+                    imageInfo.textContent = `Image: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`;
+                    
+                    imageFileName.textContent = `File Name: ${imageData.fileName || 'Unknown'}`;
+                    imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
                 }
+                
+                // Update current zoom and pan info
+                const currentZoom = canvasLens.getZoomLevel();
+                const currentPan = canvasLens.getPanOffset();
+                
+                zoomInfo.textContent = `Zoom: ${Math.round(currentZoom * 100)}%`;
+                panInfo.textContent = `Pan: (${Math.round(currentPan.x)}, ${Math.round(currentPan.y)})`;
             } else {
                 imageInfo.textContent = 'No image loaded';
+                imageFileName.textContent = 'File Name: -';
+                imageType.textContent = 'Type: -';
+                zoomInfo.textContent = 'Zoom: 100%';
+                panInfo.textContent = 'Pan: (0, 0)';
             }
         }
         

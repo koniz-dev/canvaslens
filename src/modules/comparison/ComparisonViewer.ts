@@ -79,14 +79,6 @@ export class ComparisonViewer {
   }
 
   /**
-   * Set slider position (0-100)
-   */
-  setSliderPosition(position: number): void {
-    this.comparisonManager.setSliderPosition(position);
-    this.render();
-  }
-
-  /**
    * Get current slider position
    */
   getSliderPosition(): number {
@@ -94,27 +86,31 @@ export class ComparisonViewer {
   }
 
   /**
-   * Reset slider to center
+   * Set slider position (0-100)
    */
-  resetSlider(): void {
-    this.comparisonManager.resetSlider();
-    this.render();
+  setSliderPosition(position: number): void {
+    this.comparisonManager.setSliderPosition(position);
   }
 
   /**
-   * Show more before image
+   * Show more of the before image (move slider left)
    */
   showMoreBefore(): void {
     this.comparisonManager.showMoreBefore();
-    this.render();
   }
 
   /**
-   * Show more after image
+   * Show more of the after image (move slider right)
    */
   showMoreAfter(): void {
     this.comparisonManager.showMoreAfter();
-    this.render();
+  }
+
+  /**
+   * Reset slider to center position
+   */
+  resetSlider(): void {
+    this.comparisonManager.resetSlider();
   }
 
   /**
@@ -179,6 +175,11 @@ export class ComparisonViewer {
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
     this.comparisonManager.setEventHandlers(handlers);
+    
+    // Also update zoom/pan handler event handlers
+    if (this.zoomPanHandler) {
+      this.zoomPanHandler.setEventHandlers(handlers);
+    }
   }
 
   /**

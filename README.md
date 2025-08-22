@@ -135,7 +135,7 @@ if (annotationManager) {
     annotationManager.updateStyle({
         strokeColor: '#ff0000',
         strokeWidth: 3,
-        fillColor: '#ff000040',
+        fillColor: '#ff0000',
         fontSize: 18
     });
     

@@ -15,7 +15,8 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run fix-imports",
+    "fix-imports": "node scripts/fix-imports.js",
     "dev": "node server.js",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",

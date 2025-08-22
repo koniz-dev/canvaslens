@@ -28,21 +28,22 @@ export class ArrowTool extends BaseTool {
     if (!this.isDrawing || !this.startPoint) return null;
 
     const endPoint = { ...point };
-    const annotation = this.createAnnotation([this.startPoint, endPoint]);
-
+    const startPoint = { ...this.startPoint }; // Store startPoint before canceling
+    
     // Reset state
     this.cancelDrawing();
 
     // Only create annotation if it has meaningful length
     const length = Math.sqrt(
-      Math.pow(endPoint.x - this.startPoint.x, 2) + 
-      Math.pow(endPoint.y - this.startPoint.y, 2)
+      Math.pow(endPoint.x - startPoint.x, 2) + 
+      Math.pow(endPoint.y - startPoint.y, 2)
     );
     
     if (length < 10) {
       return null; // Too short to be meaningful
     }
 
+    const annotation = this.createAnnotation([startPoint, endPoint]);
     return annotation;
   }
 

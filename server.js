@@ -9,6 +9,22 @@ const server = http.createServer((req, res) => {
         filePath = './index.html';
     }
     
+    // Handle directory requests for ES6 modules
+    // If the request ends with a path that looks like a module directory, try index.js
+    if (!path.extname(filePath) && !filePath.endsWith('/')) {
+        // Check if this might be a module directory request
+        const possibleIndexPath = filePath + '/index.js';
+        if (fs.existsSync(possibleIndexPath)) {
+            filePath = possibleIndexPath;
+        } else {
+            // Also try adding .js extension for ES6 module imports
+            const possibleJsPath = filePath + '.js';
+            if (fs.existsSync(possibleJsPath)) {
+                filePath = possibleJsPath;
+            }
+        }
+    }
+    
     const extname = path.extname(filePath);
     let contentType = 'text/html';
     
@@ -59,7 +75,10 @@ const server = http.createServer((req, res) => {
                 'Content-Type': contentType,
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
+                'Access-Control-Allow-Headers': 'Content-Type, Accept, Origin, X-Requested-With',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
             });
             res.end(content, 'utf-8');
         }

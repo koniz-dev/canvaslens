@@ -9,6 +9,8 @@ export class TextTool extends BaseTool {
    * Start drawing text (show input dialog)
    */
   startDrawing(point: Point): void {
+    this.isDrawing = true;
+    this.startPoint = { ...point };
     this.showTextInput(point);
   }
 
@@ -30,50 +32,47 @@ export class TextTool extends BaseTool {
   /**
    * Show text input dialog
    */
-  private showTextInput(point: Point): Promise<Annotation | null> {
-    return new Promise((resolve) => {
-      this.pendingAnnotation = { point, resolve };
-      
-      // Create text input element
-      this.textInput = document.createElement('input');
-      this.textInput.type = 'text';
-      this.textInput.placeholder = 'Enter text...';
-      this.textInput.style.position = 'absolute';
-      this.textInput.style.left = `${point.x}px`;
-      this.textInput.style.top = `${point.y}px`;
-      this.textInput.style.zIndex = '1000';
-      this.textInput.style.padding = '4px 8px';
-      this.textInput.style.border = '2px solid #007bff';
-      this.textInput.style.borderRadius = '4px';
-      this.textInput.style.fontSize = `${this.options.style.fontSize || 16}px`;
-      this.textInput.style.fontFamily = this.options.style.fontFamily || 'Arial, sans-serif';
-      this.textInput.style.backgroundColor = 'white';
-      this.textInput.style.color = this.options.style.strokeColor;
+  private showTextInput(point: Point): void {
+    // Create text input element
+    this.textInput = document.createElement('input');
+    this.textInput.type = 'text';
+    this.textInput.placeholder = 'Enter text...';
+    this.textInput.style.position = 'absolute';
+    this.textInput.style.left = `${point.x}px`;
+    this.textInput.style.top = `${point.y}px`;
+    this.textInput.style.zIndex = '1000';
+    this.textInput.style.padding = '4px 8px';
+    this.textInput.style.border = '2px solid #007bff';
+    this.textInput.style.borderRadius = '4px';
+    this.textInput.style.fontSize = `${this.options.style.fontSize || 16}px`;
+    this.textInput.style.fontFamily = this.options.style.fontFamily || 'Arial, sans-serif';
+    this.textInput.style.backgroundColor = 'white';
+    this.textInput.style.color = this.options.style.strokeColor;
+    this.textInput.style.minWidth = '100px';
 
-      // Add to canvas container
-      const canvasElement = this.canvas.getElement();
-      const container = canvasElement.parentElement;
-      if (container) {
-        container.style.position = 'relative';
-        container.appendChild(this.textInput);
+    // Add to canvas container
+    const canvasElement = this.canvas.getElement();
+    const container = canvasElement.parentElement;
+    if (container) {
+      container.style.position = 'relative';
+      container.appendChild(this.textInput);
+    }
+
+    // Focus and select
+    this.textInput.focus();
+
+    // Handle input events
+    this.textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        this.completeTextInput();
+      } else if (e.key === 'Escape') {
+        this.cancelTextInput();
       }
+    });
 
-      // Focus and select
-      this.textInput.focus();
-
-      // Handle input events
-      this.textInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          this.completeTextInput();
-        } else if (e.key === 'Escape') {
-          this.cancelTextInput();
-        }
-      });
-
-      this.textInput.addEventListener('blur', () => {
-        // Delay to allow for click events
-        setTimeout(() => this.completeTextInput(), 100);
-      });
+    this.textInput.addEventListener('blur', () => {
+      // Delay to allow for click events
+      setTimeout(() => this.completeTextInput(), 100);
     });
   }
 
@@ -81,33 +80,42 @@ export class TextTool extends BaseTool {
    * Complete text input and create annotation
    */
   private completeTextInput(): void {
-    if (!this.textInput || !this.pendingAnnotation) return;
+    if (!this.textInput) return;
 
     const text = this.textInput.value.trim();
     let annotation: Annotation | null = null;
 
-    if (text) {
+    if (text && this.startPoint) {
       annotation = this.createAnnotation(
-        [this.pendingAnnotation.point],
+        [this.startPoint],
         { text }
       );
     }
 
     // Clean up
     this.removeTextInput();
-    this.pendingAnnotation.resolve(annotation);
-    this.pendingAnnotation = null;
+    
+    // Reset drawing state
+    this.cancelDrawing();
+    
+    // Trigger annotation creation if we have a valid annotation
+    if (annotation) {
+      // We need to notify the tool manager about the new annotation
+      // This will be handled by the tool manager's event system
+      setTimeout(() => {
+        // Trigger a custom event or use a callback mechanism
+        const event = new CustomEvent('annotationCreated', { detail: annotation });
+        this.canvas.getElement().dispatchEvent(event);
+      }, 0);
+    }
   }
 
   /**
    * Cancel text input
    */
   private cancelTextInput(): void {
-    if (!this.pendingAnnotation) return;
-
     this.removeTextInput();
-    this.pendingAnnotation.resolve(null);
-    this.pendingAnnotation = null;
+    this.cancelDrawing();
   }
 
   /**
@@ -135,18 +143,11 @@ export class TextTool extends BaseTool {
   }
 
   /**
-   * Create text annotation with async input
-   */
-  async createTextAnnotation(point: Point): Promise<Annotation | null> {
-    return this.showTextInput(point);
-  }
-
-  /**
    * Cancel current text input if active
    */
   cancelDrawing(): void {
     super.cancelDrawing();
-    if (this.pendingAnnotation) {
+    if (this.textInput) {
       this.cancelTextInput();
     }
   }

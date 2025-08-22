@@ -122,6 +122,9 @@ public
 *.swo
 *~
 
+# Cursor IDE files
+.cursor/
+
 # OS generated files
 .DS_Store
 .DS_Store?

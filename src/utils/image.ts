@@ -54,7 +54,9 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
  */
 export function getImageData(
   image: HTMLImageElement,
-  containerSize: Size
+  containerSize: Size,
+  type?: string,
+  fileName?: string
 ): ImageData {
   const naturalSize: Size = {
     width: image.naturalWidth,
@@ -66,12 +68,22 @@ export function getImageData(
     containerSize
   );
 
-  return {
+  const imageData: ImageData = {
     element: image,
     naturalSize,
     displaySize,
     position
   };
+
+  if (type) {
+    imageData.type = type;
+  }
+
+  if (fileName) {
+    imageData.fileName = fileName;
+  }
+
+  return imageData;
 }
 
 /**

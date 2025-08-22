@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Basic Image Viewer</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+    <link rel="icon" type="image/png" href="../assets/favicon.png">
+    <link rel="apple-touch-icon" href="../assets/favicon.svg">
+    
     <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
@@ -63,6 +69,7 @@
                     <div class="info-panel">
                         <h4>Current Image:</h4>
                         <p id="imageInfo">No image loaded</p>
+                        <p id="imageFileName" style="word-break: break-all; max-width: 100%; overflow: hidden; text-overflow: ellipsis;">File Name: -</p>
                         <p id="imageSize">Size: -</p>
                         <p id="imageType">Type: -</p>
                     </div>
@@ -75,8 +82,8 @@
         </div>
     </div>
 
-    <script src="../dist/canvaslens-bundle.js"></script>
-    <script>
+    <script type="module">
+        import { CanvasLens } from '../dist/index.js';
         
         // Initialize CanvasLens
         const container = document.getElementById('viewer');
@@ -92,6 +99,7 @@
         // Set event handlers
         canvasLens.setEventHandlers({
             onImageLoad: (imageData) => {
+                console.log('onImageLoad event triggered:', imageData);
                 showStatus(`Image loaded successfully! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
                 updateImageInfo(imageData);
             }
@@ -115,7 +123,28 @@
             
             try {
                 showStatus('Loading image...', 'info');
-                await canvasLens.loadImage(url);
+                
+                // Extract file name from URL
+                const urlParts = url.split('/');
+                const fileName = urlParts[urlParts.length - 1].split('?')[0]; // Remove query parameters
+                
+                // Try to determine file type from URL
+                const fileExtension = fileName.split('.').pop()?.toLowerCase();
+                let fileType = 'Unknown';
+                if (fileExtension) {
+                    const typeMap = {
+                        'jpg': 'image/jpeg',
+                        'jpeg': 'image/jpeg',
+                        'png': 'image/png',
+                        'gif': 'image/gif',
+                        'webp': 'image/webp',
+                        'bmp': 'image/bmp',
+                        'svg': 'image/svg+xml'
+                    };
+                    fileType = typeMap[fileExtension] || 'Unknown';
+                }
+                
+                await canvasLens.loadImage(url, fileType, fileName);
             } catch (error) {
                 showStatus(`Failed to load image: ${error.message}`, 'error');
             }
@@ -134,7 +163,23 @@
             reader.onload = (e) => {
                 const img = new Image();
                 img.onload = () => {
-                    canvasLens.loadImageElement(img);
+                    try {
+                        showStatus('Loading image from file...', 'info');
+                        canvasLens.loadImageElement(img, file.type, file.name);
+                        // Manually trigger the image info update since loadImageElement might not trigger onImageLoad
+                        setTimeout(() => {
+                            if (canvasLens.isImageLoaded()) {
+                                const imageViewer = canvasLens.getImageViewer();
+                                const imageData = imageViewer.getImageData();
+                                if (imageData) {
+                                    updateImageInfo(imageData);
+                                    showStatus(`Image loaded successfully! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
+                                }
+                            }
+                        }, 100);
+                    } catch (error) {
+                        showStatus(`Failed to load image: ${error.message}`, 'error');
+                    }
                 };
                 img.src = e.target.result;
             };
@@ -145,7 +190,8 @@
             try {
                 showStatus('Loading sample image...', 'info');
                 // Using a sample image from Unsplash
-                await canvasLens.loadImage('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop');
+                const sampleUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';
+                await canvasLens.loadImage(sampleUrl, 'image/jpeg', 'sample-image.jpg');
             } catch (error) {
                 showStatus(`Failed to load sample image: ${error.message}`, 'error');
             }
@@ -163,13 +209,22 @@
         }
         
         function updateImageInfo(imageData) {
+            console.log('updateImageInfo called with:', imageData);
             const imageInfo = document.getElementById('imageInfo');
+            const imageFileName = document.getElementById('imageFileName');
             const imageSize = document.getElementById('imageSize');
             const imageType = document.getElementById('imageType');
             
-            imageInfo.textContent = `Loaded successfully`;
-            imageSize.textContent = `Size: ${imageData.naturalSize.width} × ${imageData.naturalSize.height} pixels`;
-            imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
+            if (imageInfo && imageFileName && imageSize && imageType) {
+                imageInfo.textContent = 'Loaded successfully';
+                
+                imageFileName.textContent = `File Name: ${imageData.fileName || 'Unknown'}`;
+                imageSize.textContent = `Size: ${imageData.naturalSize.width} × ${imageData.naturalSize.height} pixels`;
+                imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
+                console.log('Image info updated successfully');
+            } else {
+                console.error('Could not find image info elements:', { imageInfo, imageFileName, imageSize, imageType });
+            }
         }
         
         // Handle window resize

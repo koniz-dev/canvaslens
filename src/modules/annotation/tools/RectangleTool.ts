@@ -28,19 +28,20 @@ export class RectangleTool extends BaseTool {
     if (!this.isDrawing || !this.startPoint) return null;
 
     const endPoint = { ...point };
-    const annotation = this.createAnnotation([this.startPoint, endPoint]);
-
+    const startPoint = { ...this.startPoint }; // Store startPoint before canceling
+    
     // Reset state
     this.cancelDrawing();
 
     // Only create annotation if it has meaningful size
-    const width = Math.abs(endPoint.x - this.startPoint.x);
-    const height = Math.abs(endPoint.y - this.startPoint.y);
+    const width = Math.abs(endPoint.x - startPoint.x);
+    const height = Math.abs(endPoint.y - startPoint.y);
     
     if (width < 5 || height < 5) {
       return null; // Too small to be meaningful
     }
 
+    const annotation = this.createAnnotation([startPoint, endPoint]);
     return annotation;
   }
 

@@ -28,6 +28,11 @@ export class ImageViewer {
         zoomPanOptions,
         eventHandlers
       );
+      
+      // Listen for view state changes to trigger re-render
+      this.canvas.getElement().addEventListener('viewStateChange', () => {
+        this.render();
+      });
     }
 
     // Initialize annotation manager if options are provided
@@ -39,17 +44,20 @@ export class ImageViewer {
           eventHandlers
         }
       );
+      
+      // Set reference to annotation manager in canvas for ZoomPanHandler
+      this.canvas.annotationManager = this.annotationManager;
     }
   }
 
   /**
    * Load and display image from URL
    */
-  async loadImage(url: string): Promise<void> {
+  async loadImage(url: string, type?: string, fileName?: string): Promise<void> {
     try {
       const image = await loadImage(url);
       const canvasSize = this.canvas.getSize();
-      this.imageData = getImageData(image, canvasSize);
+      this.imageData = getImageData(image, canvasSize, type, fileName);
       
       this.render();
       
@@ -58,6 +66,8 @@ export class ImageViewer {
         const bounds = this.getImageBounds();
         if (bounds) {
           this.zoomPanHandler.fitToView(bounds);
+          // Update initial view state after fitting
+          this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
         }
       }
       
@@ -70,22 +80,24 @@ export class ImageViewer {
     }
   }
 
-  /**
+    /**
    * Load and display image from HTMLImageElement
    */
-  loadImageElement(image: HTMLImageElement): void {
+  loadImageElement(image: HTMLImageElement, type?: string, fileName?: string): void {
     const canvasSize = this.canvas.getSize();
-    this.imageData = getImageData(image, canvasSize);
+    this.imageData = getImageData(image, canvasSize, type, fileName);
     
     this.render();
     
     // Fit image to view if zoom/pan is enabled
     if (this.zoomPanHandler && this.imageData) {
       const bounds = this.getImageBounds();
-      if (bounds) {
-        this.zoomPanHandler.fitToView(bounds);
+        if (bounds) {
+          this.zoomPanHandler.fitToView(bounds);
+          // Update initial view state after fitting
+          this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
+        }
       }
-    }
     
     if (this.eventHandlers.onImageLoad) {
       this.eventHandlers.onImageLoad(this.imageData);
@@ -103,7 +115,7 @@ export class ImageViewer {
     const ctx = this.canvas.getContext();
     const canvasSize = this.canvas.getSize();
 
-    // Clear canvas
+    // Clear canvas with background
     this.canvas.clearWithBackground('#f0f0f0');
 
     // Apply view transformations
@@ -118,13 +130,14 @@ export class ImageViewer {
       this.imageData.displaySize.height
     );
 
+    // Restore transformations before drawing annotations
+    this.canvas.restoreViewTransform();
+
     // Draw annotations if annotation manager is available
+    // Annotations should be drawn in screen coordinates, not world coordinates
     if (this.annotationManager) {
       this.annotationManager.render();
     }
-
-    // Restore transformations
-    this.canvas.restoreViewTransform();
   }
 
   /**
@@ -135,7 +148,7 @@ export class ImageViewer {
     
     // Recalculate image dimensions if image is loaded
     if (this.imageData) {
-      this.imageData = getImageData(this.imageData.element, size);
+      this.imageData = getImageData(this.imageData.element, size, this.imageData.type, this.imageData.fileName);
       
       // Refit image to view after resize
       if (this.zoomPanHandler) {
@@ -239,5 +252,22 @@ export class ImageViewer {
       return this.zoomPanHandler.getPanOffset();
     }
     return { x: 0, y: 0 };
+  }
+
+  /**
+   * Update event handlers
+   */
+  setEventHandlers(handlers: EventHandlers): void {
+    this.eventHandlers = { ...this.eventHandlers, ...handlers };
+    
+    // Update event handlers in ZoomPanHandler if it exists
+    if (this.zoomPanHandler) {
+      this.zoomPanHandler.setEventHandlers(this.eventHandlers);
+    }
+    
+    // Update event handlers in AnnotationManager if it exists
+    if (this.annotationManager) {
+      this.annotationManager.setEventHandlers(this.eventHandlers);
+    }
   }
 }

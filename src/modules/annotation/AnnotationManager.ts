@@ -66,7 +66,7 @@ export class AnnotationManager {
     // Right-click for context menu or selection
     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
     
-    // Click for selection (when not drawing)
+    // Click for selection (when not drawing) - use a different approach to avoid conflicts
     this.canvas.addEventListener('click', this.handleClick.bind(this) as EventListener);
     
     // Keyboard shortcuts
@@ -77,9 +77,11 @@ export class AnnotationManager {
    * Handle context menu (right-click)
    */
   private handleContextMenu(event: MouseEvent): void {
-    if (!this.enabled) return;
+    if (!this.enabled || this.toolManager.isDrawing()) return;
     
     event.preventDefault();
+    event.stopPropagation();
+    
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
@@ -97,6 +99,7 @@ export class AnnotationManager {
   private handleClick(event: MouseEvent): void {
     if (!this.enabled || this.toolManager.isDrawing()) return;
     
+    // Don't prevent default or stop propagation here to allow normal drawing
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
@@ -134,6 +137,13 @@ export class AnnotationManager {
       x: (screenPoint.x - viewState.offsetX) / viewState.scale,
       y: (screenPoint.y - viewState.offsetY) / viewState.scale
     };
+  }
+
+  /**
+   * Set event handlers
+   */
+  setEventHandlers(handlers: EventHandlers): void {
+    this.eventHandlers = { ...this.eventHandlers, ...handlers };
   }
 
   /**
@@ -241,7 +251,7 @@ export class AnnotationManager {
 
     const annotations = this.getAllAnnotations();
     
-    // Render all annotations
+    // Render all annotations (no need to apply view transform since annotations are in world coordinates)
     this.renderer.renderAll(annotations);
     
     // Render selection highlight
@@ -324,6 +334,13 @@ export class AnnotationManager {
    */
   isEnabled(): boolean {
     return this.enabled;
+  }
+
+  /**
+   * Check if currently drawing annotation
+   */
+  isDrawing(): boolean {
+    return this.toolManager.isToolManagerDrawing();
   }
 
   /**

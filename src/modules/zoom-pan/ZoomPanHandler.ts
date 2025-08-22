@@ -17,6 +17,8 @@ export class ZoomPanHandler {
   private eventHandlers: EventHandlers;
   private isPanning = false;
   private lastPanPoint: Point = { x: 0, y: 0 };
+  private initialViewState: ViewState | null = null;
+  private annotationManager: any = null; // Reference to annotation manager
 
   constructor(
     canvas: Canvas,
@@ -37,6 +39,9 @@ export class ZoomPanHandler {
     };
 
     this.setupEventListeners();
+    
+    // Store initial view state
+    this.initialViewState = { ...this.canvas.getViewState() };
   }
 
   /**
@@ -87,9 +92,22 @@ export class ZoomPanHandler {
   }
 
   /**
+   * Check if annotation system is currently drawing
+   */
+  private isAnnotationDrawing(): boolean {
+    const isDrawing = this.canvas.annotationManager ? this.canvas.annotationManager.isDrawing() : false;
+    return isDrawing;
+  }
+
+  /**
    * Handle mouse down for panning
    */
   private handleMouseDown(event: MouseEvent): void {
+    // Don't handle panning if annotation system is drawing
+    if (this.isAnnotationDrawing()) {
+      return;
+    }
+    
     if (event.button === 0) { // Left mouse button only
       this.isPanning = true;
       this.lastPanPoint = this.canvas.getMousePosition(event);
@@ -101,6 +119,11 @@ export class ZoomPanHandler {
    * Handle mouse move for panning
    */
   private handleMouseMove(event: MouseEvent): void {
+    // Don't handle panning if annotation system is drawing
+    if (this.isAnnotationDrawing()) {
+      return;
+    }
+    
     if (!this.isPanning) return;
 
     const currentPos = this.canvas.getMousePosition(event);
@@ -146,6 +169,13 @@ export class ZoomPanHandler {
         y: currentState.offsetY
       });
     }
+
+    // Trigger a custom event to notify that view state has changed
+    // This will be used by ImageViewer to re-render
+    const viewStateChangeEvent = new CustomEvent('viewStateChange', {
+      detail: { viewState: currentState }
+    });
+    this.canvas.getElement().dispatchEvent(viewStateChangeEvent);
   }
 
   /**
@@ -174,7 +204,18 @@ export class ZoomPanHandler {
         y: canvasSize.height / 2
       };
       
-      this.zoomTo(clampedScale, centerPoint);
+      // Calculate world position at current center
+      const worldPos = screenToWorld(centerPoint, currentState);
+      
+      // Calculate new offset to maintain center
+      const newOffsetX = centerPoint.x - worldPos.x * clampedScale;
+      const newOffsetY = centerPoint.y - worldPos.y * clampedScale;
+      
+      this.updateViewState({
+        scale: clampedScale,
+        offsetX: newOffsetX,
+        offsetY: newOffsetY
+      });
     }
   }
 
@@ -198,11 +239,15 @@ export class ZoomPanHandler {
    * Reset zoom and pan to initial state
    */
   reset(): void {
-    this.updateViewState({
-      scale: 1,
-      offsetX: 0,
-      offsetY: 0
-    });
+    if (this.initialViewState) {
+      this.updateViewState(this.initialViewState);
+    } else {
+      this.updateViewState({
+        scale: 1,
+        offsetX: 0,
+        offsetY: 0
+      });
+    }
   }
 
   /**
@@ -216,7 +261,7 @@ export class ZoomPanHandler {
     const scaleY = canvasSize.height / imageBounds.height;
     const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 100%
     
-    // Calculate center position
+    // Calculate center position to center the image
     const offsetX = (canvasSize.width - imageBounds.width * scale) / 2;
     const offsetY = (canvasSize.height - imageBounds.height * scale) / 2;
     
@@ -247,6 +292,20 @@ export class ZoomPanHandler {
    */
   updateOptions(newOptions: Partial<ZoomPanOptions>): void {
     this.options = { ...this.options, ...newOptions };
+  }
+
+  /**
+   * Update event handlers
+   */
+  setEventHandlers(handlers: EventHandlers): void {
+    this.eventHandlers = { ...this.eventHandlers, ...handlers };
+  }
+
+  /**
+   * Update initial view state (called when image is loaded)
+   */
+  updateInitialViewState(viewState: ViewState): void {
+    this.initialViewState = { ...viewState };
   }
 
   /**
