@@ -322,6 +322,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [ ] Plugin system
 - [ ] Export comparison as video/GIF
 - [ ] Multiple comparison modes (side-by-side, overlay)
+- [ ] Folder tree organization for image collections
 
 ## 📝 Changelog
 

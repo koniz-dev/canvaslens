@@ -1,46 +1,11 @@
 /* Comparison Page - Specific Styles */
 
-.image-info {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.sample-images {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.sample-image {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.sample-image:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
-}
-
-.sample-image h5 {
-    margin: 0 0 5px 0;
-    color: #495057;
-    font-size: 14px;
-}
-
-.sample-image p {
-    margin: 0;
-    font-size: 12px;
-    color: #6c757d;
-}
-
 /* Override controls section width for this page */
-.controls-section {
-    width: 350px;
+.main-content .controls-section {
+    width: var(--sidebar-width-wide);
+}
+
+/* Ensure viewer container takes full height */
+.viewer-section .viewer-container {
+    flex: 1;
 }

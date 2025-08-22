@@ -1,0 +1,180 @@
+/* CanvasLens - Button Styles */
+
+/* Base Button - Element and Class */
+button,
+.btn {
+    background: var(--primary-color);
+    color: var(--text-light);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    text-decoration: none;
+    display: inline-block;
+    transition: all var(--transition-base);
+    margin: var(--spacing-xs);
+    font-family: inherit;
+}
+
+button:hover,
+.btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+button:disabled,
+.btn:disabled {
+    background: var(--gray-500);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Button Variations */
+.btn-secondary,
+button.secondary {
+    background: var(--gray-600);
+}
+
+.btn-secondary:hover,
+button.secondary:hover {
+    background: var(--gray-700);
+}
+
+.btn-success,
+button.success {
+    background: var(--success-color);
+}
+
+.btn-success:hover,
+button.success:hover {
+    background: var(--success-dark);
+}
+
+.btn-warning,
+button.warning {
+    background: var(--warning-color);
+    color: var(--gray-900);
+}
+
+.btn-warning:hover,
+button.warning:hover {
+    background: var(--warning-dark);
+}
+
+.btn-danger,
+button.danger {
+    background: var(--error-color);
+}
+
+.btn-danger:hover,
+button.danger:hover {
+    background: var(--error-dark);
+}
+
+.btn-info,
+button.info {
+    background: var(--info-color);
+}
+
+.btn-info:hover,
+button.info:hover {
+    background: var(--info-dark);
+}
+
+/* Button Sizes */
+.btn-sm,
+button.small {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-xs);
+}
+
+.btn-lg,
+button.large {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+}
+
+/* Button Groups */
+.btn-group {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.btn-group .btn,
+.btn-group button {
+    flex: 1;
+    margin: 0;
+}
+
+/* Slider Controls */
+.slider-controls {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-sm);
+}
+
+.slider-controls .btn,
+.slider-controls button {
+    flex: 1;
+    margin: 0;
+}
+
+/* Annotation Controls */
+.annotation-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.annotation-controls .btn,
+.annotation-controls button {
+    flex: 1;
+    min-width: 100px;
+    margin: 0;
+}
+
+.annotation-controls .btn.active,
+.annotation-controls button.active {
+    background: var(--success-color);
+    font-weight: bold;
+}
+
+/* Zoom Controls */
+.zoom-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.zoom-controls .btn,
+.zoom-controls button {
+    flex: 1;
+    min-width: 80px;
+    margin: 0;
+}
+
+/* Responsive Buttons */
+@media (max-width: 768px) {
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .annotation-controls,
+    .zoom-controls {
+        flex-direction: column;
+    }
+    
+    .annotation-controls .btn,
+    .annotation-controls button,
+    .zoom-controls .btn,
+    .zoom-controls button {
+        min-width: auto;
+    }
+}

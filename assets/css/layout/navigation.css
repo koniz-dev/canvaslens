@@ -1,0 +1,190 @@
+/* CanvasLens - Navigation Styles */
+
+/* Navigation Bar */
+.nav-bar {
+    background: var(--bg-gradient);
+    padding: var(--spacing-md) 0;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+}
+
+.nav-container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand {
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: var(--font-size-xl);
+    font-weight: bold;
+    transition: color var(--transition-base);
+}
+
+.nav-brand:hover {
+    color: var(--gray-200);
+}
+
+.nav-menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    gap: var(--spacing-lg);
+}
+
+.nav-menu li a {
+    color: var(--text-light);
+    text-decoration: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-pill);
+    transition: all var(--transition-base);
+}
+
+.nav-menu li a:hover {
+    background: var(--nav-overlay-light);
+    transform: translateY(-2px);
+}
+
+.nav-menu li a.active {
+    background: var(--nav-overlay-medium);
+    font-weight: bold;
+}
+
+/* Mobile Navigation Toggle */
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: var(--font-size-xl);
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    transition: background-color var(--transition-base);
+}
+
+.nav-toggle:hover {
+    background: var(--nav-overlay-light);
+}
+
+.nav-toggle .hamburger {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background: var(--text-light);
+    margin: 5px 0;
+    transition: var(--transition-base);
+    border-radius: 2px;
+}
+
+.nav-toggle.active .hamburger:nth-child(1) {
+    transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.nav-toggle.active .hamburger:nth-child(2) {
+    opacity: 0;
+}
+
+.nav-toggle.active .hamburger:nth-child(3) {
+    transform: rotate(45deg) translate(-5px, -6px);
+}
+
+/* Back Button */
+.back-btn {
+    background: var(--nav-overlay-light);
+    color: var(--text-light);
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-pill);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    transition: all var(--transition-base);
+}
+
+.back-btn:hover {
+    background: var(--nav-overlay-medium);
+    transform: translateY(-2px);
+}
+
+/* Responsive Navigation */
+@media (max-width: 768px) {
+    .nav-toggle {
+        display: block;
+    }
+    
+    .nav-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg-gradient);
+        flex-direction: column;
+        gap: 0;
+        padding: 0;
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-100%);
+        opacity: 0;
+        visibility: hidden;
+        transition: all var(--transition-base);
+        max-height: 0;
+        overflow: hidden;
+    }
+    
+    .nav-menu.active {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        max-height: 400px;
+    }
+    
+    .nav-menu li {
+        width: 100%;
+        border-bottom: 1px solid var(--nav-overlay-dark);
+    }
+    
+    .nav-menu li:last-child {
+        border-bottom: none;
+    }
+    
+    .nav-menu li a {
+        display: block;
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: var(--font-size-base);
+        border-radius: 0;
+        text-align: center;
+    }
+    
+    .nav-menu li a:hover {
+        background: var(--nav-overlay-light);
+        transform: none;
+    }
+    
+    .nav-menu li a.active {
+        background: var(--nav-overlay-medium);
+    }
+    
+    .nav-container {
+        position: relative;
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-brand {
+        font-size: var(--font-size-lg);
+    }
+    
+    .nav-menu li a {
+        padding: var(--spacing-md) var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+}

@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Annotation Demo</title>
-    <link rel="stylesheet" href="../assets/css/base.css">
-    <link rel="stylesheet" href="../assets/css/components.css">
-    <link rel="stylesheet" href="../assets/css/pages/annotation.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="nav-bar">
         <div class="nav-container">
             <a href="../index.html" class="nav-brand">CanvasLens</a>
-            <ul class="nav-menu">
+            <button class="nav-toggle" id="navToggle">
+                <span class="hamburger"></span>
+                <span class="hamburger"></span>
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
                 <li><a href="../index.html">🏠 Home</a></li>
                 <li><a href="basic-image-viewer.html">🖼️ Basic Viewer</a></li>
                 <li><a href="zoom-pan-demo.html">🔍 Zoom & Pan</a></li>
@@ -32,7 +35,7 @@
         <div class="main-content">
             <div class="viewer-section">
                 <div class="viewer-container">
-                    <div id="viewer" style="width: 100%; height: 700px;"></div>
+                    <div id="viewer" style="width: 100%; height: 100%;"></div>
                 </div>
             </div>
             
@@ -140,7 +143,7 @@
         canvasLens = new CanvasLens({
             container,
             width: container.clientWidth,
-            height: 700,
+            height: container.clientHeight,
             backgroundColor: '#f0f0f0',
             enableZoom: true,
             enablePan: true,
@@ -179,6 +182,14 @@
             requestAnimationFrame(render);
         }
         render();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (canvasLens) {
+                const container = document.getElementById('viewer');
+                canvasLens.resize(container.clientWidth, container.clientHeight);
+            }
+        });
         
         // Global functions for the demo
         window.loadFromUrl = async () => {
@@ -390,13 +401,40 @@
             canvasLens.resize(container.clientWidth, 700);
         });
         
-        // Load sample image on start
-        setTimeout(() => {
-            loadSampleImage();
-        }, 1000);
+        // Load sample image on start - DISABLED
+        // setTimeout(() => {
+        //     loadSampleImage();
+        // }, 1000);
         
         // Update info panel periodically
         setInterval(updateInfo, 500);
+        
+        // Mobile Navigation Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const navToggle = document.getElementById('navToggle');
+            const navMenu = document.getElementById('navMenu');
+            
+            navToggle.addEventListener('click', function() {
+                navToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking on a link
+            navMenu.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    navToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                    navToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            });
+        });
     </script>
 </body>
 </html>

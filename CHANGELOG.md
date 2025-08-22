@@ -69,3 +69,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plugin system
 - Export comparison as video/GIF
 - Multiple comparison modes (side-by-side, overlay)
+- Folder tree organization for image collections

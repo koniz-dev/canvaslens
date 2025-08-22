@@ -1,30 +1,11 @@
 /* Zoom & Pan Page - Specific Styles */
 
-.zoom-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.zoom-controls button {
-    flex: 1;
-    min-width: 80px;
-}
-
-.zoom-info {
-    background: #e9ecef;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    font-size: 14px;
-}
-
-.zoom-info strong {
-    color: #495057;
-}
-
 /* Override controls section width for this page */
-.controls-section {
+.main-content .controls-section {
     width: 300px;
+}
+
+/* Ensure viewer container takes full height */
+.viewer-section .viewer-container {
+    flex: 1;
 }

@@ -1,3 +1,22 @@
 /* Basic Image Viewer Page - Specific Styles */
 
-/* No additional styles needed - uses common component styles */
+/* Override controls section width for this page */
+.main-content .controls-section {
+    width: var(--sidebar-width);
+}
+
+/* Ensure viewer container takes full height */
+.viewer-section .viewer-container {
+    flex: 1;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .main-content .controls-section {
+        margin-top: var(--spacing-lg);
+    }
+    
+    .viewer-section .viewer-container {
+        min-height: 50vh;
+    }
+}

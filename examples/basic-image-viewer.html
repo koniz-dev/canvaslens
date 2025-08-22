@@ -4,16 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CanvasLens - Basic Image Viewer</title>
-    <link rel="stylesheet" href="../assets/css/base.css">
-    <link rel="stylesheet" href="../assets/css/components.css">
-    <link rel="stylesheet" href="../assets/css/pages/basic.css">
+    <link rel="stylesheet" href="../assets/css/main.css">
 </head>
 <body>
     <!-- Navigation Bar -->
     <nav class="nav-bar">
         <div class="nav-container">
             <a href="../index.html" class="nav-brand">CanvasLens</a>
-            <ul class="nav-menu">
+            <button class="nav-toggle" id="navToggle">
+                <span class="hamburger"></span>
+                <span class="hamburger"></span>
+                <span class="hamburger"></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
                 <li><a href="../index.html">🏠 Home</a></li>
                 <li><a href="basic-image-viewer.html" class="active">🖼️ Basic Viewer</a></li>
                 <li><a href="zoom-pan-demo.html">🔍 Zoom & Pan</a></li>
@@ -29,29 +32,45 @@
             <p>Module 1: Basic Image Display with Aspect Ratio Preservation</p>
         </div>
         
-        <div class="viewer-container">
-            <div id="viewer" style="width: 100%; height: 500px;"></div>
-        </div>
-        
-        <div class="controls">
-            <div class="control-group">
-                <label for="imageUrl">Image URL:</label>
-                <input type="url" id="imageUrl" placeholder="Enter image URL or use file upload below">
-                <button onclick="loadFromUrl()">Load from URL</button>
+        <div class="main-content">
+            <div class="viewer-section">
+                <div class="viewer-container">
+                    <div id="viewer" style="width: 100%; height: 100%;"></div>
+                </div>
             </div>
             
-            <div class="control-group">
-                <label for="imageFile">Or upload image file:</label>
-                <input type="file" id="imageFile" accept="image/*" onchange="loadFromFile(event)">
-            </div>
-            
-            <div class="control-group">
-                <button onclick="loadSampleImage()">Load Sample Image</button>
-                <button onclick="clearViewer()">Clear</button>
-            </div>
-            
-            <div id="status" class="status info">
-                Ready to load an image. Try uploading a file or entering an image URL.
+            <div class="controls-section">
+                <div class="instructions">
+                    <h4>📖 About This Module:</h4>
+                    <p>This basic viewer demonstrates fundamental image loading and display capabilities with automatic aspect ratio preservation.</p>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📁 Load Image</h3>
+                    <label for="imageUrl">Image URL:</label>
+                    <input type="url" id="imageUrl" placeholder="Enter image URL">
+                    <button onclick="loadFromUrl()">Load from URL</button>
+                    
+                    <label for="imageFile" style="margin-top: 10px;">Or upload file:</label>
+                    <input type="file" id="imageFile" accept="image/*" onchange="loadFromFile(event)">
+                    
+                    <button onclick="loadSampleImage()" style="margin-top: 10px;">Load Sample Image</button>
+                    <button onclick="clearViewer()" class="secondary">Clear</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📊 Image Info</h3>
+                    <div class="info-panel">
+                        <h4>Current Image:</h4>
+                        <p id="imageInfo">No image loaded</p>
+                        <p id="imageSize">Size: -</p>
+                        <p id="imageType">Type: -</p>
+                    </div>
+                </div>
+                
+                <div id="status" class="status info">
+                    Ready to load an image. Try uploading a file or entering an image URL.
+                </div>
             </div>
         </div>
     </div>
@@ -64,14 +83,25 @@
         const canvasLens = new CanvasLens({
             container,
             width: container.clientWidth,
-            height: 500,
+            height: container.clientHeight,
             backgroundColor: '#f0f0f0'
         });
+        
+
         
         // Set event handlers
         canvasLens.setEventHandlers({
             onImageLoad: (imageData) => {
                 showStatus(`Image loaded successfully! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
+                updateImageInfo(imageData);
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (canvasLens) {
+                const container = document.getElementById('viewer');
+                canvasLens.resize(container.clientWidth, container.clientHeight);
             }
         });
         
@@ -132,9 +162,46 @@
             statusEl.className = `status ${type}`;
         }
         
+        function updateImageInfo(imageData) {
+            const imageInfo = document.getElementById('imageInfo');
+            const imageSize = document.getElementById('imageSize');
+            const imageType = document.getElementById('imageType');
+            
+            imageInfo.textContent = `Loaded successfully`;
+            imageSize.textContent = `Size: ${imageData.naturalSize.width} × ${imageData.naturalSize.height} pixels`;
+            imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
+        }
+        
         // Handle window resize
         window.addEventListener('resize', () => {
-            canvasLens.resize(container.clientWidth, 500);
+            canvasLens.resize(container.clientWidth, 600);
+        });
+        
+        // Mobile Navigation Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const navToggle = document.getElementById('navToggle');
+            const navMenu = document.getElementById('navMenu');
+            
+            navToggle.addEventListener('click', function() {
+                navToggle.classList.toggle('active');
+                navMenu.classList.toggle('active');
+            });
+            
+            // Close menu when clicking on a link
+            navMenu.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A') {
+                    navToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            });
+            
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                    navToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                }
+            });
         });
     </script>
 </body>

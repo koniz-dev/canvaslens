@@ -1,87 +1,11 @@
 /* Annotation Page - Specific Styles */
 
-.annotation-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-.annotation-controls button {
-    flex: 1;
-    min-width: 100px;
-}
-
-.annotation-controls button.active {
-    background: #28a745;
-    font-weight: bold;
-}
-
-.color-picker {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
-.color-picker input[type="color"] {
-    width: 50px;
-    height: 40px;
-    padding: 2px;
-    border: 2px solid #ddd;
-    border-radius: 4px;
-}
-
-.annotation-info {
-    background: #e9ecef;
-    padding: 15px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-}
-
-.annotation-info h4 {
-    margin: 0 0 10px 0;
-    color: #495057;
-}
-
-.annotation-info ul {
-    margin: 0;
-    padding-left: 20px;
-    color: #6c757d;
-}
-
-.annotation-info li {
-    margin: 5px 0;
-}
-
-.annotation-list {
-    max-height: 200px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 10px;
-    background: #f8f9fa;
-}
-
-.annotation-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
-    border-bottom: 1px solid #eee;
-}
-
-.annotation-item:last-child {
-    border-bottom: none;
-}
-
-.annotation-item button {
-    padding: 2px 8px;
-    font-size: 12px;
-    margin: 0;
-}
-
 /* Override controls section width for this page */
-.controls-section {
-    width: 350px;
+.main-content .controls-section {
+    width: var(--sidebar-width-wide);
+}
+
+/* Ensure viewer container takes full height */
+.viewer-section .viewer-container {
+    flex: 1;
 }
