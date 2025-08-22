@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/koniz-dev/canvaslens)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
 
 A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a comprehensive solution for image viewing, zooming, panning, annotation, and before/after image comparison.
 
@@ -42,6 +43,8 @@ A powerful HTML5 Canvas-based image viewing and annotation library built with Ty
 ```bash
 npm install @koniz-dev/canvaslens
 ```
+
+**Note**: This package is published to GitHub Packages. Make sure you have access to the repository or configure your npm registry accordingly.
 
 ## 📖 Quick Start
 
@@ -151,25 +154,43 @@ if (annotationManager) {
 ### Image Comparison
 
 ```typescript
-import { ComparisonViewer } from '@koniz-dev/canvaslens';
+import { ImageComparisonManager } from '@koniz-dev/canvaslens';
 
-const comparisonViewer = new ComparisonViewer(container, size, eventHandlers, {
+const comparisonManager = new ImageComparisonManager(container, size, eventHandlers, {
     sliderPosition: 50,
     sliderColor: '#ffffff',
     sliderWidth: 4
 });
 
 // Load before/after images
-await comparisonViewer.loadImages('before.jpg', 'after.jpg');
+await comparisonManager.loadImages('before.jpg', 'after.jpg');
 
 // Control slider
-comparisonViewer.setSliderPosition(75);  // 75% reveal
-comparisonViewer.showMoreBefore();
-comparisonViewer.showMoreAfter();
-comparisonViewer.resetSlider();
+comparisonManager.setSliderPosition(75);  // 75% reveal
+comparisonManager.showMoreBefore();
+comparisonManager.showMoreAfter();
+comparisonManager.resetSlider();
 ```
 
 ## 📚 API Reference
+
+### Available Exports
+
+The library exports the following main classes and utilities:
+
+```typescript
+// Main class
+import { CanvasLens } from '@koniz-dev/canvaslens';
+
+// Individual modules (for advanced usage)
+import { ImageViewer } from '@koniz-dev/canvaslens';
+import { ZoomPanHandler } from '@koniz-dev/canvaslens';
+import { AnnotationManager } from '@koniz-dev/canvaslens';
+import { ImageComparisonManager } from '@koniz-dev/canvaslens';
+
+// Types
+import type { CanvasLensOptions, EventHandlers, Annotation, Point } from '@koniz-dev/canvaslens';
+```
 
 ### CanvasLens Constructor
 
@@ -312,8 +333,12 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Module 2: Zoom & Pan functionality  
 - [x] Module 3: Annotation tools
 - [x] Module 4: Image comparison
+- [x] Full TypeScript support with strict mode
+- [x] Modular architecture
+- [x] Comprehensive event system
+- [x] Interactive demos and examples
 
-### 🚧 Planned
+### 🚧 Planned (Future Versions)
 - [ ] Performance optimizations
 - [ ] Touch support for mobile devices
 - [ ] Advanced annotation features (circle, line tools)
@@ -333,3 +358,8 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 - **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
 - **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
 - **Discussions**: [GitHub Discussions](https://github.com/koniz-dev/canvaslens/discussions)
+- **Examples**: Check the `examples/` directory for interactive demos
+  - `basic-image-viewer.html` - Basic image loading and display
+  - `zoom-pan-demo.html` - Zoom and pan functionality
+  - `annotation-demo.html` - Annotation tools and features
+  - `comparison-demo.html` - Before/after image comparison
