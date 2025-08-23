@@ -1,10 +1,13 @@
 import { Annotation, Point, AnnotationStyle } from '../../types';
+import { Canvas } from '../../core/Canvas';
 
 export class AnnotationRenderer {
   private ctx: CanvasRenderingContext2D;
+  private canvas: Canvas;
 
-  constructor(ctx: CanvasRenderingContext2D) {
-    this.ctx = ctx;
+  constructor(canvas: Canvas) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext();
   }
 
   /**
@@ -44,7 +47,10 @@ export class AnnotationRenderer {
    */
   private applyStyle(style: AnnotationStyle): void {
     this.ctx.strokeStyle = style.strokeColor;
-    this.ctx.lineWidth = style.strokeWidth;
+    
+    // Scale line width based on current view scale
+    const viewState = this.getViewState();
+    this.ctx.lineWidth = style.strokeWidth / (viewState?.scale || 1);
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
 
@@ -53,8 +59,17 @@ export class AnnotationRenderer {
     }
 
     if (style.fontSize && style.fontFamily) {
-      this.ctx.font = `${style.fontSize}px ${style.fontFamily}`;
+      // Scale font size based on current view scale
+      const scaledFontSize = style.fontSize / (viewState?.scale || 1);
+      this.ctx.font = `${scaledFontSize}px ${style.fontFamily}`;
     }
+  }
+
+  /**
+   * Get current view state
+   */
+  private getViewState(): any {
+    return this.canvas.getViewState();
   }
 
   /**

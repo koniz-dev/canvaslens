@@ -25,7 +25,7 @@ export class AnnotationManager {
     this.enabled = options.enabled !== false;
 
     // Initialize renderer
-    this.renderer = new AnnotationRenderer(canvas.getContext());
+    this.renderer = new AnnotationRenderer(canvas);
 
     // Default style
     const defaultStyle: AnnotationStyle = {
@@ -450,6 +450,18 @@ export class AnnotationManager {
    */
   getAnnotationCount(): number {
     return this.annotations.size;
+  }
+
+  /**
+   * Get image bounds from the parent viewer (if available)
+   */
+  getImageBounds(): { x: number; y: number; width: number; height: number } | null {
+    // Try to get image bounds from the parent context
+    // This assumes the AnnotationManager is used within an ImageViewer
+    if (this.canvas.imageViewer) {
+      return this.canvas.imageViewer.getImageBounds();
+    }
+    return null;
   }
 
   /**

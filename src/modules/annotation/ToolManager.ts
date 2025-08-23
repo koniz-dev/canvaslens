@@ -120,6 +120,11 @@ export class ToolManager {
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
+    // Check if the point is within image bounds
+    if (!this.isPointInImageBounds(worldPoint)) {
+      return; // Don't start drawing outside image bounds
+    }
+    
     this.currentTool.startDrawing(worldPoint);
     this.toolManagerDrawing = true;
   }
@@ -138,7 +143,10 @@ export class ToolManager {
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
-    this.currentTool.continueDrawing(worldPoint);
+    // Clamp the point to image bounds if outside
+    const clampedPoint = this.clampPointToImageBounds(worldPoint);
+    
+    this.currentTool.continueDrawing(clampedPoint);
   }
 
   /**
@@ -155,7 +163,10 @@ export class ToolManager {
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
-    const annotation = this.currentTool.finishDrawing(worldPoint);
+    // Clamp the final point to image bounds
+    const clampedPoint = this.clampPointToImageBounds(worldPoint);
+    
+    const annotation = this.currentTool.finishDrawing(clampedPoint);
     
     if (annotation && this.onAnnotationCreate) {
       this.onAnnotationCreate(annotation);
@@ -262,6 +273,47 @@ export class ToolManager {
     return {
       x: (screenPoint.x - viewState.offsetX) / viewState.scale,
       y: (screenPoint.y - viewState.offsetY) / viewState.scale
+    };
+  }
+
+  /**
+   * Get image bounds from the canvas (through annotation manager)
+   */
+  private getImageBounds(): { x: number; y: number; width: number; height: number } | null {
+    // Get image bounds from canvas annotation manager
+    if (this.canvas.annotationManager) {
+      return this.canvas.annotationManager.getImageBounds();
+    }
+    return null;
+  }
+
+  /**
+   * Check if a point is within image bounds
+   */
+  private isPointInImageBounds(point: Point): boolean {
+    const bounds = this.getImageBounds();
+    if (!bounds) {
+      return true; // If no image bounds, allow drawing anywhere
+    }
+    
+    return point.x >= bounds.x && 
+           point.x <= bounds.x + bounds.width &&
+           point.y >= bounds.y && 
+           point.y <= bounds.y + bounds.height;
+  }
+
+  /**
+   * Clamp a point to image bounds
+   */
+  private clampPointToImageBounds(point: Point): Point {
+    const bounds = this.getImageBounds();
+    if (!bounds) {
+      return point; // If no image bounds, return original point
+    }
+    
+    return {
+      x: Math.max(bounds.x, Math.min(bounds.x + bounds.width, point.x)),
+      y: Math.max(bounds.y, Math.min(bounds.y + bounds.height, point.y))
     };
   }
 

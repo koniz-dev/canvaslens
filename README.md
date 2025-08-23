@@ -272,6 +272,8 @@ interface EventHandlers {
 - **Selection**: Click on existing annotations to select them
 - **Deletion**: Select annotation and press Delete/Backspace key
 - **Escape**: Cancel current drawing or clear selection
+- **Image Integration**: Annotations are drawn directly on the image and move/scale with zoom/pan
+- **Bounded Drawing**: Annotations are restricted to image boundaries, cannot draw outside the image
 
 ### Comparison Controls
 

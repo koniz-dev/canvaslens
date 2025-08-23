@@ -21,6 +21,9 @@ export class ImageViewer {
     this.canvas = new Canvas(container, size);
     this.eventHandlers = eventHandlers;
     
+    // Set reference to this viewer in canvas for annotation manager access
+    this.canvas.imageViewer = this;
+    
     // Initialize zoom/pan handler if options are provided
     if (zoomPanOptions) {
       this.zoomPanHandler = new ZoomPanHandler(
@@ -130,14 +133,15 @@ export class ImageViewer {
       this.imageData.displaySize.height
     );
 
-    // Restore transformations before drawing annotations
-    this.canvas.restoreViewTransform();
-
     // Draw annotations if annotation manager is available
-    // Annotations should be drawn in screen coordinates, not world coordinates
+    // Annotations are now drawn with view transformations applied
+    // so they will move and scale with the image
     if (this.annotationManager) {
       this.annotationManager.render();
     }
+
+    // Restore transformations after drawing everything
+    this.canvas.restoreViewTransform();
   }
 
   /**

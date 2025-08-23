@@ -5,6 +5,7 @@ export class Canvas {
   private ctx: CanvasRenderingContext2D;
   private viewState: ViewState;
   public annotationManager: any = null; // Reference to annotation manager
+  public imageViewer: any = null; // Reference to image viewer
 
   constructor(container: HTMLElement, size: Size) {
     this.canvas = document.createElement('canvas');
