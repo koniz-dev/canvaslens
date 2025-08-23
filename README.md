@@ -265,8 +265,9 @@ interface EventHandlers {
 
 ### Annotation Controls
 
-- **Tool Selection**: Use R (Rectangle), A (Arrow), T (Text) keys or UI buttons
-- **Drawing**: Click and drag to create rectangle/arrow annotations
+- **Tool Selection**: Use Alt+R (Rectangle), Alt+A (Arrow), Alt+T (Text) keys or UI buttons
+- **Drawing (UI buttons)**: Click tool button → Ctrl+Click to draw
+- **Drawing (Keyboard)**: Alt+R/A/T → just click to draw
 - **Text**: Click to place text, type content, press Enter to confirm
 - **Selection**: Click on existing annotations to select them
 - **Deletion**: Select annotation and press Delete/Backspace key

@@ -18,7 +18,9 @@ export class ToolManager {
   private toolManagerDrawing = false; // Track if we're currently drawing
   private isCtrlPressed = false;
   private isAltPressed = false;
-  private drawingMode = false; // Track if we're in drawing mode (tool selected)
+  private activeToolType: string | null = null; // Track which tool is currently active
+  private toolActivatedByKeyboard = false; // Track if tool was activated by Alt+R/A/T
+  private onToolChange?: (toolType: string | null) => void; // Callback for UI updates
   
   // Store bound event handlers for proper cleanup
   private boundMouseDown: (event: MouseEvent) => void;
@@ -95,9 +97,19 @@ export class ToolManager {
       return; // Only left mouse button
     }
     
-    // Start drawing if Ctrl is pressed OR if we're in drawing mode
-    if (!event.ctrlKey && !this.drawingMode) {
-      return;
+    // Start drawing if:
+    // 1. Tool is active by Alt+R/A/T (keyboard) - just click to draw
+    // 2. OR Tool is active by UI button + Ctrl is pressed - Ctrl+Click to draw
+    if (this.activeToolType) {
+      if (this.toolActivatedByKeyboard) {
+        // Tool activated by Alt+R/A/T - just click to draw
+      } else if (event.ctrlKey) {
+        // Tool activated by UI button - need Ctrl+Click to draw
+      } else {
+        return; // Tool activated by UI but no Ctrl pressed
+      }
+    } else {
+      return; // No active tool
     }
 
     // Stop all event propagation immediately to prevent zoom/pan from interfering
@@ -184,39 +196,45 @@ export class ToolManager {
       this.isAltPressed = true;
     }
 
-    // Escape key cancels current drawing or exits drawing mode
+    // Escape key cancels current drawing or deactivates tool
     if (event.key === 'Escape') {
       if (this.currentTool && this.toolManagerDrawing) {
         this.currentTool.cancelDrawing();
         this.toolManagerDrawing = false;
-      } else if (this.drawingMode) {
-        this.drawingMode = false;
+      } else if (this.activeToolType) {
+        this.deactivateTool();
       }
+      return;
     }
 
-    // Tool shortcuts (Alt + key)
+    // Tool shortcuts (Alt + key) - toggle tool on/off
     if (event.altKey) {
       switch (event.key.toLowerCase()) {
         case 'r':
           event.preventDefault();
-          this.selectTool('rect');
-          // Trigger UI update by calling the global selectTool function
-          if ((window as any).selectTool) {
-            (window as any).selectTool('rect');
+          if (this.activeToolType === 'rect') {
+            this.deactivateTool();
+          } else {
+            this.activateTool('rect');
+            this.toolActivatedByKeyboard = true; // Mark as activated by keyboard
           }
           break;
         case 'a':
           event.preventDefault();
-          this.selectTool('arrow');
-          if ((window as any).selectTool) {
-            (window as any).selectTool('arrow');
+          if (this.activeToolType === 'arrow') {
+            this.deactivateTool();
+          } else {
+            this.activateTool('arrow');
+            this.toolActivatedByKeyboard = true; // Mark as activated by keyboard
           }
           break;
         case 't':
           event.preventDefault();
-          this.selectTool('text');
-          if ((window as any).selectTool) {
-            (window as any).selectTool('text');
+          if (this.activeToolType === 'text') {
+            this.deactivateTool();
+          } else {
+            this.activateTool('text');
+            this.toolActivatedByKeyboard = true; // Mark as activated by keyboard
           }
           break;
       }
@@ -248,9 +266,9 @@ export class ToolManager {
   }
 
   /**
-   * Select a tool by type
+   * Activate a tool (click on tool button)
    */
-  selectTool(toolType: string): boolean {
+  activateTool(toolType: string): boolean {
     const tool = this.tools.get(toolType);
     if (!tool) {
       return false;
@@ -262,8 +280,41 @@ export class ToolManager {
     }
 
     this.currentTool = tool;
-    this.drawingMode = true; // Enable drawing mode when tool is selected
+    this.activeToolType = toolType;
+    this.toolActivatedByKeyboard = false; // Reset flag when activated by UI
+    
+    // Notify UI about tool change
+    if (this.onToolChange) {
+      this.onToolChange(toolType);
+    }
+    
     return true;
+  }
+
+  /**
+   * Deactivate current tool
+   */
+  deactivateTool(): void {
+    // Cancel current drawing
+    if (this.currentTool) {
+      this.currentTool.cancelDrawing();
+    }
+    
+    this.currentTool = null;
+    this.activeToolType = null;
+    this.toolActivatedByKeyboard = false; // Reset flag
+    
+    // Notify UI about tool change
+    if (this.onToolChange) {
+      this.onToolChange(null);
+    }
+  }
+
+  /**
+   * Select a tool by type (legacy method for backward compatibility)
+   */
+  selectTool(toolType: string): boolean {
+    return this.activateTool(toolType);
   }
 
   /**
@@ -278,6 +329,20 @@ export class ToolManager {
    */
   getCurrentToolType(): string | null {
     return this.currentTool?.getType() || null;
+  }
+
+  /**
+   * Get active tool type (for UI highlighting)
+   */
+  getActiveToolType(): string | null {
+    return this.activeToolType;
+  }
+
+  /**
+   * Set callback for tool change events
+   */
+  setOnToolChange(callback: (toolType: string | null) => void): void {
+    this.onToolChange = callback;
   }
 
   /**
@@ -342,6 +407,15 @@ export class ToolManager {
   }
 
   /**
+   * Check if any tool is active
+   */
+  isToolActive(): boolean {
+    return this.activeToolType !== null;
+  }
+
+
+
+  /**
    * Cancel current drawing
    */
   cancelCurrentDrawing(): void {
@@ -377,5 +451,6 @@ export class ToolManager {
     // Clear tools
     this.tools.clear();
     this.currentTool = null;
+    this.activeToolType = null;
   }
 }

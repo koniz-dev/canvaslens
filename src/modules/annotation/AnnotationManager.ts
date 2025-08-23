@@ -56,6 +56,13 @@ export class AnnotationManager {
       this.addAnnotation(annotation);
     });
 
+    // Set up tool change callback for UI updates
+    this.toolManager.setOnToolChange((toolType) => {
+      if (this.eventHandlers.onToolChange) {
+        this.eventHandlers.onToolChange(toolType);
+      }
+    });
+
     this.setupEventListeners();
   }
 
@@ -144,6 +151,11 @@ export class AnnotationManager {
    */
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
+    
+    // Setup tool change callback if provided
+    if (handlers.onToolChange) {
+      this.toolManager.setOnToolChange(handlers.onToolChange);
+    }
   }
 
   /**
@@ -338,6 +350,41 @@ export class AnnotationManager {
    */
   isDrawing(): boolean {
     return this.toolManager.isToolManagerDrawing();
+  }
+
+  /**
+   * Check if any tool is active
+   */
+  isToolActive(): boolean {
+    return this.toolManager.isToolActive();
+  }
+
+  /**
+   * Get active tool type
+   */
+  getActiveToolType(): string | null {
+    return this.toolManager.getActiveToolType();
+  }
+
+  /**
+   * Activate a tool
+   */
+  activateTool(toolType: string): boolean {
+    return this.toolManager.activateTool(toolType);
+  }
+
+  /**
+   * Deactivate current tool
+   */
+  deactivateTool(): void {
+    this.toolManager.deactivateTool();
+  }
+
+  /**
+   * Set callback for tool change events
+   */
+  setOnToolChange(callback: (toolType: string | null) => void): void {
+    this.toolManager.setOnToolChange(callback);
   }
 
   /**

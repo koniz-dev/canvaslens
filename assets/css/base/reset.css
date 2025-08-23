@@ -77,8 +77,8 @@ input, textarea, select {
 
 /* Focus styles */
 *:focus {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
 /* Selection */

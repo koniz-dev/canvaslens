@@ -9,3 +9,32 @@
 .viewer-section .viewer-container {
     flex: 1;
 }
+
+/* Tool buttons styling */
+.tool-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    flex-wrap: wrap;
+}
+
+.tool-buttons button {
+    flex: 1;
+    min-width: 80px;
+    margin: 0;
+    text-align: center;
+    line-height: 1.2;
+}
+
+.tool-buttons button.active {
+    background: var(--success-color);
+    font-weight: bold;
+}
+
+.tool-buttons button.reset-btn {
+    background: var(--error-color);
+}
+
+.tool-buttons button.reset-btn:hover {
+    background: var(--error-dark);
+}

@@ -51,12 +51,12 @@
                     <ul>
                         <li><strong>Zoom/Pan:</strong> Mouse wheel to zoom, drag to pan (default behavior)</li>
                         <li><strong>Select Tool:</strong> Click tool buttons or use Alt+R/A/T keys</li>
-                        <li><strong>Draw:</strong> After selecting tool, click and drag to create annotations</li>
-                        <li><strong>Alternative Draw:</strong> Hold Ctrl + click and drag (works anytime)</li>
+                        <li><strong>Draw (UI buttons):</strong> Click tool button → Ctrl+Click to draw</li>
+                        <li><strong>Draw (Keyboard):</strong> Alt+R/A/T → just click to draw</li>
                         <li><strong>Text:</strong> Click to place text, type, then press Enter</li>
                         <li><strong>Select:</strong> Click on annotations to select them</li>
                         <li><strong>Delete:</strong> Select annotation and press Delete key</li>
-                        <li><strong>Exit Drawing Mode:</strong> Press Esc to exit drawing mode</li>
+                        <li><strong>Exit Drawing Mode:</strong> Press Esc or Alt+R/A/T again</li>
                     </ul>
                 </div>
                 
@@ -75,12 +75,16 @@
                 <div class="control-group">
                     <h3>🛠 Annotation Tools</h3>
                     <div class="tool-buttons">
-                        <button id="rectTool" onclick="selectTool('rect')" class="active">⬜<br>Rectangle</button>
-                        <button id="arrowTool" onclick="selectTool('arrow')">↗<br>Arrow</button>
-                        <button id="textTool" onclick="selectTool('text')">T<br>Text</button>
+                        <button id="rectTool" onclick="activateTool('rect')">⬜<br>Rectangle</button>
+                        <button id="arrowTool" onclick="activateTool('arrow')">↗<br>Arrow</button>
+                        <button id="textTool" onclick="activateTool('text')">T<br>Text</button>
+                        <button id="resetTool" onclick="resetTools()" class="reset-btn">🚫<br>Reset</button>
                     </div>
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">
-                        Keyboard shortcuts: Alt+R (Rectangle), Alt+A (Arrow), Alt+T (Text)
+                        <strong>How to use:</strong><br>
+                        • UI buttons: Click tool → Ctrl+Click to draw<br>
+                        • Keyboard: Alt+R/A/T → just click to draw<br>
+                        • ESC or Alt+R/A/T again to deactivate
                     </p>
                 </div>
                 
@@ -165,6 +169,14 @@
         // Get annotation manager
         annotationManager = canvasLens.getAnnotationManager();
         
+        // Set up tool change callback for automatic UI updates
+        if (annotationManager) {
+            annotationManager.setOnToolChange((toolType) => {
+                updateToolUI();
+                updateInfo();
+            });
+        }
+        
         // Check if annotation manager is available
         if (!annotationManager) {
             console.error('Annotation manager is not available!');
@@ -191,6 +203,15 @@
                 updateAnnotationList();
                 updateInfo();
                 showStatus('Annotation removed', 'info');
+            },
+            onToolChange: (toolType) => {
+                updateToolUI();
+                updateInfo();
+                if (toolType) {
+                    showStatus(`Tool activated: ${toolType}`, 'success');
+                } else {
+                    showStatus('Tool deactivated', 'info');
+                }
             }
         });
         
@@ -254,37 +275,68 @@
             }
         };
         
-        window.selectTool = (toolType) => {
+        window.activateTool = (toolType) => {
             if (!annotationManager) {
                 console.error('Annotation manager is not available!');
                 showStatus('Error: Annotation system is not available', 'error');
                 return;
             }
             
-            // Update tool manager
-            const toolManager = annotationManager.getToolManager();
+            const success = annotationManager.activateTool(toolType);
             
-            if (!toolManager) {
-                console.error('Tool manager is not available!');
-                showStatus('Error: Tool manager is not available', 'error');
+            if (success) {
+                updateToolUI();
+                updateInfo();
+                showStatus(`Activated ${toolType} tool`, 'success');
+            } else {
+                showStatus(`Failed to activate ${toolType} tool`, 'error');
+            }
+        };
+
+        window.deactivateTool = () => {
+            if (!annotationManager) {
+                console.error('Annotation manager is not available!');
+                showStatus('Error: Annotation system is not available', 'error');
                 return;
             }
             
-            const success = toolManager.selectTool(toolType);
-            
-            if (success) {
-                // Update UI
-                document.querySelectorAll('.tool-buttons button').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.getElementById(toolType + 'Tool').classList.add('active');
-                
-                updateInfo();
-                showStatus(`Selected ${toolType} tool`, 'success');
-            } else {
-                showStatus(`Failed to select ${toolType} tool`, 'error');
-            }
+            annotationManager.deactivateTool();
+            updateToolUI();
+            updateInfo();
+            showStatus('Deactivated tool', 'info');
         };
+
+        window.resetTools = () => {
+            if (!annotationManager) {
+                console.error('Annotation manager is not available!');
+                showStatus('Error: Annotation system is not available', 'error');
+                return;
+            }
+            
+            annotationManager.deactivateTool();
+            updateToolUI();
+            updateInfo();
+            showStatus('All tools reset', 'info');
+        };
+
+        // Update tool UI highlighting
+        function updateToolUI() {
+            const activeToolType = annotationManager ? annotationManager.getActiveToolType() : null;
+            
+            document.querySelectorAll('.tool-buttons button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (activeToolType) {
+                const activeButton = document.getElementById(activeToolType + 'Tool');
+                if (activeButton) {
+                    activeButton.classList.add('active');
+                }
+            }
+        }
+
+        // Legacy function for backward compatibility
+        window.selectTool = window.activateTool;
         
         window.updateStyle = () => {
             if (!annotationManager) return;
@@ -454,9 +506,18 @@
             const imageType = document.getElementById('imageType');
             
             if (annotationManager) {
-                const toolManager = annotationManager.getToolManager();
-                const currentTool = toolManager.getCurrentToolType();
-                toolInfo.textContent = `Tool: ${currentTool ? currentTool.charAt(0).toUpperCase() + currentTool.slice(1) : 'None'}`;
+                const activeToolType = annotationManager.getActiveToolType();
+                const isToolActive = annotationManager.isToolActive();
+                const isDrawing = annotationManager.isDrawing();
+                
+                let toolStatus = 'None';
+                if (isDrawing) {
+                    toolStatus = `${activeToolType ? activeToolType.charAt(0).toUpperCase() + activeToolType.slice(1) : 'Unknown'} (Drawing)`;
+                } else if (isToolActive) {
+                    toolStatus = `${activeToolType ? activeToolType.charAt(0).toUpperCase() + activeToolType.slice(1) : 'Unknown'} (Active)`;
+                }
+                
+                toolInfo.textContent = `Tool: ${toolStatus}`;
                 
                 const count = annotationManager.getAnnotationCount();
                 annotationCount.textContent = `Annotations: ${count}`;
@@ -526,6 +587,8 @@
                     navMenu.classList.remove('active');
                 }
             });
+            
+
         });
     </script>
 </body>

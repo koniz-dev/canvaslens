@@ -153,6 +153,40 @@ export class CanvasLens {
   }
 
   /**
+   * Check if any annotation tool is active
+   */
+  isAnnotationToolActive(): boolean {
+    const annotationManager = this.getAnnotationManager();
+    return annotationManager ? annotationManager.isToolActive() : false;
+  }
+
+  /**
+   * Get active annotation tool type
+   */
+  getActiveAnnotationToolType(): string | null {
+    const annotationManager = this.getAnnotationManager();
+    return annotationManager ? annotationManager.getActiveToolType() : null;
+  }
+
+  /**
+   * Activate annotation tool
+   */
+  activateAnnotationTool(toolType: string): boolean {
+    const annotationManager = this.getAnnotationManager();
+    return annotationManager ? annotationManager.activateTool(toolType) : false;
+  }
+
+  /**
+   * Deactivate annotation tool
+   */
+  deactivateAnnotationTool(): void {
+    const annotationManager = this.getAnnotationManager();
+    if (annotationManager) {
+      annotationManager.deactivateTool();
+    }
+  }
+
+  /**
    * Check if image is loaded
    */
   isImageLoaded(): boolean {

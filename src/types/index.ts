@@ -67,6 +67,6 @@ export interface EventHandlers {
   onPanChange?: (offset: Point) => void;
   onAnnotationAdd?: (annotation: Annotation) => void;
   onAnnotationRemove?: (annotationId: string) => void;
-  onToolChange?: (tool: Tool) => void;
+  onToolChange?: (toolType: string | null) => void;
   onSliderChange?: (position: number) => void;
 }
