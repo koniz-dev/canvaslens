@@ -85,32 +85,21 @@ export class ToolManager {
     // Keyboard shortcuts - use window to ensure global capture
     window.addEventListener('keydown', this.boundKeyDown);
     window.addEventListener('keyup', this.boundKeyUp);
-    
-    console.log('ToolManager: Keyboard event listeners setup on window');
   }
 
   /**
    * Handle mouse down event
    */
   private handleMouseDown(event: MouseEvent): void {
-    console.log('ToolManager handleMouseDown called');
-    console.log('Current tool:', this.currentTool?.getType());
-    console.log('Mouse button:', event.button);
-    console.log('Ctrl pressed:', this.isCtrlPressed);
-    console.log('Event ctrlKey:', event.ctrlKey);
-    
     if (!this.currentTool || event.button !== 0) {
-      console.log('Exiting: no tool or wrong button');
       return; // Only left mouse button
     }
     
     // Start drawing if Ctrl is pressed OR if we're in drawing mode
     if (!event.ctrlKey && !this.drawingMode) {
-      console.log('Exiting: Ctrl not pressed and not in drawing mode');
       return;
     }
 
-    console.log('Starting drawing...');
     // Stop all event propagation immediately to prevent zoom/pan from interfering
     event.preventDefault();
     event.stopPropagation();
@@ -119,12 +108,8 @@ export class ToolManager {
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
-    console.log('Mouse point:', point);
-    console.log('World point:', worldPoint);
-    
     this.currentTool.startDrawing(worldPoint);
     this.toolManagerDrawing = true;
-    console.log('Drawing started successfully');
   }
 
   /**
@@ -204,20 +189,16 @@ export class ToolManager {
       if (this.currentTool && this.toolManagerDrawing) {
         this.currentTool.cancelDrawing();
         this.toolManagerDrawing = false;
-        console.log('Drawing cancelled');
       } else if (this.drawingMode) {
         this.drawingMode = false;
-        console.log('Drawing mode disabled');
       }
     }
 
     // Tool shortcuts (Alt + key)
     if (event.altKey) {
-      console.log('Alt key pressed with:', event.key);
       switch (event.key.toLowerCase()) {
         case 'r':
           event.preventDefault();
-          console.log('Selecting rectangle tool');
           this.selectTool('rect');
           // Trigger UI update by calling the global selectTool function
           if ((window as any).selectTool) {
@@ -226,7 +207,6 @@ export class ToolManager {
           break;
         case 'a':
           event.preventDefault();
-          console.log('Selecting arrow tool');
           this.selectTool('arrow');
           if ((window as any).selectTool) {
             (window as any).selectTool('arrow');
@@ -234,7 +214,6 @@ export class ToolManager {
           break;
         case 't':
           event.preventDefault();
-          console.log('Selecting text tool');
           this.selectTool('text');
           if ((window as any).selectTool) {
             (window as any).selectTool('text');
@@ -272,10 +251,8 @@ export class ToolManager {
    * Select a tool by type
    */
   selectTool(toolType: string): boolean {
-    console.log('selectTool called with:', toolType);
     const tool = this.tools.get(toolType);
     if (!tool) {
-      console.log('Tool not found:', toolType);
       return false;
     }
 
@@ -286,8 +263,6 @@ export class ToolManager {
 
     this.currentTool = tool;
     this.drawingMode = true; // Enable drawing mode when tool is selected
-    console.log('Tool selected successfully:', toolType);
-    console.log('Drawing mode enabled');
     return true;
   }
 

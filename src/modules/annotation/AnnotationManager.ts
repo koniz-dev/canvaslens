@@ -215,9 +215,6 @@ export class AnnotationManager {
     this.selectedAnnotation = annotation;
     
     // TODO: Trigger selection event
-    if (annotation) {
-      console.log('Selected annotation:', annotation.id);
-    }
   }
 
   /**
