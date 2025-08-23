@@ -11,6 +11,7 @@
     <link rel="apple-touch-icon" href="../assets/favicon.svg">
     
     <link rel="stylesheet" href="../assets/css/main.css">
+    <link rel="stylesheet" href="../assets/css/navigation-test.css">
 
 </head>
 <body>
@@ -29,6 +30,7 @@
                 <li><a href="zoom-pan-demo.html">🔍 Zoom & Pan</a></li>
                 <li><a href="annotation-demo.html">✏️ Annotation</a></li>
                 <li><a href="comparison-demo.html" class="active">⚖️ Comparison</a></li>
+                <li><a href="photo-editor-demo.html">🎨 Photo Editor</a></li>
             </ul>
         </div>
     </nav>
@@ -150,6 +152,18 @@
 
     <script type="module">
         import { ComparisonViewer } from '../dist/index.js';
+
+        
+        // Initialize mobile navigation
+        const navToggle = document.getElementById('navToggle');
+        const navMenu = document.getElementById('navMenu');
+        
+        if (navToggle && navMenu) {
+            navToggle.addEventListener('click', () => {
+                navMenu.classList.toggle('active');
+                navToggle.classList.toggle('active');
+            });
+        }
         
         let comparisonViewer;
         

@@ -35,6 +35,7 @@ export interface CanvasLensOptions {
   enableZoom?: boolean;
   enablePan?: boolean;
   enableAnnotations?: boolean;
+  enablePhotoEditor?: boolean;
   maxZoom?: number;
   minZoom?: number;
 }
@@ -69,4 +70,7 @@ export interface EventHandlers {
   onAnnotationRemove?: (annotationId: string) => void;
   onToolChange?: (toolType: string | null) => void;
   onSliderChange?: (position: number) => void;
+  onPhotoEditorOpen?: () => void;
+  onPhotoEditorClose?: () => void;
+  onPhotoEditorImageUpdate?: (imageData: ImageData) => void;
 }

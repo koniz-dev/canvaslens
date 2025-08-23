@@ -42,7 +42,8 @@ src/
 │   ├── image-viewer/  # Module 1: Basic image display
 │   ├── zoom-pan/      # Module 2: Zoom and pan
 │   ├── annotation/    # Module 3: Annotations
-│   └── comparison/    # Module 4: Image comparison
+│   ├── comparison/    # Module 4: Image comparison
+│   └── photo-editor/  # Module 5: Photo editing
 ├── types/             # TypeScript type definitions
 ├── utils/             # Utility functions
 └── index.ts           # Main entry point

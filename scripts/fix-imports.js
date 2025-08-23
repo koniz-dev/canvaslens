@@ -30,7 +30,8 @@ function fixImportsInFile(filePath) {
     const knownDirectories = [
         'tools',
         'types',
-        'utils'
+        'utils',
+        'photo-editor'
     ];
     
     // Define known files that should have .js extension
@@ -117,7 +118,18 @@ function fixImportsInFile(filePath) {
         // Only fix relative exports
         if (exportPath.startsWith('./') || exportPath.startsWith('../')) {
             modified = true;
-            return match.replace(exportPath, exportPath + '.js');
+            
+            // Check if this is a directory import
+            const pathParts = exportPath.split('/');
+            const lastPart = pathParts[pathParts.length - 1];
+            
+            if (knownDirectories.includes(lastPart)) {
+                // It's a known directory, add /index.js
+                return match.replace(exportPath, exportPath + '/index.js');
+            } else {
+                // It's a file, add .js
+                return match.replace(exportPath, exportPath + '.js');
+            }
         }
         
         return match;

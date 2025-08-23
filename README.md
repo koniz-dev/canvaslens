@@ -38,6 +38,15 @@ A powerful HTML5 Canvas-based image viewing and annotation library built with Ty
 - Customizable slider appearance
 - Real-time comparison state tracking
 
+### 🎨 **Module 5: Photo Editor**
+- Professional image editing with overlay interface
+- Light adjustments: brightness, exposure, contrast, highlights, shadows, vignette
+- Color corrections: saturation, temperature, tint, vibrance
+- Real-time preview with instant feedback
+- Tool panel with multiple editing categories
+- Slider-based adjustment controls
+- Click-to-edit functionality
+
 ## 🚀 Installation
 
 ```bash
@@ -99,6 +108,7 @@ const viewer = new CanvasLens({
     enableZoom: true,
     enablePan: true,
     enableAnnotations: true,
+    enablePhotoEditor: true,
     maxZoom: 10,
     minZoom: 0.1
 });
@@ -119,6 +129,15 @@ viewer.setEventHandlers({
     },
     onAnnotationRemove: (annotationId) => {
         console.log('Annotation removed:', annotationId);
+    },
+    onPhotoEditorOpen: () => {
+        console.log('Photo editor opened');
+    },
+    onPhotoEditorClose: () => {
+        console.log('Photo editor closed');
+    },
+    onPhotoEditorImageUpdate: (imageData) => {
+        console.log('Image updated with new adjustments');
     }
 });
 
@@ -153,6 +172,26 @@ if (annotationManager) {
     
     // Clear all annotations
     annotationManager.clearAll();
+}
+
+// Photo Editor controls
+const photoEditorManager = viewer.getPhotoEditorManager();
+if (photoEditorManager) {
+    // Open photo editor
+    viewer.openPhotoEditor();
+    
+    // Set tool (light, color, retouching, effects, info)
+    photoEditorManager.setTool('light');
+    
+    // Update adjustments
+    photoEditorManager.updateAdjustment('brightness', 20);
+    photoEditorManager.updateAdjustment('contrast', -10);
+    
+    // Reset all adjustments
+    photoEditorManager.reset();
+    
+    // Close photo editor
+    viewer.closePhotoEditor();
 }
 ```
 
@@ -208,6 +247,7 @@ interface CanvasLensOptions {
     enableZoom?: boolean;         // Enable zoom (default: true)
     enablePan?: boolean;          // Enable pan (default: true)
     enableAnnotations?: boolean;  // Enable annotations (default: false)
+    enablePhotoEditor?: boolean;  // Enable photo editor (default: false)
     maxZoom?: number;             // Maximum zoom level (default: 10)
     minZoom?: number;             // Minimum zoom level (default: 0.1)
 }
@@ -236,6 +276,11 @@ interface CanvasLensOptions {
 #### Annotation Controls
 - `getAnnotationManager(): AnnotationManager | null` - Get annotation manager instance
 
+#### Photo Editor Controls
+- `openPhotoEditor(): void` - Open photo editor overlay
+- `closePhotoEditor(): void` - Close photo editor overlay
+- `getPhotoEditorManager(): PhotoEditorManager | null` - Get photo editor manager instance
+
 #### State Management
 - `setEventHandlers(handlers: EventHandlers): void` - Set event handlers
 - `isImageLoaded(): boolean` - Check if an image is currently loaded
@@ -252,6 +297,9 @@ interface EventHandlers {
     onAnnotationAdd?: (annotation: Annotation) => void;
     onAnnotationRemove?: (annotationId: string) => void;
     onToolChange?: (tool: Tool) => void;
+    onPhotoEditorOpen?: () => void;
+    onPhotoEditorClose?: () => void;
+    onPhotoEditorImageUpdate?: (imageData: ImageData) => void;
 }
 ```
 
@@ -281,6 +329,14 @@ interface EventHandlers {
 - **Slider Buttons**: Use ←/→ buttons to move slider incrementally
 - **Reset Slider**: Center button to reset slider to 50%
 - **Zoom/Pan**: Mouse wheel to zoom, drag to pan (synchronized for both images)
+
+### Photo Editor Controls
+
+- **Click Image**: Click on the image to open photo editor overlay
+- **Tool Panel**: Use the tool panel on the right to switch between Light, Color, Retouching, Effects, and Info
+- **Sliders**: Adjust the sliders at the bottom to modify image properties in real-time
+- **Close**: Click the ✕ button to close the editor and apply changes
+- **Reset**: Use the reset button to restore original image settings
 
 ## 🌐 Browser Support
 

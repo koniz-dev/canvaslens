@@ -16,6 +16,8 @@ export * from './modules/annotation/tools/index';
 export { ImageComparisonManager } from './modules/comparison/ImageComparisonManager';
 export type { ComparisonOptions, ComparisonState } from './modules/comparison/ImageComparisonManager';
 export { ComparisonViewer } from './modules/comparison/ComparisonViewer';
+export { PhotoEditorManager, PhotoEditorUI } from './modules/photo-editor';
+export type { PhotoEditorOptions, PhotoEditorState, PhotoEditorTool } from './modules/photo-editor';
 
 // Export types
 export type {
@@ -52,12 +54,16 @@ import { CanvasLensOptions, EventHandlers, Size } from './types';
 import { ImageViewer } from './modules/image-viewer/ImageViewer';
 import { ZoomPanOptions } from './modules/zoom-pan/ZoomPanHandler';
 import { AnnotationManagerOptions } from './modules/annotation/AnnotationManager';
+import { PhotoEditorManager, PhotoEditorUI } from './modules/photo-editor';
+import { PhotoEditorOptions } from './modules/photo-editor/types';
 
 export class CanvasLens {
   private container: HTMLElement;
   private options: CanvasLensOptions;
   private imageViewer: ImageViewer;
   private eventHandlers: EventHandlers;
+  private photoEditorManager: PhotoEditorManager | null = null;
+  private photoEditorUI: PhotoEditorUI | null = null;
 
   constructor(options: CanvasLensOptions) {
     this.container = options.container;
@@ -99,6 +105,11 @@ export class CanvasLens {
       zoomPanOptions,
       annotationOptions
     );
+
+    // Initialize photo editor if enabled
+    if (this.options.enablePhotoEditor) {
+      this.initializePhotoEditor();
+    }
   }
 
   /**
@@ -262,6 +273,118 @@ export class CanvasLens {
     const handler = this.getZoomPanHandler();
     if (handler) {
       handler.zoomTo(scale);
+    }
+  }
+
+  /**
+   * Initialize photo editor
+   */
+  private initializePhotoEditor(): void {
+    const photoEditorOptions: PhotoEditorOptions = {
+      enabled: true,
+      tools: ['light', 'color', 'retouching', 'effects', 'info'],
+      defaultTool: 'light',
+      theme: 'dark',
+      position: 'right',
+      width: 300,
+      height: 600
+    };
+
+    this.photoEditorManager = new PhotoEditorManager(photoEditorOptions);
+    this.photoEditorUI = new PhotoEditorUI(this.photoEditorManager, this.container);
+
+    // Set up callbacks
+    this.photoEditorManager.setCallbacks(
+      (state) => this.onPhotoEditorStateChange(state),
+      (imageData) => this.onPhotoEditorImageUpdate(imageData)
+    );
+
+    // Add click handler to open photo editor
+    this.container.addEventListener('click', (e) => {
+      if (this.isImageLoaded() && !this.isAnnotationToolActive()) {
+        this.openPhotoEditor();
+      }
+    });
+  }
+
+  /**
+   * Open photo editor
+   */
+  openPhotoEditor(): void {
+    if (!this.photoEditorManager || !this.photoEditorUI) {
+      console.warn('Photo editor is not enabled');
+      return;
+    }
+
+    // Get current image data
+    const imageData = this.imageViewer.getImageData();
+    if (imageData) {
+      // Convert image to ImageData for processing
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      canvas.width = imageData.naturalSize.width;
+      canvas.height = imageData.naturalSize.height;
+      ctx.drawImage(imageData.element, 0, 0);
+      
+      const processedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      this.photoEditorManager.setOriginalImage(processedImageData);
+    }
+
+    this.photoEditorManager.open();
+    
+    if (this.eventHandlers.onPhotoEditorOpen) {
+      this.eventHandlers.onPhotoEditorOpen();
+    }
+  }
+
+  /**
+   * Close photo editor
+   */
+  closePhotoEditor(): void {
+    if (this.photoEditorManager) {
+      this.photoEditorManager.close();
+    }
+  }
+
+  /**
+   * Get photo editor manager
+   */
+  getPhotoEditorManager(): PhotoEditorManager | null {
+    return this.photoEditorManager;
+  }
+
+  /**
+   * Handle photo editor state change
+   */
+  private onPhotoEditorStateChange(state: any): void {
+    if (!state.isOpen && this.eventHandlers.onPhotoEditorClose) {
+      this.eventHandlers.onPhotoEditorClose();
+    }
+  }
+
+  /**
+   * Handle photo editor image update
+   */
+  private onPhotoEditorImageUpdate(imageData: ImageData): void {
+    // Apply the modified image data to the canvas
+    if (this.imageViewer) {
+      // Create a temporary canvas to convert ImageData back to image
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      canvas.width = imageData.width;
+      canvas.height = imageData.height;
+      ctx.putImageData(imageData, 0, 0);
+
+      // Convert canvas to image and update the viewer
+      const img = new Image();
+      img.onload = () => {
+        this.imageViewer.loadImageElement(img);
+      };
+      img.src = canvas.toDataURL();
+    }
+
+    if (this.eventHandlers.onPhotoEditorImageUpdate) {
+      this.eventHandlers.onPhotoEditorImageUpdate(imageData as any);
     }
   }
 }

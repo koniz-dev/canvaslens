@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Customizable slider appearance (color, width)
   - Real-time comparison state tracking
 
+- **Module 5: Photo Editor**
+  - Professional image editing with overlay interface
+  - Light adjustments: brightness, exposure, contrast, highlights, shadows, vignette
+  - Color corrections: saturation, temperature, tint, vibrance
+  - Real-time preview with instant feedback
+  - Tool panel with multiple editing categories
+  - Slider-based adjustment controls
+  - Click-to-edit functionality
+
 ### Technical Features
 - Full TypeScript support with strict mode
 - Modular architecture for easy extension
