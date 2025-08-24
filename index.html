@@ -190,12 +190,28 @@
                 <button class="btn secondary" onclick="resetView()">🔄 Reset View</button>
                 <button class="btn secondary" onclick="fitToView()">📐 Fit to View</button>
             </div>
+            
+            <div class="controls">
+                <button class="btn" onclick="setToolsAll()">🔧 All Tools</button>
+                <button class="btn secondary" onclick="setToolsZoomOnly()">🔍 Zoom Only</button>
+                <button class="btn secondary" onclick="setToolsAnnotationOnly()">✏️ Annotation Only</button>
+                <button class="btn secondary" onclick="setToolsCustom()">⚙️ Custom Config</button>
+            </div>
 
             <div class="status" id="status">
                 <strong>Status:</strong> Ready to load an image
             </div>
 
-            <div class="canvas-container" id="canvasContainer"></div>
+            <div class="canvas-container">
+                    <canvas-lens 
+            id="canvasContainer"
+            src="https://picsum.photos/800/600"
+            width="100%" 
+            height="100%"
+            tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
+            background-color="#f8f9fa">
+        </canvas-lens>
+        </div>
         </div>
 
         <div class="footer">
@@ -211,54 +227,32 @@
     <script type="module">
         import { CanvasLens } from './dist/index.js';
 
-        let canvasLensInstance = null;
-        const container = document.getElementById('canvasContainer');
+        const viewer = document.getElementById('canvasContainer');
         const status = document.getElementById('status');
 
-        // Initialize CanvasLens component
-        function initCanvasLens() {
-            if (canvasLensInstance) {
-                canvasLensInstance.destroy();
-            }
+        // Set up event listeners
+        viewer.addEventListener('imageload', (e) => {
+            updateStatus(`Image loaded: ${e.detail.naturalSize.width} × ${e.detail.naturalSize.height}`);
+        });
 
-            canvasLensInstance = CanvasLens.create(container, {
-                width: '100%',
-                height: '100%',
-                backgroundColor: '#f8f9fa',
-                enableZoom: true,
-                enablePan: true,
-                enableAnnotations: true,
-                enableComparison: true,
-                onImageLoad: (imageData) => {
-                    updateStatus(`Image loaded: ${imageData.naturalSize.width} × ${imageData.naturalSize.height}`);
-                },
-                onZoomChange: (scale) => {
-                    updateStatus(`Zoom level: ${(scale * 100).toFixed(0)}%`);
-                },
-                onAnnotationAdd: (annotation) => {
-                    updateStatus(`Annotation added: ${annotation.type}`);
-                },
-                onSave: (imageData) => {
-                    updateStatus('Changes saved successfully!');
-                },
-                onClose: () => {
-                    updateStatus('Overlay closed');
-                }
-            });
-        }
+        viewer.addEventListener('zoomchange', (e) => {
+            updateStatus(`Zoom level: ${(e.detail * 100).toFixed(0)}%`);
+        });
+
+        viewer.addEventListener('annotationadd', (e) => {
+            updateStatus(`Annotation added: ${e.detail.type}`);
+        });
 
         // Load sample image
         window.loadSampleImage = function() {
-            if (canvasLensInstance) {
-                updateStatus('Loading sample image...');
-                canvasLensInstance.loadImage('https://picsum.photos/800/600', 'image/jpeg', 'sample.jpg');
-            }
+            updateStatus('Loading sample image...');
+            viewer.loadImage('https://picsum.photos/800/600', 'image/jpeg', 'sample.jpg');
         };
 
         // Open overlay
         window.openOverlay = function() {
-            if (canvasLensInstance && canvasLensInstance.isImageLoaded()) {
-                canvasLensInstance.openOverlay();
+            if (viewer.isImageLoaded()) {
+                viewer.openOverlay();
             } else {
                 updateStatus('Please load an image first');
             }
@@ -266,18 +260,14 @@
 
         // Reset view
         window.resetView = function() {
-            if (canvasLensInstance) {
-                canvasLensInstance.getCanvasLens().resetView();
-                updateStatus('View reset');
-            }
+            viewer.resetView();
+            updateStatus('View reset');
         };
 
         // Fit to view
         window.fitToView = function() {
-            if (canvasLensInstance) {
-                canvasLensInstance.getCanvasLens().fitToView();
-                updateStatus('Fitted to view');
-            }
+            viewer.fitToView();
+            updateStatus('Fitted to view');
         };
 
         // Update status
@@ -288,15 +278,84 @@
         // File input handler
         document.getElementById('imageInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file && canvasLensInstance) {
+            if (file) {
                 updateStatus(`Loading ${file.name}...`);
-                canvasLensInstance.loadImageFromFile(file);
+                viewer.loadImageFromFile(file);
             }
         });
 
+        // Tool configuration functions
+        window.setToolsAll = function() {
+            const config = {
+                zoom: true,
+                pan: true,
+                annotation: {
+                    rect: true,
+                    arrow: true,
+                    text: true,
+                    circle: true,
+                    line: true
+                },
+                comparison: true
+            };
+            viewer.setAttribute('tools', JSON.stringify(config));
+            updateStatus('All tools enabled');
+        };
+
+        window.setToolsZoomOnly = function() {
+            const config = {
+                zoom: true,
+                pan: true,
+                annotation: {
+                    rect: false,
+                    arrow: false,
+                    text: false,
+                    circle: false,
+                    line: false
+                },
+                comparison: false
+            };
+            viewer.setAttribute('tools', JSON.stringify(config));
+            updateStatus('Zoom and pan only');
+        };
+
+        window.setToolsAnnotationOnly = function() {
+            const config = {
+                zoom: false,
+                pan: false,
+                annotation: {
+                    rect: true,
+                    arrow: true,
+                    text: true,
+                    circle: true,
+                    line: true
+                },
+                comparison: false
+            };
+            viewer.setAttribute('tools', JSON.stringify(config));
+            updateStatus('Annotation tools only');
+        };
+
+        window.setToolsCustom = function() {
+            const config = {
+                zoom: true,
+                pan: false,
+                annotation: {
+                    rect: true,
+                    arrow: false,
+                    text: true,
+                    circle: false,
+                    line: false
+                },
+                comparison: true
+            };
+            viewer.setAttribute('tools', JSON.stringify(config));
+            updateStatus('Custom configuration applied');
+        };
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            initCanvasLens();
+            updateStatus('CanvasLens Web Component ready!');
         });
     </script>
 </body>

@@ -1,74 +1,10 @@
 // Main entry point for CanvasLens library
 
-// Export core classes
-export { Canvas } from './core/Canvas';
-
-// Export modules
-export { ImageViewer } from './modules/image-viewer/ImageViewer';
-export { ZoomPanHandler } from './modules/zoom-pan/ZoomPanHandler';
-export type { ZoomPanOptions } from './modules/zoom-pan/ZoomPanHandler';
-export { AnnotationManager } from './modules/annotation/AnnotationManager';
-export type { AnnotationManagerOptions } from './modules/annotation/AnnotationManager';
-export { AnnotationRenderer } from './modules/annotation/AnnotationRenderer';
-export { ToolManager } from './modules/annotation/ToolManager';
-export type { ToolManagerOptions } from './modules/annotation/ToolManager';
-export * from './modules/annotation/tools/index';
-export { ImageComparisonManager } from './modules/comparison/ImageComparisonManager';
-export type { ComparisonOptions, ComparisonState } from './modules/comparison/ImageComparisonManager';
-export { ComparisonViewer } from './modules/comparison/ComparisonViewer';
-
-// Export types
-export type {
-  Point,
-  Size,
-  Rectangle,
-  ViewState,
-  ImageData,
-  CanvasLensOptions,
-  Annotation,
-  AnnotationStyle,
-  Tool,
-  EventHandlers
-} from './types';
-
-// Export utilities
-export {
-  screenToWorld,
-  worldToScreen,
-  distance,
-  centerPoint,
-  clamp
-} from './utils/coordinate';
-
-export {
-  calculateFitDimensions,
-  loadImage,
-  getImageData,
-  isPointInRect
-} from './utils/image';
-
-export {
-  log,
-  warn,
-  error,
-  info
-} from './utils/logger';
-
-// Export main CanvasLens component
-export {
-  CanvasLens,
-  createCanvasLens,
-  updateCanvasLens
-} from './CanvasLens';
-
-export type {
-  CanvasLensProps,
-  CanvasLensInstance,
-  CanvasLensFactory
-} from './CanvasLens';
+// Export main CanvasLens Web Component only
+export { CanvasLens } from './CanvasLens';
 
 // Main CanvasLens class
-import { CanvasLensOptions, EventHandlers, Size } from './types';
+import { CanvasLensOptions, EventHandlers, Size, ToolConfig } from './types';
 import { ImageViewer } from './modules/image-viewer/ImageViewer';
 import { ZoomPanOptions } from './modules/zoom-pan/ZoomPanHandler';
 import { AnnotationManagerOptions } from './modules/annotation/AnnotationManager';
@@ -86,10 +22,18 @@ export class CoreCanvasLens {
       width: 800,
       height: 600,
       backgroundColor: '#f0f0f0',
-      enableZoom: true,
-      enablePan: true,
-      enableAnnotations: false,
-      enableComparison: false,
+      tools: {
+        zoom: true,
+        pan: true,
+        annotation: {
+          rect: true,
+          arrow: true,
+          text: true,
+          circle: true,
+          line: true
+        },
+        comparison: true
+      },
       maxZoom: 10,
       minZoom: 0.1,
       ...options
@@ -103,14 +47,15 @@ export class CoreCanvasLens {
       height: this.options.height!
     };
 
+    const tools = this.options.tools || {};
     const zoomPanOptions: ZoomPanOptions = {
-      enableZoom: this.options.enableZoom ?? true,
-      enablePan: this.options.enablePan ?? true,
+      enableZoom: tools.zoom ?? true,
+      enablePan: tools.pan ?? true,
       maxZoom: this.options.maxZoom ?? 10,
       minZoom: this.options.minZoom ?? 0.1
     };
 
-    const annotationOptions: AnnotationManagerOptions | undefined = this.options.enableAnnotations ? {
+    const annotationOptions: AnnotationManagerOptions | undefined = tools.annotation ? {
       enabled: true
     } : undefined;
 

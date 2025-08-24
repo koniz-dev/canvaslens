@@ -60,7 +60,7 @@ npm install @koniz-dev/canvaslens
 
 ## 📖 Quick Start
 
-### Basic Usage
+### Basic Usage (Web Component)
 
 ```html
 <!DOCTYPE html>
@@ -68,36 +68,84 @@ npm install @koniz-dev/canvaslens
 <head>
     <title>CanvasLens Demo</title>
     <style>
-        #viewer {
+        canvas-lens {
             border: 1px solid #ccc;
             margin: 20px;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <div id="viewer" style="width: 800px; height: 600px;"></div>
+    <!-- Simple HTML element usage -->
+    <canvas-lens 
+        src="https://picsum.photos/800/600"
+        width="800px" 
+        height="600px"
+        tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
+        background-color="#f0f0f0">
+    </canvas-lens>
     
     <script type="module">
         import { CanvasLens } from '@koniz-dev/canvaslens';
         
-        const container = document.getElementById('viewer');
-        const instance = CanvasLens.create(container, {
-            width: '100%',
-            height: '100%',
-            enableZoom: true,
-            enablePan: true,
-            enableAnnotations: true,
-            enableComparison: true,
-            onImageLoad: (imageData) => {
-                console.log('Image loaded:', imageData.naturalSize);
-            },
-            onSave: (imageData) => {
-                console.log('Changes saved');
-            }
+        // Get the element
+        const viewer = document.querySelector('canvas-lens');
+        
+        // Listen for events
+        viewer.addEventListener('imageload', (e) => {
+            console.log('Image loaded:', e.detail);
         });
         
-        // Load an image
-        await instance.loadImage('https://picsum.photos/800/600');
+        // Use JavaScript API
+        viewer.addEventListener('click', () => {
+            viewer.openOverlay(); // Open full-screen editor
+        });
+    </script>
+</body>
+</html>
+```
+
+### Programmatic Usage
+
+```javascript
+import { CanvasLens } from '@koniz-dev/canvaslens';
+
+// Get the element
+const viewer = document.querySelector('canvas-lens');
+
+// Load image programmatically
+await viewer.loadImage('https://picsum.photos/800/600');
+
+// Load from file input
+const fileInput = document.getElementById('fileInput');
+fileInput.addEventListener('change', (e) => {
+    viewer.loadImageFromFile(e.target.files[0]);
+});
+
+// Zoom controls
+viewer.zoomIn(1.2);
+viewer.zoomOut(1.2);
+viewer.zoomTo(2.0);
+viewer.fitToView();
+viewer.resetView();
+
+// Tool controls
+viewer.activateTool('rect');  // Rectangle tool
+viewer.activateTool('arrow'); // Arrow tool
+viewer.activateTool('text');  // Text tool
+viewer.activateTool('circle'); // Circle tool
+viewer.activateTool('line');  // Line tool
+viewer.deactivateTool();
+
+// Annotation controls
+viewer.addAnnotation(annotation);
+viewer.removeAnnotation(annotationId);
+viewer.clearAnnotations();
+const annotations = viewer.getAnnotations();
+
+// Overlay editor
+viewer.openOverlay();
+viewer.closeOverlay();
         
         // Open overlay mode
         instance.openOverlay();
@@ -106,120 +154,113 @@ npm install @koniz-dev/canvaslens
 </html>
 ```
 
-### Component Pattern Usage
+### Framework Integration
 
-CanvasLens supports usage as a component in various frameworks through the Component Pattern:
+CanvasLens works seamlessly with any framework since it's a standard Web Component:
 
 #### Vue 3
 ```vue
 <template>
   <div>
-    <div ref="containerRef" style="width: 800px; height: 600px;"></div>
+    <canvas-lens 
+      :src="imageSrc"
+      width="800px" 
+      height="600px"
+      :enable-annotations="true"
+      @imageload="onImageLoad">
+    </canvas-lens>
     <button @click="setTool('rect')">Rectangle Tool</button>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { CanvasLensComponent } from '@koniz-dev/canvaslens';
+import { ref } from 'vue';
+import { CanvasLens } from '@koniz-dev/canvaslens';
 
-const containerRef = ref(null);
-const instance = ref(null);
+const imageSrc = ref('https://example.com/image.jpg');
 
-onMounted(() => {
-  if (containerRef.value) {
-    instance.value = CanvasLensComponent.create(containerRef.value, {
-      src: 'https://example.com/image.jpg',
-      enableAnnotations: true,
-      onImageLoad: (data) => console.log('Image loaded:', data)
-    });
-  }
-});
-
-onUnmounted(() => {
-  if (instance.value) {
-    instance.value.destroy();
-  }
-});
+const onImageLoad = (e) => {
+  console.log('Image loaded:', e.detail);
+};
 
 const setTool = (toolType) => {
-  if (instance.value) {
-    instance.value.activateTool(toolType);
-  }
+  const viewer = document.querySelector('canvas-lens');
+  viewer.activateTool(toolType);
 };
 </script>
 ```
 
 #### React
 ```jsx
-import React, { useRef, useEffect } from 'react';
-import { CanvasLensComponent } from '@koniz-dev/canvaslens';
+import React, { useEffect, useRef } from 'react';
+import { CanvasLens } from '@koniz-dev/canvaslens';
 
 const CanvasLensViewer = ({ src }) => {
-  const containerRef = useRef(null);
-  const instanceRef = useRef(null);
+  const viewerRef = useRef(null);
 
   useEffect(() => {
-    if (containerRef.current) {
-      instanceRef.current = CanvasLensComponent.create(containerRef.current, {
-        src,
-        enableAnnotations: true,
-        onImageLoad: (data) => console.log('Image loaded:', data)
+    if (viewerRef.current) {
+      viewerRef.current.addEventListener('imageload', (e) => {
+        console.log('Image loaded:', e.detail);
       });
     }
+  }, []);
 
-    return () => {
-      if (instanceRef.current) {
-        instanceRef.current.destroy();
-      }
-    };
-  }, [src]);
-
-  return <div ref={containerRef} style={{ width: 800, height: 600 }} />;
+  return (
+    <canvas-lens 
+      ref={viewerRef}
+      src={src}
+      width="800px" 
+      height="600px"
+      enable-annotations="true">
+    </canvas-lens>
+  );
 };
 ```
 
 ### Advanced Usage with All Features
 
-```typescript
-import { CanvasLens } from '@koniz-dev/canvaslens';
+```html
+<canvas-lens
+    src="https://example.com/image.jpg"
+    width="800px"
+    height="600px"
+    background-color="#f0f0f0"
+    enable-zoom="true"
+    enable-pan="true"
+    enable-annotations="true"
+    enable-comparison="true"
+    max-zoom="10"
+    min-zoom="0.1"
+    active-tool="rect">
+</canvas-lens>
 
-const viewer = new CanvasLens({
-    container: document.getElementById('viewer'),
-    width: 800,
-    height: 600,
-    backgroundColor: '#f0f0f0',
-    enableZoom: true,
-    enablePan: true,
-    enableAnnotations: true,
-    enableComparison: true,
-    maxZoom: 10,
-    minZoom: 0.1
-});
+<script>
+const viewer = document.querySelector('canvas-lens');
 
 // Set event handlers
-viewer.setEventHandlers({
-    onImageLoad: (imageData) => {
-        console.log('Image loaded:', imageData.naturalSize);
-    },
-    onZoomChange: (scale) => {
-        console.log('Zoom level:', scale);
-    },
-    onPanChange: (offset) => {
-        console.log('Pan offset:', offset);
-    },
-    onAnnotationAdd: (annotation) => {
-        console.log('Annotation added:', annotation);
-    },
-    onAnnotationRemove: (annotationId) => {
-        console.log('Annotation removed:', annotationId);
-    },
-    onComparisonChange: (position) => {
-        console.log('Comparison position:', position);
-    },
-    onSave: (imageData) => {
-        console.log('Changes saved');
-    }
+viewer.addEventListener('imageload', (e) => {
+    console.log('Image loaded:', e.detail);
+});
+
+viewer.addEventListener('zoomchange', (e) => {
+    console.log('Zoom level:', e.detail);
+});
+
+viewer.addEventListener('panchange', (e) => {
+    console.log('Pan offset:', e.detail);
+});
+
+viewer.addEventListener('annotationadd', (e) => {
+    console.log('Annotation added:', e.detail);
+});
+
+viewer.addEventListener('annotationremove', (e) => {
+    console.log('Annotation removed:', e.detail);
+});
+
+viewer.addEventListener('comparisonchange', (e) => {
+    console.log('Comparison position:', e.detail);
 });
 
 // Load image from URL
@@ -232,41 +273,23 @@ viewer.zoomTo(2.5);           // Zoom to 250%
 viewer.fitToView();           // Fit image to view
 viewer.resetView();           // Reset zoom and pan
 
-// Annotation controls
-const annotationManager = viewer.getAnnotationManager();
-if (annotationManager) {
-    // Select annotation tool
-    const toolManager = annotationManager.getToolManager();
-    toolManager.selectTool('rect');  // 'rect', 'arrow', 'text'
-    
-    // Update annotation style
-    annotationManager.updateStyle({
-        strokeColor: '#ff0000',
-        strokeWidth: 3,
-        fillColor: '#ff0000',
-        fontSize: 18
-    });
-    
-    // Export/import annotations
-    const jsonData = annotationManager.exportAnnotations();
-    annotationManager.importAnnotations(jsonData);
-    
-    // Clear all annotations
-    annotationManager.clearAll();
-}
+// Tool controls
+viewer.activateTool('rect');  // Rectangle tool
+viewer.activateTool('arrow'); // Arrow tool
+viewer.activateTool('text');  // Text tool
+viewer.activateTool('circle'); // Circle tool
+viewer.activateTool('line');  // Line tool
+viewer.deactivateTool();      // Deactivate current tool
 
-// Comparison controls
-const comparisonManager = viewer.getComparisonManager();
-if (comparisonManager) {
-    // Set comparison image
-    await comparisonManager.setComparisonImage('https://picsum.photos/1200/800');
-    
-    // Set comparison position (0-100)
-    comparisonManager.setPosition(50);
-    
-    // Get current position
-    const position = comparisonManager.getPosition();
-}
+// Annotation controls
+viewer.addAnnotation(annotation);
+viewer.removeAnnotation(annotationId);
+viewer.clearAnnotations();
+const annotations = viewer.getAnnotations();
+
+// Overlay editor
+viewer.openOverlay();
+viewer.closeOverlay();
 ```
 
 ### Image Comparison
@@ -292,46 +315,169 @@ comparisonManager.resetSlider();
 
 ## 📚 API Reference
 
-### Available Exports
+### Web Component Attributes
 
-The library exports the following main classes and utilities:
+The `<canvas-lens>` element supports the following attributes:
 
-```typescript
-// Main class
-import { CanvasLens } from '@koniz-dev/canvaslens';
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `src` | string | - | Image source URL |
+| `width` | string/number | "800" | Width in px, %, or number |
+| `height` | string/number | "600" | Height in px, %, or number |
+| `background-color` | string | "#f0f0f0" | Background color |
+| `tools` | JSON string | All enabled | Tool configuration object |
+| `max-zoom` | number | "10" | Maximum zoom level |
+| `min-zoom` | number | "0.1" | Minimum zoom level |
+| `image-type` | string | - | Image MIME type |
+| `file-name` | string | - | File name for display |
 
-// Individual modules (for advanced usage)
-import { ImageViewer } from '@koniz-dev/canvaslens';
-import { ZoomPanHandler } from '@koniz-dev/canvaslens';
-import { AnnotationManager } from '@koniz-dev/canvaslens';
-import { ImageComparisonManager } from '@koniz-dev/canvaslens';
+### Tool Configuration
 
-// Types
-import type { CanvasLensOptions, EventHandlers, Annotation, Point } from '@koniz-dev/canvaslens';
-```
+The `tools` attribute accepts a JSON string with the following structure:
 
-### CanvasLens Constructor
-
-```typescript
-interface CanvasLensOptions {
-    container: HTMLElement;        // Container element
-    width?: number;               // Canvas width (default: 800)
-    height?: number;              // Canvas height (default: 600)
-    backgroundColor?: string;     // Background color (default: '#f0f0f0')
-    enableZoom?: boolean;         // Enable zoom (default: true)
-    enablePan?: boolean;          // Enable pan (default: true)
-    enableAnnotations?: boolean;  // Enable annotations (default: false)
-    enablePhotoEditor?: boolean;  // Enable photo editor (default: false)
-    maxZoom?: number;             // Maximum zoom level (default: 10)
-    minZoom?: number;             // Minimum zoom level (default: 0.1)
+```json
+{
+  "zoom": true,
+  "pan": true,
+  "annotation": {
+    "rect": true,
+    "arrow": true,
+    "text": true,
+    "circle": true,
+    "line": true
+  },
+  "comparison": true
 }
 ```
 
-### Core Methods
+#### **Predefined Configurations (Browser):**
+
+```javascript
+// Available globally in browser
+viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.all));
+viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.viewer));
+viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.editor));
+viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.basic));
+viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.advanced));
+viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.minimal));
+```
+
+#### **Custom Configuration (Browser):**
+
+```javascript
+// Create custom configuration
+const customConfig = window.CanvasLensToolConfig.create({
+  zoom: true,
+  pan: false,
+  annotation: {
+    rect: true,
+    arrow: false,
+    text: true,
+    circle: false,
+    line: false
+  },
+  comparison: true
+});
+
+viewer.setAttribute('tools', JSON.stringify(customConfig));
+```
+
+#### **Available Predefined Configurations:**
+
+- `window.CanvasLensToolConfig.all` - All tools enabled (default)
+- `window.CanvasLensToolConfig.viewer` - Zoom and pan only
+- `window.CanvasLensToolConfig.editor` - Annotation tools only
+- `window.CanvasLensToolConfig.basic` - Basic annotation tools
+- `window.CanvasLensToolConfig.advanced` - Advanced annotation tools
+- `window.CanvasLensToolConfig.minimal` - Minimal configuration
+
+#### **HTML Examples:**
+
+```html
+<!-- All tools enabled (default) -->
+<canvas-lens tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'></canvas-lens>
+
+<!-- Zoom and pan only -->
+<canvas-lens tools='{"zoom": true, "pan": true, "annotation": {"rect": false, "arrow": false, "text": false, "circle": false, "line": false}, "comparison": false}'></canvas-lens>
+
+<!-- Annotation tools only -->
+<canvas-lens tools='{"zoom": false, "pan": false, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": false}'></canvas-lens>
+
+<!-- Custom configuration -->
+<canvas-lens tools='{"zoom": true, "pan": false, "annotation": {"rect": true, "arrow": false, "text": true, "circle": false, "line": false}, "comparison": true}'></canvas-lens>
+```
+
+### JavaScript API Methods
+
+```typescript
+// Get the element
+const viewer = document.querySelector('canvas-lens');
+
+// Image loading
+await viewer.loadImage(src: string, type?: string, fileName?: string): Promise<void>
+viewer.loadImageFromFile(file: File): void
+
+// Resize
+viewer.resize(width: number, height: number): void
+
+// Zoom controls
+viewer.zoomIn(factor?: number): void
+viewer.zoomOut(factor?: number): void
+viewer.zoomTo(scale: number): void
+viewer.fitToView(): void
+viewer.resetView(): void
+
+// Tool controls
+viewer.activateTool(toolType: string): boolean
+viewer.deactivateTool(): boolean
+viewer.getActiveTool(): string | null
+
+// Annotation controls
+viewer.addAnnotation(annotation: Annotation): void
+viewer.removeAnnotation(annotationId: string): void
+viewer.clearAnnotations(): void
+viewer.getAnnotations(): Annotation[]
+
+// Overlay editor
+viewer.openOverlay(): void
+viewer.closeOverlay(): void
+viewer.isOverlayOpen(): boolean
+
+// State queries
+viewer.isImageLoaded(): boolean
+viewer.getImageData(): ImageData | null
+viewer.getZoomLevel(): number
+viewer.getPanOffset(): Point
+```
+
+### Events
+
+The component dispatches the following custom events:
+
+| Event | Detail | Description |
+|-------|--------|-------------|
+| `imageload` | ImageData | Fired when image is loaded |
+| `zoomchange` | number | Fired when zoom level changes |
+| `panchange` | Point | Fired when pan offset changes |
+| `annotationadd` | Annotation | Fired when annotation is added |
+| `annotationremove` | string | Fired when annotation is removed |
+| `toolchange` | string \| null | Fired when active tool changes |
+| `comparisonchange` | number | Fired when comparison position changes |
+
+### Available Exports
+
+The library exports only the main Web Component:
+
+```typescript
+// Web Component
+import { CanvasLens } from '@koniz-dev/canvaslens';
+```
+
+### Web Component Methods
 
 #### Image Loading
-- `loadImage(url: string): Promise<void>` - Load and display an image from URL
-- `loadImageElement(image: HTMLImageElement): void` - Load and display an image from HTMLImageElement
+- `loadImage(url: string, type?: string, fileName?: string): Promise<void>` - Load image from URL
+- `loadImageFromFile(file: File): void` - Load image from file
 
 #### View Controls
 - `resize(width: number, height: number): void` - Resize the viewer
@@ -339,39 +485,33 @@ interface CanvasLensOptions {
 - `resetView(): void` - Reset zoom and pan to initial state
 
 #### Zoom Controls
-- `zoomIn(factor: number = 1.2): void` - Zoom in by factor
-- `zoomOut(factor: number = 1.2): void` - Zoom out by factor
+- `zoomIn(factor?: number): void` - Zoom in by factor (default: 1.2)
+- `zoomOut(factor?: number): void` - Zoom out by factor (default: 1.2)
 - `zoomTo(scale: number): void` - Zoom to specific level
 - `getZoomLevel(): number` - Get current zoom level
 
 #### Pan Controls
 - `getPanOffset(): Point` - Get current pan offset
 
+#### Tool Controls
+- `activateTool(toolType: string): boolean` - Activate annotation tool
+- `deactivateTool(): boolean` - Deactivate current tool
+- `getActiveTool(): string | null` - Get active tool type
+
 #### Annotation Controls
-- `getAnnotationManager(): AnnotationManager | null` - Get annotation manager instance
+- `addAnnotation(annotation: Annotation): void` - Add annotation
+- `removeAnnotation(annotationId: string): void` - Remove annotation
+- `clearAnnotations(): void` - Clear all annotations
+- `getAnnotations(): Annotation[]` - Get all annotations
 
-#### Comparison Controls
-- `getComparisonManager(): ImageComparisonManager | null` - Get comparison manager instance
+#### Overlay Editor
+- `openOverlay(): void` - Open full-screen editor
+- `closeOverlay(): void` - Close overlay editor
+- `isOverlayOpen(): boolean` - Check if overlay is open
 
-#### State Management
-- `setEventHandlers(handlers: EventHandlers): void` - Set event handlers
-- `isImageLoaded(): boolean` - Check if an image is currently loaded
-- `getOptions(): CanvasLensOptions` - Get current options
-- `updateOptions(newOptions: Partial<CanvasLensOptions>): void` - Update viewer options
-
-### Event Handlers
-
-```typescript
-interface EventHandlers {
-    onImageLoad?: (imageData: ImageData) => void;
-    onZoomChange?: (scale: number) => void;
-    onPanChange?: (offset: Point) => void;
-    onAnnotationAdd?: (annotation: Annotation) => void;
-    onAnnotationRemove?: (annotationId: string) => void;
-    onToolChange?: (tool: Tool) => void;
-    onComparisonChange?: (position: number) => void;
-}
-```
+#### State Queries
+- `isImageLoaded(): boolean` - Check if image is loaded
+- `getImageData(): ImageData | null` - Get current image data
 
 ## 🎮 Controls
 
@@ -383,13 +523,22 @@ interface EventHandlers {
 
 ### Annotation Controls
 
-- **Tool Selection**: Use Alt+R (Rectangle), Alt+A (Arrow), Alt+T (Text) keys or UI buttons
-- **Drawing (UI buttons)**: Click tool button → Ctrl+Click to draw
-- **Drawing (Keyboard)**: Alt+R/A/T → just click to draw
+- **Tool Selection**: Use `activateTool()` method or UI buttons
+- **Drawing**: Click and drag to draw annotations
 - **Text**: Click to place text, type content, press Enter to confirm
 - **Selection**: Click on existing annotations to select them
 - **Deletion**: Select annotation and press Delete/Backspace key
 - **Escape**: Cancel current drawing or clear selection
+
+### Keyboard Shortcuts
+
+- **R**: Activate rectangle tool
+- **A**: Activate arrow tool  
+- **T**: Activate text tool
+- **C**: Activate circle tool
+- **L**: Activate line tool
+- **Escape**: Deactivate current tool
+- **Delete/Backspace**: Delete selected annotation
 - **Image Integration**: Annotations are drawn directly on the image and move/scale with zoom/pan
 - **Bounded Drawing**: Annotations are restricted to image boundaries, cannot draw outside the image
 
@@ -429,7 +578,7 @@ interface EventHandlers {
 - Ensure the library is properly built and imported
 
 **Annotations not working:**
-- Make sure `enableAnnotations: true` is set in options
+- Make sure annotation tools are enabled in the `tools` configuration
 - Check if annotation tools are properly selected
 - Verify event handlers are correctly set up
 

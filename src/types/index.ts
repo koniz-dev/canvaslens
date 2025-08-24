@@ -27,15 +27,25 @@ export interface ImageData {
   fileName?: string;
 }
 
+export interface ToolConfig {
+  zoom?: boolean;
+  pan?: boolean;
+  annotation?: {
+    rect?: boolean;
+    arrow?: boolean;
+    text?: boolean;
+    circle?: boolean;
+    line?: boolean;
+  };
+  comparison?: boolean;
+}
+
 export interface CanvasLensOptions {
   container: HTMLElement;
   width?: number;
   height?: number;
   backgroundColor?: string;
-  enableZoom?: boolean;
-  enablePan?: boolean;
-  enableAnnotations?: boolean;
-  enableComparison?: boolean;
+  tools?: ToolConfig;
   maxZoom?: number;
   minZoom?: number;
 }

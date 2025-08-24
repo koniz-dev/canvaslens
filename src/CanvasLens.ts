@@ -1,172 +1,366 @@
-import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point } from './types';
+import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point, ToolConfig } from './types';
 import { CoreCanvasLens } from './index';
 
-export interface CanvasLensProps {
-  // Image props
-  src?: string;
-  imageType?: string;
-  fileName?: string;
-  
-  // Size props
-  width?: number | string;
-  height?: number | string;
-  
-  // Configuration props
-  backgroundColor?: string;
-  enableZoom?: boolean;
-  enablePan?: boolean;
-  enableAnnotations?: boolean;
-  enableComparison?: boolean;
-  maxZoom?: number;
-  minZoom?: number;
-  
-  // Overlay mode
-  overlayMode?: boolean;
-  
-  // Tool props
-  activeTool?: 'rect' | 'arrow' | 'text' | 'circle' | 'line' | null;
-  
-  // Event handlers
-  onImageLoad?: (imageData: ImageData) => void;
-  onZoomChange?: (scale: number) => void;
-  onPanChange?: (offset: Point) => void;
-  onAnnotationAdd?: (annotation: Annotation) => void;
-  onAnnotationRemove?: (annotationId: string) => void;
-  onToolChange?: (toolType: string | null) => void;
-  onComparisonChange?: (position: number) => void;
-  onSave?: (imageData: ImageData) => void;
-  onClose?: () => void;
-  onClick?: (event: MouseEvent) => void;
-}
+// Web Component for CanvasLens
+export class CanvasLensElement extends HTMLElement {
+  private canvasLens: CoreCanvasLens | null = null;
+  private isDestroyed = false;
+  private overlayContainer: HTMLElement | null = null;
+  private overlayCanvasLens: CoreCanvasLens | null = null;
+  private overlayOpen = false;
 
-export interface CanvasLensInstance {
-  // Core methods
-  loadImage: (src: string, type?: string, fileName?: string) => Promise<void>;
-  loadImageFromFile: (file: File) => void;
-  resize: (width: number, height: number) => void;
-  
-  // Tool methods
-  activateTool: (toolType: string) => boolean;
-  deactivateTool: () => boolean;
-  getActiveTool: () => string | null;
-  
-  // Annotation methods
-  addAnnotation: (annotation: Annotation) => void;
-  removeAnnotation: (annotationId: string) => void;
-  clearAnnotations: () => void;
-  getAnnotations: () => Annotation[];
-  
-  // Comparison methods
-  setComparisonImage: (src: string) => Promise<void>;
-  setComparisonPosition: (position: number) => void;
-  getComparisonPosition: () => number;
-  
-  // Overlay methods
-  openOverlay: () => void;
-  closeOverlay: () => void;
-  saveChanges: () => void;
-  
-  // Getter methods
-  getCanvasLens: () => CoreCanvasLens;
-  getImageViewer: () => any;
-  getZoomPanHandler: () => any;
-  getAnnotationManager: () => any;
-  getComparisonManager: () => any;
-  
-  // State methods
-  isImageLoaded: () => boolean;
-  getImageData: () => ImageData | null;
-  getZoomLevel: () => number;
-  getPanOffset: () => Point;
-  isOverlayOpen: () => boolean;
-  
-  // Destroy
-  destroy: () => void;
-}
+  // Define observed attributes for reactivity
+  static get observedAttributes() {
+    return [
+      'src', 'width', 'height', 'background-color', 
+      'tools', 'max-zoom', 'min-zoom'
+    ];
+  }
 
-export interface CanvasLensFactory {
-  create: (container: HTMLElement, props: CanvasLensProps) => CanvasLensInstance;
-  update: (instance: CanvasLensInstance, props: CanvasLensProps) => void;
-  destroy: (instance: CanvasLensInstance) => void;
-}
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+  }
 
-/**
- * Factory function to create CanvasLens instance
- */
-export function createCanvasLens(
-  container: HTMLElement, 
-  props: CanvasLensProps
-): CanvasLensInstance {
-  let canvasLens: CoreCanvasLens | null = null;
-  let isDestroyed = false;
-  let overlayContainer: HTMLElement | null = null;
-  let overlayCanvasLens: CoreCanvasLens | null = null;
-  let isOverlayOpen = false;
+  connectedCallback() {
+    this.initialize();
+  }
 
-  // Parse width and height
-  const parseSize = (size: number | string | undefined, defaultSize: number): number => {
-    if (typeof size === 'number') return size;
-    if (typeof size === 'string') {
-      if (size.endsWith('px')) return parseInt(size);
-      if (size.endsWith('%')) return (container.clientWidth * parseInt(size)) / 100;
-      return parseInt(size) || defaultSize;
+  disconnectedCallback() {
+    this.destroy();
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (oldValue !== newValue) {
+      this.handleAttributeChange(name, newValue);
     }
-    return defaultSize;
-  };
-
-  const width = parseSize(props.width, 800);
-  const height = parseSize(props.height, 600);
-
-  // Create CanvasLens options
-  const options: CanvasLensOptions = {
-    container,
-    width,
-    height,
-    backgroundColor: props.backgroundColor || '#f0f0f0',
-    enableZoom: props.enableZoom !== false,
-    enablePan: props.enablePan !== false,
-    enableAnnotations: props.enableAnnotations || false,
-    enableComparison: props.enableComparison || false,
-    maxZoom: props.maxZoom || 10,
-    minZoom: props.minZoom || 0.1
-  };
-
-  // Create CanvasLens instance
-  canvasLens = new CoreCanvasLens(options);
-
-  // Set event handlers
-  const eventHandlers: EventHandlers = {};
-  if (props.onImageLoad) eventHandlers.onImageLoad = props.onImageLoad;
-  if (props.onZoomChange) eventHandlers.onZoomChange = props.onZoomChange;
-  if (props.onPanChange) eventHandlers.onPanChange = props.onPanChange;
-  if (props.onAnnotationAdd) eventHandlers.onAnnotationAdd = props.onAnnotationAdd;
-  if (props.onAnnotationRemove) eventHandlers.onAnnotationRemove = props.onAnnotationRemove;
-  if (props.onToolChange) eventHandlers.onToolChange = props.onToolChange;
-  if (props.onComparisonChange) eventHandlers.onComparisonChange = props.onComparisonChange;
-
-  canvasLens.setEventHandlers(eventHandlers);
-
-  // Set initial tool if provided
-  if (props.activeTool) {
-    canvasLens.activateAnnotationTool(props.activeTool);
   }
 
-  // Load initial image if src is provided
-  if (props.src) {
-    canvasLens.loadImage(props.src, props.imageType, props.fileName);
+  private initialize() {
+    if (this.shadowRoot) {
+      // Create container
+      const container = document.createElement('div');
+      container.style.cssText = `
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      `;
+      this.shadowRoot.appendChild(container);
+
+      // Parse attributes
+      const options = this.parseAttributes();
+      
+      // Create CanvasLens instance
+      this.canvasLens = new CoreCanvasLens({
+        ...options,
+        container
+      });
+
+      // Set up event listeners
+      this.setupEventListeners();
+
+      // Load initial image if src is provided
+      const src = this.getAttribute('src');
+      if (src) {
+        this.canvasLens.loadImage(src, this.getAttribute('image-type') || undefined, this.getAttribute('file-name') || undefined);
+      }
+    }
   }
 
-  // Add click handler if provided
-  if (props.onClick) {
-    container.addEventListener('click', props.onClick);
+  private parseAttributes(): CanvasLensOptions {
+    const width = this.parseSize(this.getAttribute('width'), 800);
+    const height = this.parseSize(this.getAttribute('height'), 600);
+
+    // Parse tools configuration
+    const toolsConfig = this.parseToolsConfig();
+
+    return {
+      container: this.shadowRoot!.firstElementChild as HTMLElement,
+      width,
+      height,
+      backgroundColor: this.getAttribute('background-color') || '#f0f0f0',
+      tools: toolsConfig,
+      maxZoom: parseFloat(this.getAttribute('max-zoom') || '10'),
+      minZoom: parseFloat(this.getAttribute('min-zoom') || '0.1')
+    };
   }
 
-  // Create overlay container
-  const createOverlay = () => {
-    if (overlayContainer) return;
+  private parseToolsConfig(): ToolConfig {
+    const toolsAttr = this.getAttribute('tools');
+    
+    if (toolsAttr) {
+      try {
+        return JSON.parse(toolsAttr);
+      } catch (e) {
+        console.warn('Invalid tools configuration:', toolsAttr);
+      }
+    }
 
-    overlayContainer = document.createElement('div');
-    overlayContainer.style.cssText = `
+    // Default configuration - all tools enabled
+    return {
+      zoom: true,
+      pan: true,
+      annotation: {
+        rect: true,
+        arrow: true,
+        text: true,
+        circle: true,
+        line: true
+      },
+      comparison: true
+    };
+  }
+
+  private parseSize(size: string | null, defaultSize: number): number {
+    if (!size) return defaultSize;
+    if (size.endsWith('px')) return parseInt(size);
+    if (size.endsWith('%')) return (this.clientWidth * parseInt(size)) / 100;
+    return parseInt(size) || defaultSize;
+  }
+
+  private setupEventListeners() {
+    // Listen for custom events
+    this.addEventListener('imageLoad', (e: any) => {
+      this.dispatchEvent(new CustomEvent('imageload', { detail: e.detail }));
+    });
+
+    this.addEventListener('zoomChange', (e: any) => {
+      this.dispatchEvent(new CustomEvent('zoomchange', { detail: e.detail }));
+    });
+
+    this.addEventListener('panChange', (e: any) => {
+      this.dispatchEvent(new CustomEvent('panchange', { detail: e.detail }));
+    });
+
+    this.addEventListener('annotationAdd', (e: any) => {
+      this.dispatchEvent(new CustomEvent('annotationadd', { detail: e.detail }));
+    });
+
+    this.addEventListener('annotationRemove', (e: any) => {
+      this.dispatchEvent(new CustomEvent('annotationremove', { detail: e.detail }));
+    });
+
+    this.addEventListener('toolChange', (e: any) => {
+      this.dispatchEvent(new CustomEvent('toolchange', { detail: e.detail }));
+    });
+
+    this.addEventListener('comparisonChange', (e: any) => {
+      this.dispatchEvent(new CustomEvent('comparisonchange', { detail: e.detail }));
+    });
+  }
+
+  private handleAttributeChange(name: string, value: string) {
+    if (!this.canvasLens || this.isDestroyed) return;
+
+    switch (name) {
+      case 'src':
+        if (value) {
+          this.canvasLens.loadImage(value, this.getAttribute('image-type') || undefined, this.getAttribute('file-name') || undefined);
+        }
+        break;
+      case 'width':
+      case 'height':
+        const width = this.parseSize(this.getAttribute('width'), 800);
+        const height = this.parseSize(this.getAttribute('height'), 600);
+        this.canvasLens.resize(width, height);
+        break;
+      case 'tools':
+      case 'max-zoom':
+      case 'min-zoom':
+        // Reinitialize with new options
+        this.reinitialize();
+        break;
+    }
+  }
+
+  private reinitialize() {
+    if (this.canvasLens) {
+      const currentImageData = this.canvasLens.getImageViewer()?.getImageData();
+      this.destroy();
+      this.initialize();
+      if (currentImageData && this.canvasLens) {
+        this.canvasLens.loadImageElement(currentImageData.element, currentImageData.type, currentImageData.fileName);
+      }
+    }
+  }
+
+  // Public API methods
+  async loadImage(src: string, type?: string, fileName?: string): Promise<void> {
+    if (this.canvasLens && !this.isDestroyed) {
+      await this.canvasLens.loadImage(src, type, fileName);
+    }
+  }
+
+  loadImageFromFile(file: File): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          this.canvasLens!.loadImageElement(img, file.type, file.name);
+        };
+        img.src = e.target!.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  resize(width: number, height: number): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.resize(width, height);
+    }
+  }
+
+  activateTool(toolType: string): boolean {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.activateAnnotationTool(toolType);
+    }
+    return false;
+  }
+
+  deactivateTool(): boolean {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.deactivateAnnotationTool();
+      return true;
+    }
+    return false;
+  }
+
+  getActiveTool(): string | null {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.getActiveAnnotationToolType();
+    }
+    return null;
+  }
+
+  addAnnotation(annotation: Annotation): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      const annotationManager = this.canvasLens.getAnnotationManager();
+      if (annotationManager) {
+        annotationManager.addAnnotation(annotation);
+      }
+    }
+  }
+
+  removeAnnotation(annotationId: string): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      const annotationManager = this.canvasLens.getAnnotationManager();
+      if (annotationManager) {
+        annotationManager.removeAnnotation(annotationId);
+      }
+    }
+  }
+
+  clearAnnotations(): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      const annotationManager = this.canvasLens.getAnnotationManager();
+      if (annotationManager) {
+        const annotations = annotationManager.getAllAnnotations();
+        annotations.forEach(annotation => {
+          annotationManager.removeAnnotation(annotation.id);
+        });
+      }
+    }
+  }
+
+  getAnnotations(): Annotation[] {
+    if (this.canvasLens && !this.isDestroyed) {
+      const annotationManager = this.canvasLens.getAnnotationManager();
+      return annotationManager ? annotationManager.getAllAnnotations() : [];
+    }
+    return [];
+  }
+
+  fitToView(): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.fitToView();
+    }
+  }
+
+  resetView(): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.resetView();
+    }
+  }
+
+  getZoomLevel(): number {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.getZoomLevel();
+    }
+    return 1;
+  }
+
+  getPanOffset(): Point {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.getPanOffset();
+    }
+    return { x: 0, y: 0 };
+  }
+
+  zoomIn(factor: number = 1.2): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.zoomIn(factor);
+    }
+  }
+
+  zoomOut(factor: number = 1.2): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.zoomOut(factor);
+    }
+  }
+
+  zoomTo(scale: number): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.zoomTo(scale);
+    }
+  }
+
+  isImageLoaded(): boolean {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.isImageLoaded();
+    }
+    return false;
+  }
+
+  getImageData(): ImageData | null {
+    if (this.canvasLens && !this.isDestroyed) {
+      const imageViewer = this.canvasLens.getImageViewer();
+      return imageViewer ? imageViewer.getImageData() : null;
+    }
+    return null;
+  }
+
+  openOverlay(): void {
+    if (this.overlayOpen) return;
+    
+    this.createOverlay();
+    if (this.overlayContainer) {
+      document.body.appendChild(this.overlayContainer);
+      this.overlayOpen = true;
+    }
+  }
+
+  closeOverlay(): void {
+    if (!this.overlayOpen) return;
+    
+    if (this.overlayContainer) {
+      document.body.removeChild(this.overlayContainer);
+      this.overlayContainer = null;
+      this.overlayCanvasLens = null;
+      this.overlayOpen = false;
+    }
+  }
+
+  isOverlayOpen(): boolean {
+    return this.overlayOpen;
+  }
+
+  private createOverlay(): void {
+    if (this.overlayContainer) return;
+
+    this.overlayContainer = document.createElement('div');
+    this.overlayContainer.style.cssText = `
       position: fixed;
       top: 0;
       left: 0;
@@ -231,30 +425,20 @@ export function createCanvasLens(
 
     // Zoom/Pan tool
     const zoomButton = createToolButton('Zoom & Pan', '🔍', () => {
-      if (overlayCanvasLens) {
-        overlayCanvasLens.deactivateAnnotationTool();
+      if (this.overlayCanvasLens) {
+        this.overlayCanvasLens.deactivateAnnotationTool();
       }
     });
 
     // Annotation tool
     const annotationButton = createToolButton('Annotation', '✏️', () => {
-      if (overlayCanvasLens) {
-        overlayCanvasLens.activateAnnotationTool('rect');
+      if (this.overlayCanvasLens) {
+        this.overlayCanvasLens.activateAnnotationTool('rect');
       }
-    });
-
-    // Comparison tool
-    const comparisonButton = createToolButton('Comparison', '⚖️', () => {
-              // Toggle comparison mode
-        if (overlayCanvasLens) {
-          // Implementation for comparison toggle
-          // TODO: Implement comparison toggle functionality
-        }
     });
 
     toolButtons.appendChild(zoomButton);
     toolButtons.appendChild(annotationButton);
-    toolButtons.appendChild(comparisonButton);
 
     // Action buttons
     const actionButtons = document.createElement('div');
@@ -264,20 +448,8 @@ export function createCanvasLens(
       align-items: center;
     `;
 
-    const saveButton = createToolButton('Save', '💾', () => {
-      if (props.onSave && overlayCanvasLens) {
-        const imageViewer = overlayCanvasLens.getImageViewer();
-        const imageData = imageViewer ? imageViewer.getImageData() : null;
-        if (imageData) {
-          props.onSave(imageData);
-        }
-      }
-      closeOverlay();
-    });
+    const closeButton = createToolButton('Close', '✕', () => this.closeOverlay());
 
-    const closeButton = createToolButton('Close', '✕', closeOverlay);
-
-    actionButtons.appendChild(saveButton);
     actionButtons.appendChild(closeButton);
 
     header.appendChild(title);
@@ -295,305 +467,46 @@ export function createCanvasLens(
       overflow: hidden;
     `;
 
-    overlayContainer.appendChild(header);
-    overlayContainer.appendChild(canvasContainer);
+    this.overlayContainer.appendChild(header);
+    this.overlayContainer.appendChild(canvasContainer);
 
     // Create overlay CanvasLens instance
     const overlayOptions: CanvasLensOptions = {
       container: canvasContainer,
       width: canvasContainer.clientWidth,
       height: canvasContainer.clientHeight,
-      backgroundColor: props.backgroundColor || '#f0f0f0',
-      enableZoom: props.enableZoom !== false,
-      enablePan: props.enablePan !== false,
-      enableAnnotations: props.enableAnnotations || false,
-      enableComparison: props.enableComparison || false,
-      maxZoom: props.maxZoom || 10,
-      minZoom: props.minZoom || 0.1
+      backgroundColor: this.getAttribute('background-color') || '#f0f0f0',
+      tools: this.parseToolsConfig(),
+      maxZoom: parseFloat(this.getAttribute('max-zoom') || '10'),
+      minZoom: parseFloat(this.getAttribute('min-zoom') || '0.1')
     };
 
-    overlayCanvasLens = new CoreCanvasLens(overlayOptions);
-    overlayCanvasLens.setEventHandlers(eventHandlers);
+    this.overlayCanvasLens = new CoreCanvasLens(overlayOptions);
 
     // Load current image to overlay
-    if (canvasLens && canvasLens.isImageLoaded()) {
-      const imageViewer = canvasLens.getImageViewer();
+    if (this.canvasLens && this.canvasLens.isImageLoaded()) {
+      const imageViewer = this.canvasLens.getImageViewer();
       const imageData = imageViewer ? imageViewer.getImageData() : null;
       if (imageData) {
-        overlayCanvasLens.loadImageElement(imageData.element, imageData.type, imageData.fileName);
+        this.overlayCanvasLens.loadImageElement(imageData.element, imageData.type, imageData.fileName);
       }
-    }
-  };
-
-  const openOverlay = () => {
-    if (isOverlayOpen) return;
-    
-    createOverlay();
-    if (overlayContainer) {
-      document.body.appendChild(overlayContainer);
-      isOverlayOpen = true;
-    }
-  };
-
-  const closeOverlay = () => {
-    if (!isOverlayOpen) return;
-    
-    if (overlayContainer) {
-      document.body.removeChild(overlayContainer);
-      overlayContainer = null;
-      overlayCanvasLens = null;
-      isOverlayOpen = false;
-    }
-    
-    if (props.onClose) {
-      props.onClose();
-    }
-  };
-
-  const saveChanges = () => {
-    if (overlayCanvasLens && props.onSave) {
-      const imageViewer = overlayCanvasLens.getImageViewer();
-      const imageData = imageViewer ? imageViewer.getImageData() : null;
-      if (imageData) {
-        props.onSave(imageData);
-      }
-    }
-  };
-
-  // Create component instance
-  const instance: CanvasLensInstance = {
-    loadImage: async (src: string, type?: string, fileName?: string) => {
-      if (canvasLens && !isDestroyed) {
-        await canvasLens.loadImage(src, type, fileName);
-      }
-    },
-
-    loadImageFromFile: (file: File) => {
-      if (canvasLens && !isDestroyed) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            canvasLens!.loadImageElement(img, file.type, file.name);
-          };
-          img.src = e.target!.result as string;
-        };
-        reader.readAsDataURL(file);
-      }
-    },
-
-    resize: (width: number, height: number) => {
-      if (canvasLens && !isDestroyed) {
-        canvasLens.resize(width, height);
-      }
-    },
-
-    activateTool: (toolType: string) => {
-      if (canvasLens && !isDestroyed) {
-        return canvasLens.activateAnnotationTool(toolType);
-      }
-      return false;
-    },
-
-    deactivateTool: () => {
-      if (canvasLens && !isDestroyed) {
-        canvasLens.deactivateAnnotationTool();
-        return true;
-      }
-      return false;
-    },
-
-    getActiveTool: () => {
-      if (canvasLens && !isDestroyed) {
-        return canvasLens.getActiveAnnotationToolType();
-      }
-      return null;
-    },
-
-    addAnnotation: (annotation: Annotation) => {
-      if (canvasLens && !isDestroyed) {
-        const annotationManager = canvasLens.getAnnotationManager();
-        if (annotationManager) {
-          annotationManager.addAnnotation(annotation);
-        }
-      }
-    },
-
-    removeAnnotation: (annotationId: string) => {
-      if (canvasLens && !isDestroyed) {
-        const annotationManager = canvasLens.getAnnotationManager();
-        if (annotationManager) {
-          annotationManager.removeAnnotation(annotationId);
-        }
-      }
-    },
-
-    clearAnnotations: () => {
-      if (canvasLens && !isDestroyed) {
-        const annotationManager = canvasLens.getAnnotationManager();
-        if (annotationManager) {
-          // Clear all annotations by removing them one by one
-          const annotations = annotationManager.getAllAnnotations();
-          annotations.forEach(annotation => {
-            annotationManager.removeAnnotation(annotation.id);
-          });
-        }
-      }
-    },
-
-    getAnnotations: () => {
-      if (canvasLens && !isDestroyed) {
-        const annotationManager = canvasLens.getAnnotationManager();
-        return annotationManager ? annotationManager.getAllAnnotations() : [];
-      }
-      return [];
-    },
-
-    setComparisonImage: async (src: string) => {
-      if (canvasLens && !isDestroyed) {
-        // TODO: Implement comparison functionality
-        // This will be implemented when comparison module is fully integrated
-      }
-    },
-
-    setComparisonPosition: (position: number) => {
-      if (canvasLens && !isDestroyed) {
-        // TODO: Implement comparison position
-        // This will be implemented when comparison module is fully integrated
-      }
-    },
-
-    getComparisonPosition: () => {
-      return 0.5; // Default position
-    },
-
-    openOverlay,
-    closeOverlay,
-    saveChanges,
-
-    getCanvasLens: () => {
-      if (!canvasLens || isDestroyed) {
-        throw new Error('CanvasLens instance is not available');
-      }
-      return canvasLens;
-    },
-
-    getImageViewer: () => {
-      if (canvasLens && !isDestroyed) {
-        return canvasLens.getImageViewer();
-      }
-      return null;
-    },
-
-    getZoomPanHandler: () => {
-      if (canvasLens && !isDestroyed) {
-        return canvasLens.getZoomPanHandler();
-      }
-      return null;
-    },
-
-    getAnnotationManager: () => {
-      if (canvasLens && !isDestroyed) {
-        return canvasLens.getAnnotationManager();
-      }
-      return null;
-    },
-
-    getComparisonManager: () => {
-      // TODO: Implement comparison manager
-      return null;
-    },
-
-    isImageLoaded: () => {
-      if (canvasLens && !isDestroyed) {
-        return canvasLens.isImageLoaded();
-      }
-      return false;
-    },
-
-    getImageData: () => {
-      if (canvasLens && !isDestroyed) {
-        const imageViewer = canvasLens.getImageViewer();
-        return imageViewer ? imageViewer.getImageData() : null;
-      }
-      return null;
-    },
-
-    getZoomLevel: () => {
-      if (canvasLens && !isDestroyed) {
-        const zoomPanHandler = canvasLens.getZoomPanHandler();
-        return zoomPanHandler ? zoomPanHandler.getZoomLevel() : 1;
-      }
-      return 1;
-    },
-
-    getPanOffset: () => {
-      if (canvasLens && !isDestroyed) {
-        const zoomPanHandler = canvasLens.getZoomPanHandler();
-        return zoomPanHandler ? zoomPanHandler.getPanOffset() : { x: 0, y: 0 };
-      }
-      return { x: 0, y: 0 };
-    },
-
-    isOverlayOpen: () => isOverlayOpen,
-
-    destroy: () => {
-      if (!isDestroyed) {
-        isDestroyed = true;
-        closeOverlay();
-        if (props.onClick) {
-          container.removeEventListener('click', props.onClick);
-        }
-        // CanvasLens will automatically cleanup when container is removed
-        canvasLens = null;
-      }
-    }
-  };
-
-  return instance;
-}
-
-/**
- * Update component instance with new props
- */
-export function updateCanvasLens(
-  instance: CanvasLensInstance,
-  props: CanvasLensProps
-): void {
-  const canvasLens = instance.getCanvasLens();
-  
-  // Update event handlers
-  const eventHandlers: EventHandlers = {};
-  if (props.onImageLoad) eventHandlers.onImageLoad = props.onImageLoad;
-  if (props.onZoomChange) eventHandlers.onZoomChange = props.onZoomChange;
-  if (props.onPanChange) eventHandlers.onPanChange = props.onPanChange;
-  if (props.onAnnotationAdd) eventHandlers.onAnnotationAdd = props.onAnnotationAdd;
-  if (props.onAnnotationRemove) eventHandlers.onAnnotationRemove = props.onAnnotationRemove;
-  if (props.onToolChange) eventHandlers.onToolChange = props.onToolChange;
-  if (props.onComparisonChange) eventHandlers.onComparisonChange = props.onComparisonChange;
-
-  canvasLens.setEventHandlers(eventHandlers);
-
-  // Update tool
-  if (props.activeTool !== undefined) {
-    if (props.activeTool) {
-      instance.activateTool(props.activeTool);
-    } else {
-      instance.deactivateTool();
     }
   }
 
-  // Load new image if src changed
-  if (props.src && props.src !== instance.getImageData()?.element.src) {
-    instance.loadImage(props.src, props.imageType, props.fileName);
+  private destroy(): void {
+    if (!this.isDestroyed) {
+      this.isDestroyed = true;
+      this.closeOverlay();
+      this.canvasLens = null;
+    }
   }
 }
 
-/**
- * Factory object for component management
- */
-export const CanvasLens: CanvasLensFactory = {
-  create: createCanvasLens,
-  update: updateCanvasLens,
-  destroy: (instance: CanvasLensInstance) => instance.destroy()
-};
+// Register the custom element
+if (typeof window !== 'undefined' && !customElements.get('canvas-lens')) {
+  customElements.define('canvas-lens', CanvasLensElement);
+}
+
+// Export for backward compatibility
+export const CanvasLens = CanvasLensElement;
+
