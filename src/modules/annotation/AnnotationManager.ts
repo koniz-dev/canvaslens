@@ -2,6 +2,7 @@ import { Canvas } from '../../core/Canvas';
 import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '../../types';
 import { AnnotationRenderer } from './AnnotationRenderer';
 import { ToolManager, ToolManagerOptions } from './ToolManager';
+import { error } from '../../utils/logger';
 
 export interface AnnotationManagerOptions {
   enabled?: boolean;
@@ -425,8 +426,8 @@ export class AnnotationManager {
       });
 
       return true;
-    } catch (error) {
-      console.error('Failed to import annotations:', error);
+    } catch (err) {
+      error('Failed to import annotations:', err);
       return false;
     }
   }

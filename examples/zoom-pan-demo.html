@@ -137,17 +137,14 @@
         // Set event handlers
         canvasLens.setEventHandlers({
             onImageLoad: (imageData) => {
-                console.log('onImageLoad called:', imageData);
                 showStatus(`Image loaded! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
                 updateInfo();
             },
             onZoomChange: (scale) => {
-                console.log('onZoomChange called:', scale);
                 updateZoomInfo(scale);
                 updateInfo();
             },
             onPanChange: (offset) => {
-                console.log('onPanChange called:', offset);
                 updatePanInfo(offset);
                 updateInfo();
             }

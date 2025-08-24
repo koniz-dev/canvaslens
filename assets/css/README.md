@@ -1,90 +1,111 @@
-# CanvasLens CSS Architecture
+# CSS Architecture
 
-## Tổng quan
+## Overview
 
-CSS của CanvasLens đã được tổ chức lại theo kiến trúc modular để dễ bảo trì và mở rộng. Tất cả styles được tổ chức thành các module riêng biệt và được import thông qua file `main.css`.
+CanvasLens CSS has been reorganized with a modular architecture for better maintainability and scalability. All styles are organized into separate modules and imported through the `main.css` file.
 
-## Cấu trúc thư mục
+## Directory Structure
 
 ```
 assets/css/
-├── base/                    # Base styles và variables
-│   ├── variables.css        # CSS variables và theme
-│   └── reset.css           # CSS reset và typography
-├── layout/                  # Layout và grid system
-│   ├── navigation.css      # Navigation styles
-│   └── grid.css           # Layout components
+├── main.css                 # Main entry point - imports all modules
+├── base/                    # Base styles and variables
+│   ├── variables.css        # CSS variables and theme
+│   └── reset.css           # CSS reset and typography
+├── layout/                  # Layout and grid system
+│   ├── grid.css            # Grid system and containers
+│   ├── navigation.css      # Navigation bar styles
+│   ├── header.css          # Header and title styles
+│   ├── footer.css          # Footer styles
+│   └── panels.css          # Info panels and containers
 ├── components/              # Reusable components
 │   ├── buttons.css         # Button styles
 │   ├── forms.css           # Form elements
-│   └── panels.css          # Info panels và containers
+│   ├── modals.css          # Modal and dialog styles
+│   ├── tooltips.css        # Tooltip styles
+│   └── sliders.css         # Slider and range input styles
 ├── pages/                   # Page-specific styles
-│   ├── home.css            # Home page
+│   ├── home.css            # Home page styles
 │   ├── basic.css           # Basic viewer page
-│   ├── annotation.css      # Annotation page
-│   ├── zoom.css            # Zoom page
-│   └── comparison.css      # Comparison page
-└── main.css                # Main import file
+│   ├── zoom.css            # Zoom/pan demo page
+│   ├── annotation.css      # Annotation demo page
+│   ├── comparison.css      # Comparison demo page
+│   └── editor.css          # Photo editor demo page
+└── utilities/               # Utility classes
+    ├── spacing.css         # Margin and padding utilities
+    ├── typography.css      # Text utilities
+    ├── colors.css          # Color utilities
+    └── responsive.css      # Responsive utilities
 ```
 
 ## CSS Variables
 
-Tất cả colors, spacing, typography và các giá trị khác được định nghĩa trong `variables.css`:
+All colors, spacing, typography, and other values are defined in `variables.css`:
 
-- **Colors**: Primary, secondary, success, warning, error colors
-- **Spacing**: Consistent spacing scale (xs, sm, md, lg, xl, xxl)
-- **Typography**: Font sizes, font family
-- **Layout**: Container widths, sidebar widths
-- **Shadows**: Consistent shadow system
-- **Transitions**: Standard transition durations
+```css
+:root {
+  /* Colors */
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 3rem;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-size-base: 1rem;
+  --line-height-base: 1.5;
+}
+```
 
-## Sử dụng
+## Usage
 
-### Import CSS
-Chỉ cần import file `main.css` trong HTML:
+### Basic Usage
+
+Just import the `main.css` file in your HTML:
 
 ```html
 <link rel="stylesheet" href="assets/css/main.css">
 ```
 
-### Sử dụng CSS Variables
+### Using CSS Variables
+
+You can use the defined variables in your custom CSS:
+
 ```css
 .my-component {
-    background: var(--primary-color);
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    box-shadow: var(--shadow-md);
+  color: var(--primary-color);
+  padding: var(--spacing-md);
+  font-family: var(--font-family);
 }
 ```
 
-### Thêm styles mới
+### Adding New Styles
 
-1. **Base styles**: Thêm vào `base/` nếu là global styles
-2. **Layout**: Thêm vào `layout/` nếu liên quan đến layout
-3. **Components**: Thêm vào `components/` nếu là reusable components
-4. **Page-specific**: Thêm vào `pages/` nếu chỉ dành cho một trang cụ thể
+1. **Base styles**: Add to `base/` if they are global styles
+2. **Layout**: Add to `layout/` if related to layout
+3. **Components**: Add to `components/` if they are reusable components
+4. **Page-specific**: Add to `pages/` if specific to one page
 
-## Lợi ích của cấu trúc mới
+## Benefits of New Structure
 
-1. **Không trùng lặp**: Loại bỏ hoàn toàn các class trùng lặp
-2. **Dễ bảo trì**: Mỗi component có file riêng
-3. **Consistent**: Sử dụng CSS variables cho consistency
-4. **Modular**: Dễ dàng thêm/sửa/xóa components
-5. **Performance**: Chỉ load những gì cần thiết
-6. **Scalable**: Dễ dàng mở rộng khi project phát triển
-
-## Responsive Design
-
-Tất cả components đều responsive với breakpoints nhất quán:
-- Desktop: > 1024px
-- Tablet: 768px - 1024px  
-- Mobile: < 768px
-- Small Mobile: < 480px
+1. **No duplication**: Completely eliminates duplicate classes
+2. **Better organization**: Clear separation of concerns
+3. **Easier maintenance**: Changes are localized to specific modules
+4. **Scalability**: Easy to add new components or pages
+5. **Performance**: Only load what you need
+6. **Consistency**: Centralized variables ensure design consistency
 
 ## Best Practices
 
-1. Luôn sử dụng CSS variables thay vì hardcode values
-2. Tổ chức styles theo chức năng, không theo page
-3. Sử dụng BEM naming convention cho complex components
-4. Test responsive design trên tất cả breakpoints
-5. Comment rõ ràng cho complex CSS rules
+1. **Use variables**: Always use CSS variables for colors, spacing, and typography
+2. **Follow naming**: Use BEM methodology for class naming
+3. **Keep it modular**: Each file should have a single responsibility
+4. **Document changes**: Update this README when adding new modules
+5. **Test responsiveness**: Ensure all components work on different screen sizes

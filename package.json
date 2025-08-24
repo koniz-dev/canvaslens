@@ -16,7 +16,9 @@
   },
   "scripts": {
     "build": "tsc && npm run fix-imports",
+    "build:prod": "tsc && npm run fix-imports && npm run remove-console-logs",
     "fix-imports": "node scripts/fix-imports.js",
+    "remove-console-logs": "node scripts/remove-console-logs.js",
     "dev": "node server.js",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
@@ -24,7 +26,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:silent": "jest --silent",
-    "prepublishOnly": "npm run build && npm test",
+    "prepublishOnly": "npm run build:prod && npm test",
     "release": "./scripts/release.sh patch",
     "release:minor": "./scripts/release.sh minor",
     "release:major": "./scripts/release.sh major"

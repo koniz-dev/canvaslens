@@ -21,8 +21,6 @@ function findJsFiles(dir, files = []) {
 
 // Function to fix import statements in a file
 function fixImportsInFile(filePath) {
-    console.log(`Processing: ${filePath}`);
-    
     let content = fs.readFileSync(filePath, 'utf8');
     let modified = false;
     
@@ -137,8 +135,7 @@ function fixImportsInFile(filePath) {
     
     if (modified) {
         fs.writeFileSync(filePath, content, 'utf8');
-        console.log(`  ✓ Fixed imports in ${filePath}`);
-    }
+        }
 }
 
 // Main execution
@@ -150,17 +147,12 @@ function main() {
         process.exit(1);
     }
     
-    console.log('🔧 Fixing import statements in compiled JavaScript files...');
-    
     const jsFiles = findJsFiles(distDir);
-    console.log(`Found ${jsFiles.length} JavaScript files to process.`);
-    
     for (const file of jsFiles) {
         fixImportsInFile(file);
     }
     
-    console.log('✅ Import fixing completed!');
-}
+    }
 
 if (require.main === module) {
     main();

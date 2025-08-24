@@ -201,41 +201,61 @@
             <p>Module 5: Professional Image Editing with Advanced Adjustment Tools</p>
         </div>
 
-        <div class="demo-section">
-            <div class="instructions">
-                <h3>How to use Photo Editor:</h3>
-                <ul>
-                    <li><strong>Click on the image</strong> to open the photo editor overlay</li>
-                    <li>Use the <strong>tool panel on the right</strong> to switch between Light, Color, Retouching, Effects, and Info</li>
-                    <li>Adjust the <strong>sliders at the bottom</strong> to modify image properties</li>
-                    <li>Click the <strong>✕ button</strong> to close the editor</li>
-                    <li>Changes are applied in real-time to the image</li>
-                </ul>
+        <div class="main-content">
+            <div class="viewer-section">
+                <div class="viewer-container">
+                    <div id="viewer" style="width: 100%; height: 100%;"></div>
+                </div>
             </div>
+            
+            <div class="controls-section">
+                <div class="instructions">
+                    <h4>🎨 How to Use Photo Editor:</h4>
+                    <ul>
+                        <li><strong>Click on the image</strong> to open the photo editor overlay</li>
+                        <li>Use the <strong>tool panel on the right</strong> to switch between Light, Color, Retouching, Effects, and Info</li>
+                        <li>Adjust the <strong>sliders at the bottom</strong> to modify image properties</li>
+                        <li>Click the <strong>✕ button</strong> to close the editor</li>
+                        <li>Changes are applied in real-time to the image</li>
+                    </ul>
+                </div>
+                
+                <div class="control-group">
+                    <h3>📁 Load Image</h3>
+                    <label for="imageUrl">Image URL:</label>
+                    <input type="url" id="imageUrl" placeholder="Enter image URL">
+                    <button onclick="loadFromUrl()">Load from URL</button>
+                    
+                    <label for="imageFile" style="margin-top: 10px;">Or upload file:</label>
+                    <input type="file" id="imageFile" accept="image/*" onchange="loadFromFile(event)">
+                    
+                    <button onclick="loadSampleImage()" style="margin-top: 10px;">Load Sample Image</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>🎨 Photo Editor</h3>
+                    <div class="tool-buttons">
+                        <button onclick="openPhotoEditor()" class="btn btn-primary">🎨 Open Editor</button>
+                        <button onclick="resetImage()" class="btn btn-success">🔄 Reset Image</button>
+                    </div>
+                </div>
+                
 
-            <div class="image-selector">
-                <label for="imageSelect">Select an image to edit:</label>
-                <select id="imageSelect">
-                    <option value="https://picsum.photos/800/600?random=1">Sample Image 1</option>
-                    <option value="https://picsum.photos/800/600?random=2">Sample Image 2</option>
-                    <option value="https://picsum.photos/800/600?random=3">Sample Image 3</option>
-                    <option value="https://picsum.photos/800/600?random=4">Sample Image 4</option>
-                </select>
-                <button onclick="loadSelectedImage()">Load Image</button>
-            </div>
-
-            <div class="canvas-container" id="canvasContainer"></div>
-
-            <div class="controls">
-                <button class="btn btn-primary" onclick="openPhotoEditor()">Open Photo Editor</button>
-                <button class="btn btn-secondary" onclick="closePhotoEditor()">Close Photo Editor</button>
-                <button class="btn btn-success" onclick="resetImage()">Reset Image</button>
-                <button class="btn btn-secondary" onclick="fitToView()">Fit to View</button>
-                <button class="btn btn-secondary" onclick="resetView()">Reset View</button>
-            </div>
-
-            <div id="status" class="status info">
-                Ready to edit images. Click on the image or use the "Open Photo Editor" button to start.
+                
+                <div class="control-group">
+                    <h3>📊 Info</h3>
+                    <div class="info-panel">
+                        <h4>Current State:</h4>
+                        <p id="imageInfo">No image loaded</p>
+                        <p id="imageFileName" style="word-break: break-all; max-width: 100%; overflow: hidden; text-overflow: ellipsis;">File Name: -</p>
+                        <p id="imageSize">Size: -</p>
+                        <p id="imageType">Type: -</p>
+                    </div>
+                </div>
+                
+                <div id="status" class="status info">
+                    Ready to edit images. Click on the image or use the "Open Photo Editor" button to start.
+                </div>
             </div>
         </div>
     </div>
@@ -259,7 +279,7 @@
 
         // Initialize CanvasLens with photo editor enabled
         function initializeCanvasLens() {
-            const container = document.getElementById('canvasContainer');
+            const container = document.getElementById('viewer');
             
             canvasLens = new CanvasLens({
                 container: container,
@@ -278,6 +298,7 @@
             canvasLens.setEventHandlers({
                 onImageLoad: (imageData) => {
                     updateStatus('Image loaded successfully!', 'success');
+                    updateImageInfo(imageData);
                     canvasLens.fitToView();
                 },
                 onPhotoEditorOpen: () => {
@@ -292,24 +313,75 @@
             });
 
             // Load initial image
-            loadSelectedImage();
+            loadSampleImage();
         }
 
-        // Load the selected image
-        window.loadSelectedImage = function() {
-            const select = document.getElementById('imageSelect');
-            const imageUrl = select.value;
-            
-            updateStatus('Loading image...', 'info');
-            
-            canvasLens.loadImage(imageUrl)
-                .then(() => {
-                    updateStatus('Image loaded successfully!', 'success');
-                })
-                .catch((error) => {
-                    updateStatus('Error loading image: ' + error.message, 'warning');
-                });
+        // Load sample image
+        window.loadSampleImage = async function() {
+            try {
+                updateStatus('Loading sample image...', 'info');
+                // Using a sample image from Unsplash
+                const sampleUrl = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop';
+                await canvasLens.loadImage(sampleUrl, 'image/jpeg', 'sample-image.jpg');
+            } catch (error) {
+                updateStatus(`Failed to load sample image: ${error.message}`, 'warning');
+            }
         };
+
+        // Load image from URL
+        window.loadFromUrl = async function() {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            if (!imageUrl) {
+                updateStatus('Please enter a valid image URL', 'warning');
+                return;
+            }
+            
+            try {
+                updateStatus('Loading image...', 'info');
+                await canvasLens.loadImage(imageUrl);
+            } catch (error) {
+                updateStatus(`Failed to load image: ${error.message}`, 'warning');
+            }
+        };
+
+        // Load image from file
+        window.loadFromFile = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                updateStatus('Please select a valid image file', 'warning');
+                return;
+            }
+            
+            updateStatus('Loading image from file...', 'info');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = () => {
+                    try {
+                        canvasLens.loadImageElement(img, file.type, file.name);
+                        // Manually trigger the image info update since loadImageElement might not trigger onImageLoad
+                        setTimeout(() => {
+                            if (canvasLens.isImageLoaded()) {
+                                const imageViewer = canvasLens.getImageViewer();
+                                const imageData = imageViewer.getImageData();
+                                if (imageData) {
+                                    updateImageInfo(imageData);
+                                    updateStatus(`Image loaded successfully! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
+                                }
+                            }
+                        }, 100);
+                    } catch (error) {
+                        updateStatus(`Failed to load image: ${error.message}`, 'warning');
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+
+
 
         // Open photo editor
         window.openPhotoEditor = function() {
@@ -320,10 +392,7 @@
             }
         };
 
-        // Close photo editor
-        window.closePhotoEditor = function() {
-            canvasLens.closePhotoEditor();
-        };
+
 
         // Reset image to original
         window.resetImage = function() {
@@ -348,6 +417,25 @@
             updateStatus('View reset.', 'info');
         };
 
+
+
+        // Update image info
+        function updateImageInfo(imageData) {
+            const imageInfo = document.getElementById('imageInfo');
+            const imageFileName = document.getElementById('imageFileName');
+            const imageSize = document.getElementById('imageSize');
+            const imageType = document.getElementById('imageType');
+            
+            if (imageInfo && imageFileName && imageSize && imageType) {
+                imageInfo.textContent = 'Loaded successfully';
+                imageFileName.textContent = `File Name: ${imageData.fileName || 'Unknown'}`;
+                imageSize.textContent = `Size: ${imageData.naturalSize.width} × ${imageData.naturalSize.height} pixels`;
+                imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
+            } else {
+                console.error('Could not find image info elements:', { imageInfo, imageFileName, imageSize, imageType });
+            }
+        }
+
         // Update status message
         function updateStatus(message, type) {
             const statusElement = document.getElementById('status');
@@ -358,8 +446,10 @@
         // Handle window resize
         window.addEventListener('resize', () => {
             if (canvasLens) {
-                const container = document.getElementById('canvasContainer');
-                canvasLens.resize(container.clientWidth, container.clientHeight);
+                const container = document.getElementById('viewer');
+                if (container) {
+                    canvasLens.resize(container.clientWidth, container.clientHeight);
+                }
             }
         });
 

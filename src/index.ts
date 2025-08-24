@@ -49,6 +49,13 @@ export {
   isPointInRect
 } from './utils/image';
 
+export {
+  log,
+  warn,
+  error,
+  info
+} from './utils/logger';
+
 // Main CanvasLens class
 import { CanvasLensOptions, EventHandlers, Size } from './types';
 import { ImageViewer } from './modules/image-viewer/ImageViewer';
@@ -56,6 +63,7 @@ import { ZoomPanOptions } from './modules/zoom-pan/ZoomPanHandler';
 import { AnnotationManagerOptions } from './modules/annotation/AnnotationManager';
 import { PhotoEditorManager, PhotoEditorUI } from './modules/photo-editor';
 import { PhotoEditorOptions } from './modules/photo-editor/types';
+import { warn } from './utils/logger';
 
 export class CanvasLens {
   private container: HTMLElement;
@@ -293,9 +301,10 @@ export class CanvasLens {
     this.photoEditorManager = new PhotoEditorManager(photoEditorOptions);
     this.photoEditorUI = new PhotoEditorUI(this.photoEditorManager, this.container);
 
-    // Set up callbacks
+    // PhotoEditorUI already set its callbacks in constructor
+    // We only need to set up image update callback
     this.photoEditorManager.setCallbacks(
-      (state) => this.onPhotoEditorStateChange(state),
+      undefined, // Let PhotoEditorUI handle state changes
       (imageData) => this.onPhotoEditorImageUpdate(imageData)
     );
 
@@ -312,7 +321,7 @@ export class CanvasLens {
    */
   openPhotoEditor(): void {
     if (!this.photoEditorManager || !this.photoEditorUI) {
-      console.warn('Photo editor is not enabled');
+      warn('Photo editor is not enabled');
       return;
     }
 
@@ -331,6 +340,11 @@ export class CanvasLens {
     }
 
     this.photoEditorManager.open();
+    
+    // Load image into overlay container
+    if (imageData && this.photoEditorUI) {
+      this.photoEditorUI.loadImageToContainer(imageData.element);
+    }
     
     if (this.eventHandlers.onPhotoEditorOpen) {
       this.eventHandlers.onPhotoEditorOpen();

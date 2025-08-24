@@ -1,6 +1,7 @@
 import { Canvas } from '../../core/Canvas';
 import { ImageData, Point, Size, EventHandlers } from '../../types';
 import { loadImage, getImageData, calculateFitDimensions } from '../../utils/image';
+import { error } from '../../utils/logger';
 
 export interface ComparisonOptions {
   sliderPosition?: number; // 0-100 percentage
@@ -119,9 +120,9 @@ export class ImageComparisonManager {
       const image = await loadImage(url);
       const canvasSize = this.canvas.getSize();
       this.state.beforeImage = getImageData(image, canvasSize);
-    } catch (error) {
-      console.error('Failed to load before image:', error);
-      throw error;
+    } catch (err) {
+      error('Failed to load before image:', err);
+      throw err;
     }
   }
 
@@ -133,9 +134,9 @@ export class ImageComparisonManager {
       const image = await loadImage(url);
       const canvasSize = this.canvas.getSize();
       this.state.afterImage = getImageData(image, canvasSize);
-    } catch (error) {
-      console.error('Failed to load after image:', error);
-      throw error;
+    } catch (err) {
+      error('Failed to load after image:', err);
+      throw err;
     }
   }
 

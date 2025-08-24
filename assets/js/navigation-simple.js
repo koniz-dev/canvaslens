@@ -1,7 +1,5 @@
 // Simple Navigation Module
 export function createSimpleNavigation() {
-    console.log('Creating navigation...');
-    
     const nav = document.createElement('nav');
     nav.className = 'nav-bar';
     nav.innerHTML = `
@@ -24,7 +22,6 @@ export function createSimpleNavigation() {
     `;
     
     document.body.insertBefore(nav, document.body.firstChild);
-    console.log('Navigation created successfully');
     
     // Initialize mobile menu
     const navToggle = document.getElementById('navToggle');

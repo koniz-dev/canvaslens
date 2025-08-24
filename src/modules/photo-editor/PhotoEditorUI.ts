@@ -7,6 +7,7 @@ export class PhotoEditorUI {
   private overlay: HTMLElement | null = null;
   private toolPanel: HTMLElement | null = null;
   private sliderPanel: HTMLElement | null = null;
+  private imageContainer: HTMLElement | null = null;
   private currentState: PhotoEditorState;
 
   constructor(manager: PhotoEditorManager, container: HTMLElement) {
@@ -45,11 +46,43 @@ export class PhotoEditorUI {
   }
 
   /**
+   * Load image into the overlay container
+   */
+  loadImageToContainer(imageElement: HTMLImageElement): void {
+    if (!this.imageContainer) return;
+
+    // Remove placeholder
+    const placeholder = document.getElementById('canvaslens-image-placeholder');
+    if (placeholder) {
+      placeholder.remove();
+    }
+
+    // Remove existing image if any
+    const existingImg = this.imageContainer.querySelector('img');
+    if (existingImg) {
+      existingImg.remove();
+    }
+
+    // Create and add new image
+    const img = document.createElement('img');
+    img.src = imageElement.src;
+    img.style.cssText = `
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+    `;
+    
+    this.imageContainer.appendChild(img);
+  }
+
+  /**
    * Show overlay
    */
   private showOverlay(): void {
-    if (this.overlay) return;
-
+    if (this.overlay) {
+      return;
+    }
     this.overlay = document.createElement('div');
     this.overlay.className = 'canvaslens-photo-editor-overlay';
     this.overlay.style.cssText = `
@@ -64,6 +97,34 @@ export class PhotoEditorUI {
       align-items: center;
       justify-content: center;
     `;
+
+    // Add image container in the center
+    this.imageContainer = document.createElement('div');
+    this.imageContainer.className = 'canvaslens-photo-editor-image-container';
+    this.imageContainer.style.cssText = `
+      position: relative;
+      width: 80%;
+      height: 80%;
+      max-width: 800px;
+      max-height: 600px;
+      background-color: #1a1a1a;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    `;
+
+    // Add placeholder text for image (will be replaced when image loads)
+    const placeholder = document.createElement('div');
+    placeholder.id = 'canvaslens-image-placeholder';
+    placeholder.innerHTML = '🖼️ Image will be displayed here';
+    placeholder.style.cssText = `
+      color: #666;
+      font-size: 18px;
+      text-align: center;
+    `;
+    this.imageContainer.appendChild(placeholder);
 
     // Add close button
     const closeBtn = document.createElement('button');
@@ -81,6 +142,7 @@ export class PhotoEditorUI {
     `;
     closeBtn.onclick = () => this.manager.close();
 
+    this.overlay.appendChild(this.imageContainer);
     this.overlay.appendChild(closeBtn);
     document.body.appendChild(this.overlay);
   }
@@ -124,51 +186,240 @@ export class PhotoEditorUI {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       z-index: 1001;
       min-width: 200px;
+      max-height: 80vh;
+      overflow-y: auto;
     `;
 
+    // Create tool sections
+    this.createAnnotationTools();
+    this.createZoomPanTools();
+    this.createComparisonTools();
+    this.createImageTools();
+    this.createPhotoEditorTools();
+    
+    // Add tool panel to overlay
+    if (this.overlay) {
+      this.overlay.appendChild(this.toolPanel);
+    }
+  }
+
+  /**
+   * Create annotation tools section
+   */
+  private createAnnotationTools(): void {
+    const section = document.createElement('div');
+    section.innerHTML = '<h3 style="color: white; margin: 0 0 10px 0; font-size: 14px;">📝 Annotation Tools</h3>';
+    
+    const tools = [
+      { id: 'rectangle', name: 'Rectangle', icon: '⬜' },
+      { id: 'arrow', name: 'Arrow', icon: '➡️' },
+      { id: 'text', name: 'Text', icon: 'T' }
+    ];
+
+    tools.forEach(tool => {
+      const toolBtn = document.createElement('button');
+      toolBtn.innerHTML = `
+        <div style="font-size: 16px; margin-bottom: 2px;">${tool.icon}</div>
+        <div style="font-size: 10px;">${tool.name}</div>
+      `;
+      toolBtn.style.cssText = `
+        display: inline-block;
+        width: 60px;
+        height: 50px;
+        margin: 2px;
+        background-color: #3a3a3a;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 10px;
+      `;
+      toolBtn.onclick = () => this.activateAnnotationTool(tool.id);
+      section.appendChild(toolBtn);
+    });
+
+    this.toolPanel!.appendChild(section);
+  }
+
+  /**
+   * Create zoom/pan tools section
+   */
+  private createZoomPanTools(): void {
+    const section = document.createElement('div');
+    section.innerHTML = '<h3 style="color: white; margin: 20px 0 10px 0; font-size: 14px;">🔍 Zoom & Pan</h3>';
+    
+    const tools = [
+      { id: 'zoom-in', name: 'Zoom In', icon: '🔍+' },
+      { id: 'zoom-out', name: 'Zoom Out', icon: '🔍-' },
+      { id: 'fit-view', name: 'Fit View', icon: '📐' },
+      { id: 'reset-view', name: 'Reset', icon: '🔄' }
+    ];
+
+    tools.forEach(tool => {
+      const toolBtn = document.createElement('button');
+      toolBtn.innerHTML = `
+        <div style="font-size: 16px; margin-bottom: 2px;">${tool.icon}</div>
+        <div style="font-size: 10px;">${tool.name}</div>
+      `;
+      toolBtn.style.cssText = `
+        display: inline-block;
+        width: 60px;
+        height: 50px;
+        margin: 2px;
+        background-color: #3a3a3a;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 10px;
+      `;
+      toolBtn.onclick = () => this.activateZoomPanTool(tool.id);
+      section.appendChild(toolBtn);
+    });
+
+    this.toolPanel!.appendChild(section);
+  }
+
+  /**
+   * Create comparison tools section
+   */
+  private createComparisonTools(): void {
+    const section = document.createElement('div');
+    section.innerHTML = '<h3 style="color: white; margin: 20px 0 10px 0; font-size: 14px;">🔄 Comparison</h3>';
+    
+    const tools = [
+      { id: 'before-after', name: 'Before/After', icon: '⚖️' },
+      { id: 'side-by-side', name: 'Side by Side', icon: '📊' }
+    ];
+
+    tools.forEach(tool => {
+      const toolBtn = document.createElement('button');
+      toolBtn.innerHTML = `
+        <div style="font-size: 16px; margin-bottom: 2px;">${tool.icon}</div>
+        <div style="font-size: 10px;">${tool.name}</div>
+      `;
+      toolBtn.style.cssText = `
+        display: inline-block;
+        width: 60px;
+        height: 50px;
+        margin: 2px;
+        background-color: #3a3a3a;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 10px;
+      `;
+      toolBtn.onclick = () => this.activateComparisonTool(tool.id);
+      section.appendChild(toolBtn);
+    });
+
+    this.toolPanel!.appendChild(section);
+  }
+
+  /**
+   * Create image tools section
+   */
+  private createImageTools(): void {
+    const section = document.createElement('div');
+    section.innerHTML = '<h3 style="color: white; margin: 20px 0 10px 0; font-size: 14px;">🖼️ Image</h3>';
+    
+    const tools = [
+      { id: 'load-image', name: 'Load Image', icon: '📁' },
+      { id: 'save-image', name: 'Save Image', icon: '💾' },
+      { id: 'reset-image', name: 'Reset', icon: '🔄' }
+    ];
+
+    tools.forEach(tool => {
+      const toolBtn = document.createElement('button');
+      toolBtn.innerHTML = `
+        <div style="font-size: 16px; margin-bottom: 2px;">${tool.icon}</div>
+        <div style="font-size: 10px;">${tool.name}</div>
+      `;
+      toolBtn.style.cssText = `
+        display: inline-block;
+        width: 60px;
+        height: 50px;
+        margin: 2px;
+        background-color: #3a3a3a;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        font-size: 10px;
+      `;
+      toolBtn.onclick = () => this.activateImageTool(tool.id);
+      section.appendChild(toolBtn);
+    });
+
+    this.toolPanel!.appendChild(section);
+  }
+
+  /**
+   * Create photo editor tools section
+   */
+  private createPhotoEditorTools(): void {
+    const section = document.createElement('div');
+    section.innerHTML = '<h3 style="color: white; margin: 20px 0 10px 0; font-size: 14px;">🎨 Photo Editor</h3>';
+    
     const toolConfigs = this.manager.getToolConfigs();
     
     toolConfigs.forEach(config => {
       const toolBtn = document.createElement('button');
       toolBtn.className = 'canvaslens-tool-btn';
       toolBtn.innerHTML = `
-        <div style="font-size: 20px; margin-bottom: 4px;">${config.icon}</div>
-        <div style="font-size: 12px;">${config.name}</div>
+        <div style="font-size: 16px; margin-bottom: 2px;">${config.icon}</div>
+        <div style="font-size: 10px;">${config.name}</div>
       `;
       toolBtn.style.cssText = `
-        display: block;
-        width: 100%;
-        padding: 12px 8px;
-        margin-bottom: 8px;
-        background: ${this.currentState.currentTool === config.id ? '#4a90e2' : '#3a3a3a'};
+        display: inline-block;
+        width: 60px;
+        height: 50px;
+        margin: 2px;
+        background-color: #3a3a3a;
         border: none;
-        border-radius: 6px;
+        border-radius: 4px;
         color: white;
         cursor: pointer;
-        text-align: center;
-        transition: background-color 0.2s;
+        font-size: 10px;
       `;
-      
       toolBtn.onclick = () => this.manager.setTool(config.id);
-      toolBtn.onmouseenter = () => {
-        if (this.currentState.currentTool !== config.id) {
-          toolBtn.style.backgroundColor = '#4a4a4a';
-        }
-      };
-      toolBtn.onmouseleave = () => {
-        if (this.currentState.currentTool !== config.id) {
-          toolBtn.style.backgroundColor = '#3a3a3a';
-        }
-      };
-
-      if (this.toolPanel) {
-        this.toolPanel.appendChild(toolBtn);
-      }
+      section.appendChild(toolBtn);
     });
 
-    if (this.overlay) {
-      this.overlay.appendChild(this.toolPanel);
-    }
+    this.toolPanel!.appendChild(section);
+  }
+
+  /**
+   * Activate annotation tool
+   */
+  private activateAnnotationTool(toolId: string): void {
+    // TODO: Integrate with annotation manager
+    alert(`Annotation tool "${toolId}" activated!`);
+  }
+
+  /**
+   * Activate zoom/pan tool
+   */
+  private activateZoomPanTool(toolId: string): void {
+    // TODO: Integrate with zoom/pan handler
+    alert(`Zoom/Pan tool "${toolId}" activated!`);
+  }
+
+  /**
+   * Activate comparison tool
+   */
+  private activateComparisonTool(toolId: string): void {
+    // TODO: Integrate with comparison manager
+    alert(`Comparison tool "${toolId}" activated!`);
+  }
+
+  /**
+   * Activate image tool
+   */
+  private activateImageTool(toolId: string): void {
+    // TODO: Integrate with image viewer
+    alert(`Image tool "${toolId}" activated!`);
   }
 
   /**

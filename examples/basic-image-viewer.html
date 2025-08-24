@@ -112,7 +112,6 @@
         // Set event handlers
         canvasLens.setEventHandlers({
             onImageLoad: (imageData) => {
-                console.log('onImageLoad event triggered:', imageData);
                 showStatus(`Image loaded successfully! Size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`, 'success');
                 updateImageInfo(imageData);
             }
@@ -222,7 +221,6 @@
         }
         
         function updateImageInfo(imageData) {
-            console.log('updateImageInfo called with:', imageData);
             const imageInfo = document.getElementById('imageInfo');
             const imageFileName = document.getElementById('imageFileName');
             const imageSize = document.getElementById('imageSize');
@@ -234,7 +232,6 @@
                 imageFileName.textContent = `File Name: ${imageData.fileName || 'Unknown'}`;
                 imageSize.textContent = `Size: ${imageData.naturalSize.width} × ${imageData.naturalSize.height} pixels`;
                 imageType.textContent = `Type: ${imageData.type || 'Unknown'}`;
-                console.log('Image info updated successfully');
             } else {
                 console.error('Could not find image info elements:', { imageInfo, imageFileName, imageSize, imageType });
             }

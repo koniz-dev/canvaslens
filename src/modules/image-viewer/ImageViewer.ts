@@ -1,6 +1,7 @@
 import { Canvas } from '../../core/Canvas';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { loadImage, getImageData } from '../../utils/image';
+import { error } from '../../utils/logger';
 import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
 import { AnnotationManager, AnnotationManagerOptions } from '../annotation/AnnotationManager';
 
@@ -77,9 +78,9 @@ export class ImageViewer {
       if (this.eventHandlers.onImageLoad) {
         this.eventHandlers.onImageLoad(this.imageData);
       }
-    } catch (error) {
-      console.error('Failed to load image:', error);
-      throw error;
+    } catch (err) {
+      error('Failed to load image:', err);
+      throw err;
     }
   }
 

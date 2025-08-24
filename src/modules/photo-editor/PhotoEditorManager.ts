@@ -5,8 +5,8 @@ export class PhotoEditorManager {
   private options: PhotoEditorOptions;
   private state: PhotoEditorState;
   private imageProcessor: ImageProcessor;
-  private onStateChange?: (state: PhotoEditorState) => void;
-  private onImageUpdate?: (imageData: ImageData) => void;
+  private stateChangeCallbacks: ((state: PhotoEditorState) => void)[] = [];
+  private imageUpdateCallbacks: ((imageData: ImageData) => void)[] = [];
 
   constructor(options: PhotoEditorOptions = {}) {
     this.options = {
@@ -48,8 +48,12 @@ export class PhotoEditorManager {
    * Set callbacks for state changes and image updates
    */
   setCallbacks(onStateChange?: (state: PhotoEditorState) => void, onImageUpdate?: (imageData: ImageData) => void): void {
-    this.onStateChange = onStateChange || (() => {});
-    this.onImageUpdate = onImageUpdate || (() => {});
+    if (onStateChange) {
+      this.stateChangeCallbacks.push(onStateChange);
+    }
+    if (onImageUpdate) {
+      this.imageUpdateCallbacks.push(onImageUpdate);
+    }
   }
 
   /**
@@ -164,18 +168,18 @@ export class PhotoEditorManager {
     this.state.modifiedImageData = processedImageData;
 
     // Notify image update
-    if (this.onImageUpdate) {
-      this.onImageUpdate(processedImageData);
-    }
+    this.imageUpdateCallbacks.forEach(callback => {
+      callback(processedImageData);
+    });
   }
 
   /**
    * Notify state change
    */
   private notifyStateChange(): void {
-    if (this.onStateChange) {
-      this.onStateChange(this.getState());
-    }
+    this.stateChangeCallbacks.forEach(callback => {
+      callback(this.getState());
+    });
   }
 
   /**

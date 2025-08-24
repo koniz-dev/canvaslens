@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Logger utility (`src/utils/logger.ts`) for production-safe logging
+- Production build script (`npm run build:prod`) that automatically removes console.log statements
+- Console log removal script (`scripts/remove-console-logs.js`)
+- Documentation for logging system (`docs/LOGGING.md`)
+
+### Changed
+- Replaced direct console.log usage with logger utility functions
+- Updated build process to support production builds
+- Modified prepublishOnly script to use production build
+- **Internationalization**: Converted all documentation to English for better accessibility
+
+### Fixed
+- Removed unnecessary console.log statements for production environment
+- Maintained important console.error and console.warn statements for debugging
+
+## [0.0.8] - 2024-01-XX
+
+### Added
+- Photo editor module with basic editing capabilities
+- Image comparison module for before/after comparison
+- Enhanced annotation tools with more drawing options
+- Zoom and pan functionality with smooth interactions
+- Event handling system for better integration
+
+### Changed
+- Improved TypeScript type definitions
+- Enhanced error handling throughout the library
+- Better performance optimizations for large images
+
+### Fixed
+- Memory leaks in annotation rendering
+- Zoom behavior on different screen sizes
+- Image loading issues with certain formats
+
 ## [1.0.0] - 2024-12-19
 
 ### Added
