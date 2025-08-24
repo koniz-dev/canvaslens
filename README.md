@@ -5,45 +5,18 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/koniz-dev/canvaslens)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
 
-A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a unified component for image viewing, zooming, panning, annotation, and before/after image comparison with optional overlay mode for professional editing.
+A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a unified Web Component for image viewing, zooming, panning, annotation, and before/after image comparison with optional overlay mode for professional editing.
 
 ## ✨ Features
 
-### 🖼️ **Module 1: Basic Image Viewer**
-- Load images from URL or file input
-- Automatic aspect ratio preservation
-- Responsive design with device pixel ratio support
-- High-quality rendering with proper canvas context management
-
-### 🔍 **Module 2: Zoom & Pan**
-- Mouse wheel zoom with cursor-centered zooming
-- Drag to pan with smooth interactions
-- Configurable zoom limits and speed controls
-- Fit to view and reset functionality
-- Real-time zoom/pan state tracking
-
-### ✏️ **Module 3: Annotations**
-- Rectangle, arrow, and text annotation tools
-- Interactive drawing with mouse controls
-- Customizable styles (colors, stroke width, fonts)
-- Selection, deletion, and management
-- Export/import functionality as JSON
-- Real-time preview while drawing
-- Keyboard shortcuts (R/A/T keys)
-
-### 🔄 **Module 4: Image Comparison**
-- Interactive slider-based before/after comparison
-- Drag slider to reveal differences
-- Synchronized zoom and pan for both images
-- Customizable slider appearance
-- Real-time comparison state tracking
-
-### 🖼️ **Overlay Mode**
-- Full-screen professional editing interface
-- All tools available in overlay mode
-- Save functionality for applying changes
-- Professional UI with top toolbar
-- Three main tools always accessible: Zoom/Pan, Annotation, Comparison
+- 🖼️ **Image Viewer**: Load images from URL or file input with automatic aspect ratio preservation
+- 🔍 **Zoom & Pan**: Mouse wheel zoom with cursor-centered zooming, drag to pan
+- ✏️ **Annotations**: Rectangle, arrow, text, circle, and line annotation tools
+- 🔄 **Image Comparison**: Interactive slider-based before/after comparison
+- 🖼️ **Overlay Mode**: Full-screen professional editing interface
+- 🎯 **Web Component**: Standard HTML element that works with any framework
+- ⚙️ **Declarative Configuration**: JSON-based tool configuration
+- 🎨 **TypeScript Support**: Full type safety and IntelliSense
 
 ## 🚀 Installation
 
@@ -60,7 +33,7 @@ npm install @koniz-dev/canvaslens
 
 ## 📖 Quick Start
 
-### Basic Usage (Web Component)
+### Basic Usage
 
 ```html
 <!DOCTYPE html>
@@ -76,27 +49,22 @@ npm install @koniz-dev/canvaslens
     </style>
 </head>
 <body>
-    <!-- Simple HTML element usage -->
     <canvas-lens 
         src="https://picsum.photos/800/600"
         width="800px" 
         height="600px"
-        tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
-        background-color="#f0f0f0">
+        tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true}, "comparison": true}'>
     </canvas-lens>
     
     <script type="module">
         import { CanvasLens } from '@koniz-dev/canvaslens';
         
-        // Get the element
         const viewer = document.querySelector('canvas-lens');
         
-        // Listen for events
         viewer.addEventListener('imageload', (e) => {
             console.log('Image loaded:', e.detail);
         });
         
-        // Use JavaScript API
         viewer.addEventListener('click', () => {
             viewer.openOverlay(); // Open full-screen editor
         });
@@ -105,72 +73,82 @@ npm install @koniz-dev/canvaslens
 </html>
 ```
 
-### Programmatic Usage
+### Complete Props and Events Example
 
-```javascript
-import { CanvasLens } from '@koniz-dev/canvaslens';
+```html
+<!-- Complete Web Component with ALL props and events -->
+<canvas-lens 
+    src="https://example.com/image.jpg"
+    width="800px"
+    height="600px"
+    background-color="#f0f0f0"
+    tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
+    max-zoom="10"
+    min-zoom="0.1"
+    image-type="image/jpeg"
+    file-name="my-image.jpg"
+    
+    <!-- Event listeners -->
+    onimageload="handleImageLoad(event)"
+    onzoomchange="handleZoomChange(event)"
+    onpanchange="handlePanChange(event)"
+    onannotationadd="handleAnnotationAdd(event)"
+    onannotationremove="handleAnnotationRemove(event)"
+    ontoolchange="handleToolChange(event)"
+    oncomparisonchange="handleComparisonChange(event)">
+</canvas-lens>
 
-// Get the element
+<script>
+// Event handler functions
+function handleImageLoad(event) {
+    const { naturalSize, fileName, type } = event.detail;
+    console.log('Image loaded:', { fileName, type, width: naturalSize.width, height: naturalSize.height });
+}
+
+function handleZoomChange(event) {
+    console.log('Zoom level:', event.detail);
+}
+
+function handlePanChange(event) {
+    console.log('Pan offset:', event.detail);
+}
+
+function handleAnnotationAdd(event) {
+    console.log('Annotation added:', event.detail);
+}
+
+function handleAnnotationRemove(event) {
+    console.log('Annotation removed:', event.detail);
+}
+
+function handleToolChange(event) {
+    console.log('Active tool:', event.detail);
+}
+
+function handleComparisonChange(event) {
+    console.log('Comparison position:', event.detail);
+}
+
+// Alternative: Using addEventListener
 const viewer = document.querySelector('canvas-lens');
-
-// Load image programmatically
-await viewer.loadImage('https://picsum.photos/800/600');
-
-// Load from file input
-const fileInput = document.getElementById('fileInput');
-fileInput.addEventListener('change', (e) => {
-    viewer.loadImageFromFile(e.target.files[0]);
+viewer.addEventListener('imageload', (event) => {
+    console.log('Image loaded via addEventListener:', event.detail);
 });
-
-// Zoom controls
-viewer.zoomIn(1.2);
-viewer.zoomOut(1.2);
-viewer.zoomTo(2.0);
-viewer.fitToView();
-viewer.resetView();
-
-// Tool controls
-viewer.activateTool('rect');  // Rectangle tool
-viewer.activateTool('arrow'); // Arrow tool
-viewer.activateTool('text');  // Text tool
-viewer.activateTool('circle'); // Circle tool
-viewer.activateTool('line');  // Line tool
-viewer.deactivateTool();
-
-// Annotation controls
-viewer.addAnnotation(annotation);
-viewer.removeAnnotation(annotationId);
-viewer.clearAnnotations();
-const annotations = viewer.getAnnotations();
-
-// Overlay editor
-viewer.openOverlay();
-viewer.closeOverlay();
-        
-        // Open overlay mode
-        instance.openOverlay();
-    </script>
-</body>
-</html>
+</script>
 ```
 
 ### Framework Integration
 
-CanvasLens works seamlessly with any framework since it's a standard Web Component:
-
 #### Vue 3
 ```vue
 <template>
-  <div>
-    <canvas-lens 
-      :src="imageSrc"
-      width="800px" 
-      height="600px"
-      :enable-annotations="true"
-      @imageload="onImageLoad">
-    </canvas-lens>
-    <button @click="setTool('rect')">Rectangle Tool</button>
-  </div>
+  <canvas-lens 
+    :src="imageSrc"
+    width="800px" 
+    height="600px"
+    :tools="toolConfig"
+    @imageload="onImageLoad">
+  </canvas-lens>
 </template>
 
 <script setup>
@@ -178,33 +156,32 @@ import { ref } from 'vue';
 import { CanvasLens } from '@koniz-dev/canvaslens';
 
 const imageSrc = ref('https://example.com/image.jpg');
+const toolConfig = ref({
+  zoom: true,
+  pan: true,
+  annotation: { rect: true, arrow: true, text: true },
+  comparison: false
+});
 
 const onImageLoad = (e) => {
   console.log('Image loaded:', e.detail);
-};
-
-const setTool = (toolType) => {
-  const viewer = document.querySelector('canvas-lens');
-  viewer.activateTool(toolType);
 };
 </script>
 ```
 
 #### React
 ```jsx
-import React, { useEffect, useRef } from 'react';
+import React, { useRef } from 'react';
 import { CanvasLens } from '@koniz-dev/canvaslens';
 
 const CanvasLensViewer = ({ src }) => {
   const viewerRef = useRef(null);
-
-  useEffect(() => {
-    if (viewerRef.current) {
-      viewerRef.current.addEventListener('imageload', (e) => {
-        console.log('Image loaded:', e.detail);
-      });
-    }
-  }, []);
+  const toolConfig = {
+    zoom: true,
+    pan: true,
+    annotation: { rect: true, arrow: true, text: true },
+    comparison: false
+  };
 
   return (
     <canvas-lens 
@@ -212,13 +189,13 @@ const CanvasLensViewer = ({ src }) => {
       src={src}
       width="800px" 
       height="600px"
-      enable-annotations="true">
+      tools={JSON.stringify(toolConfig)}>
     </canvas-lens>
   );
 };
 ```
 
-### Advanced Usage with All Features
+### Advanced Usage
 
 ```html
 <canvas-lens
@@ -226,13 +203,9 @@ const CanvasLensViewer = ({ src }) => {
     width="800px"
     height="600px"
     background-color="#f0f0f0"
-    enable-zoom="true"
-    enable-pan="true"
-    enable-annotations="true"
-    enable-comparison="true"
+    tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
     max-zoom="10"
-    min-zoom="0.1"
-    active-tool="rect">
+    min-zoom="0.1">
 </canvas-lens>
 
 <script>
@@ -290,34 +263,12 @@ const annotations = viewer.getAnnotations();
 // Overlay editor
 viewer.openOverlay();
 viewer.closeOverlay();
-```
-
-### Image Comparison
-
-```typescript
-import { ImageComparisonManager } from '@koniz-dev/canvaslens';
-
-const comparisonManager = new ImageComparisonManager(container, size, eventHandlers, {
-    sliderPosition: 50,
-    sliderColor: '#ffffff',
-    sliderWidth: 4
-});
-
-// Load before/after images
-await comparisonManager.loadImages('before.jpg', 'after.jpg');
-
-// Control slider
-comparisonManager.setSliderPosition(75);  // 75% reveal
-comparisonManager.showMoreBefore();
-comparisonManager.showMoreAfter();
-comparisonManager.resetSlider();
+</script>
 ```
 
 ## 📚 API Reference
 
 ### Web Component Attributes
-
-The `<canvas-lens>` element supports the following attributes:
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -325,7 +276,7 @@ The `<canvas-lens>` element supports the following attributes:
 | `width` | string/number | "800" | Width in px, %, or number |
 | `height` | string/number | "600" | Height in px, %, or number |
 | `background-color` | string | "#f0f0f0" | Background color |
-| `tools` | JSON string | All enabled | Tool configuration object |
+| `tools` | JSON string | All enabled | Tool configuration |
 | `max-zoom` | number | "10" | Maximum zoom level |
 | `min-zoom` | number | "0.1" | Minimum zoom level |
 | `image-type` | string | - | Image MIME type |
@@ -333,7 +284,7 @@ The `<canvas-lens>` element supports the following attributes:
 
 ### Tool Configuration
 
-The `tools` attribute accepts a JSON string with the following structure:
+The `tools` attribute accepts a JSON string:
 
 ```json
 {
@@ -350,7 +301,7 @@ The `tools` attribute accepts a JSON string with the following structure:
 }
 ```
 
-#### **Predefined Configurations (Browser):**
+#### Predefined Configurations
 
 ```javascript
 // Available globally in browser
@@ -362,27 +313,7 @@ viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.advanced
 viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.minimal));
 ```
 
-#### **Custom Configuration (Browser):**
-
-```javascript
-// Create custom configuration
-const customConfig = window.CanvasLensToolConfig.create({
-  zoom: true,
-  pan: false,
-  annotation: {
-    rect: true,
-    arrow: false,
-    text: true,
-    circle: false,
-    line: false
-  },
-  comparison: true
-});
-
-viewer.setAttribute('tools', JSON.stringify(customConfig));
-```
-
-#### **Available Predefined Configurations:**
+#### Available Predefined Configurations:
 
 - `window.CanvasLensToolConfig.all` - All tools enabled (default)
 - `window.CanvasLensToolConfig.viewer` - Zoom and pan only
@@ -391,7 +322,7 @@ viewer.setAttribute('tools', JSON.stringify(customConfig));
 - `window.CanvasLensToolConfig.advanced` - Advanced annotation tools
 - `window.CanvasLensToolConfig.minimal` - Minimal configuration
 
-#### **HTML Examples:**
+#### HTML Examples:
 
 ```html
 <!-- All tools enabled (default) -->
@@ -409,60 +340,66 @@ viewer.setAttribute('tools', JSON.stringify(customConfig));
 
 ### JavaScript API Methods
 
-```typescript
-// Get the element
+```javascript
 const viewer = document.querySelector('canvas-lens');
 
 // Image loading
-await viewer.loadImage(src: string, type?: string, fileName?: string): Promise<void>
-viewer.loadImageFromFile(file: File): void
-
-// Resize
-viewer.resize(width: number, height: number): void
+await viewer.loadImage('https://example.com/image.jpg');
+viewer.loadImageFromFile(file);
 
 // Zoom controls
-viewer.zoomIn(factor?: number): void
-viewer.zoomOut(factor?: number): void
-viewer.zoomTo(scale: number): void
-viewer.fitToView(): void
-viewer.resetView(): void
+viewer.zoomIn(1.2);
+viewer.zoomOut(1.2);
+viewer.zoomTo(2.0);
+viewer.fitToView();
+viewer.resetView();
 
 // Tool controls
-viewer.activateTool(toolType: string): boolean
-viewer.deactivateTool(): boolean
-viewer.getActiveTool(): string | null
+viewer.activateTool('rect');
+viewer.activateTool('arrow');
+viewer.activateTool('text');
+viewer.deactivateTool();
 
 // Annotation controls
-viewer.addAnnotation(annotation: Annotation): void
-viewer.removeAnnotation(annotationId: string): void
-viewer.clearAnnotations(): void
-viewer.getAnnotations(): Annotation[]
+viewer.addAnnotation(annotation);
+viewer.removeAnnotation(annotationId);
+viewer.clearAnnotations();
+const annotations = viewer.getAnnotations();
 
 // Overlay editor
-viewer.openOverlay(): void
-viewer.closeOverlay(): void
-viewer.isOverlayOpen(): boolean
+viewer.openOverlay();
+viewer.closeOverlay();
 
 // State queries
-viewer.isImageLoaded(): boolean
-viewer.getImageData(): ImageData | null
-viewer.getZoomLevel(): number
-viewer.getPanOffset(): Point
+viewer.isImageLoaded();
+viewer.getZoomLevel();
+viewer.getPanOffset();
+viewer.getActiveTool();
+viewer.isOverlayOpen();
 ```
 
 ### Events
 
-The component dispatches the following custom events:
-
 | Event | Detail | Description |
 |-------|--------|-------------|
-| `imageload` | ImageData | Fired when image is loaded |
-| `zoomchange` | number | Fired when zoom level changes |
-| `panchange` | Point | Fired when pan offset changes |
-| `annotationadd` | Annotation | Fired when annotation is added |
-| `annotationremove` | string | Fired when annotation is removed |
-| `toolchange` | string \| null | Fired when active tool changes |
-| `comparisonchange` | number | Fired when comparison position changes |
+| `imageload` | `{naturalSize, fileName, type}` | Fired when image is loaded |
+| `zoomchange` | `number` | Fired when zoom level changes |
+| `panchange` | `{x, y}` | Fired when pan offset changes |
+| `annotationadd` | `Annotation` | Fired when annotation is added |
+| `annotationremove` | `string` | Fired when annotation is removed |
+| `toolchange` | `string \| null` | Fired when active tool changes |
+| `comparisonchange` | `number` | Fired when comparison position changes |
+
+```javascript
+// Event handling
+viewer.addEventListener('imageload', (event) => {
+    const { naturalSize, fileName, type } = event.detail;
+    console.log(`Loaded ${fileName}: ${naturalSize.width}x${naturalSize.height}`);
+});
+
+// HTML attribute binding
+<canvas-lens onimageload="handleImageLoad(event)"></canvas-lens>
+```
 
 ### Available Exports
 
@@ -473,65 +410,14 @@ The library exports only the main Web Component:
 import { CanvasLens } from '@koniz-dev/canvaslens';
 ```
 
-### Web Component Methods
-
-#### Image Loading
-- `loadImage(url: string, type?: string, fileName?: string): Promise<void>` - Load image from URL
-- `loadImageFromFile(file: File): void` - Load image from file
-
-#### View Controls
-- `resize(width: number, height: number): void` - Resize the viewer
-- `fitToView(): void` - Fit image to view
-- `resetView(): void` - Reset zoom and pan to initial state
-
-#### Zoom Controls
-- `zoomIn(factor?: number): void` - Zoom in by factor (default: 1.2)
-- `zoomOut(factor?: number): void` - Zoom out by factor (default: 1.2)
-- `zoomTo(scale: number): void` - Zoom to specific level
-- `getZoomLevel(): number` - Get current zoom level
-
-#### Pan Controls
-- `getPanOffset(): Point` - Get current pan offset
-
-#### Tool Controls
-- `activateTool(toolType: string): boolean` - Activate annotation tool
-- `deactivateTool(): boolean` - Deactivate current tool
-- `getActiveTool(): string | null` - Get active tool type
-
-#### Annotation Controls
-- `addAnnotation(annotation: Annotation): void` - Add annotation
-- `removeAnnotation(annotationId: string): void` - Remove annotation
-- `clearAnnotations(): void` - Clear all annotations
-- `getAnnotations(): Annotation[]` - Get all annotations
-
-#### Overlay Editor
-- `openOverlay(): void` - Open full-screen editor
-- `closeOverlay(): void` - Close overlay editor
-- `isOverlayOpen(): boolean` - Check if overlay is open
-
-#### State Queries
-- `isImageLoaded(): boolean` - Check if image is loaded
-- `getImageData(): ImageData | null` - Get current image data
-
 ## 🎮 Controls
 
 ### Mouse Controls
-
 - **Mouse Wheel**: Zoom in/out (zooms to cursor position)
-- **Left Click + Drag**: Pan around the image (when no annotation tool is active)
+- **Left Click + Drag**: Pan around the image
 - **Double Click**: Reset view to initial state
 
-### Annotation Controls
-
-- **Tool Selection**: Use `activateTool()` method or UI buttons
-- **Drawing**: Click and drag to draw annotations
-- **Text**: Click to place text, type content, press Enter to confirm
-- **Selection**: Click on existing annotations to select them
-- **Deletion**: Select annotation and press Delete/Backspace key
-- **Escape**: Cancel current drawing or clear selection
-
 ### Keyboard Shortcuts
-
 - **R**: Activate rectangle tool
 - **A**: Activate arrow tool  
 - **T**: Activate text tool
@@ -539,19 +425,22 @@ import { CanvasLens } from '@koniz-dev/canvaslens';
 - **L**: Activate line tool
 - **Escape**: Deactivate current tool
 - **Delete/Backspace**: Delete selected annotation
-- **Image Integration**: Annotations are drawn directly on the image and move/scale with zoom/pan
-- **Bounded Drawing**: Annotations are restricted to image boundaries, cannot draw outside the image
+
+### Annotation Controls
+- **Tool Selection**: Use `activateTool()` method or keyboard shortcuts
+- **Drawing**: Click and drag to draw annotations
+- **Text**: Click to place text, type content, press Enter to confirm
+- **Selection**: Click on existing annotations to select them
+- **Deletion**: Select annotation and press Delete/Backspace key
 
 ### Comparison Controls
-
 - **Slider Drag**: Click and drag the white slider to reveal before/after
 - **Slider Buttons**: Use ←/→ buttons to move slider incrementally
 - **Reset Slider**: Center button to reset slider to 50%
 - **Zoom/Pan**: Mouse wheel to zoom, drag to pan (synchronized for both images)
 
 ### Overlay Mode Controls
-
-- **Open Overlay**: Use `instance.openOverlay()` to open full-screen editor
+- **Open Overlay**: Use `viewer.openOverlay()` to open full-screen editor
 - **Tool Panel**: Use the top toolbar to switch between Zoom/Pan, Annotation, and Comparison tools
 - **Save Changes**: Click Save button to apply changes and close overlay
 - **Close**: Click Close button to exit without saving changes
