@@ -25,30 +25,27 @@ Thank you for your interest in contributing to CanvasLens! We welcome contributi
    ```bash
    npm run build
    ```
-5. Open examples in your browser to test:
-   - `examples/basic-image-viewer.html`
-   - `examples/zoom-pan-demo.html`
-   - `examples/annotation-demo.html`
-   - `examples/comparison-demo.html`
+5. Open the demo in your browser to test:
+   - `index.html` - Main demo with all features
 
 ## Development Workflow
 
 ### Project Structure
 ```
 src/
+├── CanvasLens.ts      # Main unified component
 ├── core/              # Core canvas functionality
 │   └── Canvas.ts
 ├── modules/           # Feature modules
 │   ├── image-viewer/  # Module 1: Basic image display
 │   ├── zoom-pan/      # Module 2: Zoom and pan
 │   ├── annotation/    # Module 3: Annotations
-│   ├── comparison/    # Module 4: Image comparison
-│   └── photo-editor/  # Module 5: Photo editing
+│   └── comparison/    # Module 4: Image comparison
 ├── types/             # TypeScript type definitions
 ├── utils/             # Utility functions
 └── index.ts           # Main entry point
 
-examples/              # HTML demo files
+index.html             # Main demo file
 ```
 
 ### Building and Testing
@@ -126,7 +123,7 @@ examples/              # HTML demo files
 1. Create directory in `src/modules/your-module/`
 2. Implement core functionality with proper TypeScript types
 3. Add to main exports in `src/index.ts`
-4. Create HTML demo in `examples/`
+4. Create HTML demo in `index.html`
 5. Update README.md with new features
 6. Add to CHANGELOG.md
 

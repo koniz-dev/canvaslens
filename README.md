@@ -5,7 +5,7 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/koniz-dev/canvaslens)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
 
-A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a comprehensive solution for image viewing, zooming, panning, annotation, and before/after image comparison.
+A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a unified component for image viewing, zooming, panning, annotation, and before/after image comparison with optional overlay mode for professional editing.
 
 ## ✨ Features
 
@@ -38,14 +38,12 @@ A powerful HTML5 Canvas-based image viewing and annotation library built with Ty
 - Customizable slider appearance
 - Real-time comparison state tracking
 
-### 🎨 **Module 5: Photo Editor**
-- Professional image editing with overlay interface
-- Light adjustments: brightness, exposure, contrast, highlights, shadows, vignette
-- Color corrections: saturation, temperature, tint, vibrance
-- Real-time preview with instant feedback
-- Tool panel with multiple editing categories
-- Slider-based adjustment controls
-- Click-to-edit functionality
+### 🖼️ **Overlay Mode**
+- Full-screen professional editing interface
+- All tools available in overlay mode
+- Save functionality for applying changes
+- Professional UI with top toolbar
+- Three main tools always accessible: Zoom/Pan, Annotation, Comparison
 
 ## 🚀 Installation
 
@@ -82,17 +80,103 @@ npm install @koniz-dev/canvaslens
     <script type="module">
         import { CanvasLens } from '@koniz-dev/canvaslens';
         
-        const viewer = new CanvasLens({
-            container: document.getElementById('viewer'),
-            width: 800,
-            height: 600
+        const container = document.getElementById('viewer');
+        const instance = CanvasLens.create(container, {
+            width: '100%',
+            height: '100%',
+            enableZoom: true,
+            enablePan: true,
+            enableAnnotations: true,
+            enableComparison: true,
+            onImageLoad: (imageData) => {
+                console.log('Image loaded:', imageData.naturalSize);
+            },
+            onSave: (imageData) => {
+                console.log('Changes saved');
+            }
         });
         
         // Load an image
-        await viewer.loadImage('https://picsum.photos/800/600');
+        await instance.loadImage('https://picsum.photos/800/600');
+        
+        // Open overlay mode
+        instance.openOverlay();
     </script>
 </body>
 </html>
+```
+
+### Component Pattern Usage
+
+CanvasLens supports usage as a component in various frameworks through the Component Pattern:
+
+#### Vue 3
+```vue
+<template>
+  <div>
+    <div ref="containerRef" style="width: 800px; height: 600px;"></div>
+    <button @click="setTool('rect')">Rectangle Tool</button>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { CanvasLensComponent } from '@koniz-dev/canvaslens';
+
+const containerRef = ref(null);
+const instance = ref(null);
+
+onMounted(() => {
+  if (containerRef.value) {
+    instance.value = CanvasLensComponent.create(containerRef.value, {
+      src: 'https://example.com/image.jpg',
+      enableAnnotations: true,
+      onImageLoad: (data) => console.log('Image loaded:', data)
+    });
+  }
+});
+
+onUnmounted(() => {
+  if (instance.value) {
+    instance.value.destroy();
+  }
+});
+
+const setTool = (toolType) => {
+  if (instance.value) {
+    instance.value.activateTool(toolType);
+  }
+};
+</script>
+```
+
+#### React
+```jsx
+import React, { useRef, useEffect } from 'react';
+import { CanvasLensComponent } from '@koniz-dev/canvaslens';
+
+const CanvasLensViewer = ({ src }) => {
+  const containerRef = useRef(null);
+  const instanceRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      instanceRef.current = CanvasLensComponent.create(containerRef.current, {
+        src,
+        enableAnnotations: true,
+        onImageLoad: (data) => console.log('Image loaded:', data)
+      });
+    }
+
+    return () => {
+      if (instanceRef.current) {
+        instanceRef.current.destroy();
+      }
+    };
+  }, [src]);
+
+  return <div ref={containerRef} style={{ width: 800, height: 600 }} />;
+};
 ```
 
 ### Advanced Usage with All Features
@@ -108,7 +192,7 @@ const viewer = new CanvasLens({
     enableZoom: true,
     enablePan: true,
     enableAnnotations: true,
-    enablePhotoEditor: true,
+    enableComparison: true,
     maxZoom: 10,
     minZoom: 0.1
 });
@@ -130,14 +214,11 @@ viewer.setEventHandlers({
     onAnnotationRemove: (annotationId) => {
         console.log('Annotation removed:', annotationId);
     },
-    onPhotoEditorOpen: () => {
-        console.log('Photo editor opened');
+    onComparisonChange: (position) => {
+        console.log('Comparison position:', position);
     },
-    onPhotoEditorClose: () => {
-        console.log('Photo editor closed');
-    },
-    onPhotoEditorImageUpdate: (imageData) => {
-        console.log('Image updated with new adjustments');
+    onSave: (imageData) => {
+        console.log('Changes saved');
     }
 });
 
@@ -174,24 +255,17 @@ if (annotationManager) {
     annotationManager.clearAll();
 }
 
-// Photo Editor controls
-const photoEditorManager = viewer.getPhotoEditorManager();
-if (photoEditorManager) {
-    // Open photo editor
-    viewer.openPhotoEditor();
+// Comparison controls
+const comparisonManager = viewer.getComparisonManager();
+if (comparisonManager) {
+    // Set comparison image
+    await comparisonManager.setComparisonImage('https://picsum.photos/1200/800');
     
-    // Set tool (light, color, retouching, effects, info)
-    photoEditorManager.setTool('light');
+    // Set comparison position (0-100)
+    comparisonManager.setPosition(50);
     
-    // Update adjustments
-    photoEditorManager.updateAdjustment('brightness', 20);
-    photoEditorManager.updateAdjustment('contrast', -10);
-    
-    // Reset all adjustments
-    photoEditorManager.reset();
-    
-    // Close photo editor
-    viewer.closePhotoEditor();
+    // Get current position
+    const position = comparisonManager.getPosition();
 }
 ```
 
@@ -276,10 +350,8 @@ interface CanvasLensOptions {
 #### Annotation Controls
 - `getAnnotationManager(): AnnotationManager | null` - Get annotation manager instance
 
-#### Photo Editor Controls
-- `openPhotoEditor(): void` - Open photo editor overlay
-- `closePhotoEditor(): void` - Close photo editor overlay
-- `getPhotoEditorManager(): PhotoEditorManager | null` - Get photo editor manager instance
+#### Comparison Controls
+- `getComparisonManager(): ImageComparisonManager | null` - Get comparison manager instance
 
 #### State Management
 - `setEventHandlers(handlers: EventHandlers): void` - Set event handlers
@@ -297,9 +369,7 @@ interface EventHandlers {
     onAnnotationAdd?: (annotation: Annotation) => void;
     onAnnotationRemove?: (annotationId: string) => void;
     onToolChange?: (tool: Tool) => void;
-    onPhotoEditorOpen?: () => void;
-    onPhotoEditorClose?: () => void;
-    onPhotoEditorImageUpdate?: (imageData: ImageData) => void;
+    onComparisonChange?: (position: number) => void;
 }
 ```
 
@@ -330,13 +400,12 @@ interface EventHandlers {
 - **Reset Slider**: Center button to reset slider to 50%
 - **Zoom/Pan**: Mouse wheel to zoom, drag to pan (synchronized for both images)
 
-### Photo Editor Controls
+### Overlay Mode Controls
 
-- **Click Image**: Click on the image to open photo editor overlay
-- **Tool Panel**: Use the tool panel on the right to switch between Light, Color, Retouching, Effects, and Info
-- **Sliders**: Adjust the sliders at the bottom to modify image properties in real-time
-- **Close**: Click the ✕ button to close the editor and apply changes
-- **Reset**: Use the reset button to restore original image settings
+- **Open Overlay**: Use `instance.openOverlay()` to open full-screen editor
+- **Tool Panel**: Use the top toolbar to switch between Zoom/Pan, Annotation, and Comparison tools
+- **Save Changes**: Click Save button to apply changes and close overlay
+- **Close**: Click Close button to exit without saving changes
 
 ## 🌐 Browser Support
 
@@ -422,8 +491,4 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 - **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
 - **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
 - **Discussions**: [GitHub Discussions](https://github.com/koniz-dev/canvaslens/discussions)
-- **Examples**: Check the `examples/` directory for interactive demos
-  - `basic-image-viewer.html` - Basic image loading and display
-  - `zoom-pan-demo.html` - Zoom and pan functionality
-  - `annotation-demo.html` - Annotation tools and features
-  - `comparison-demo.html` - Before/after image comparison
+- **Demo**: Check `index.html` for interactive demo with all features

@@ -15,75 +15,187 @@
         ul {
             padding-inline-start: 16px;
         }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .demo-header p {
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        
+        .demo-section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .demo-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn.secondary {
+            background: #95a5a6;
+        }
+        
+        .btn.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .btn.success {
+            background: #27ae60;
+        }
+        
+        .btn.success:hover {
+            background: #229954;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-label {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .file-label:hover {
+            background: #8e44ad;
+        }
+        
+        .status {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            color: #7f8c8d;
+            margin: 0;
+        }
     </style>
 </head>
 <body class="home-page">
-    <div class="container">
-        <div class="header">
+    <div class="demo-container">
+        <div class="demo-header">
             <h1>CanvasLens</h1>
             <p>A powerful HTML5 Canvas-based image viewing and annotation library</p>
         </div>
 
-        <div class="demo-grid">
-            <a href="examples/basic-image-viewer.html" class="demo-card">
-                <h3>🖼️ Basic Image Viewer</h3>
-                <p>Simple image loading and display with basic controls</p>
-                <ul class="features">
-                    <li>Load images from URL or file upload</li>
-                    <li>Responsive canvas display</li>
-                    <li>Basic image information</li>
-                    <li>Sample image loading</li>
-                </ul>
-                <span class="btn">Try Demo</span>
-            </a>
+        <div class="demo-section">
+            <h2>🖼️ Unified Image Viewer & Editor</h2>
+            <p>Experience the complete CanvasLens functionality with zoom, pan, annotations, and comparison tools. Click "Open in Overlay" to access the full editor interface.</p>
+            
+            <div class="features">
+                <div class="feature-card">
+                    <h3>🔍 Zoom & Pan</h3>
+                    <p>Mouse wheel zoom, drag to pan, and zoom controls for precise image navigation</p>
+                </div>
+                <div class="feature-card">
+                    <h3>✏️ Annotations</h3>
+                    <p>Draw rectangles, arrows, text, circles, and lines on images with customizable styles</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚖️ Comparison</h3>
+                    <p>Compare two images side by side with synchronized controls and split view</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🖼️ Overlay Mode</h3>
+                    <p>Full-screen editor with professional UI and save functionality for image edits</p>
+                </div>
+            </div>
 
-            <a href="examples/zoom-pan-demo.html" class="demo-card">
-                <h3>🔍 Zoom & Pan Demo</h3>
-                <p>Advanced image navigation with zoom and pan capabilities</p>
-                <ul class="features">
-                    <li>Mouse wheel zoom</li>
-                    <li>Drag to pan</li>
-                    <li>Zoom controls</li>
-                    <li>Fit to screen options</li>
-                </ul>
-                <span class="btn">Try Demo</span>
-            </a>
+            <div class="controls">
+                <input type="file" id="imageInput" class="file-input" accept="image/*">
+                <label for="imageInput" class="file-label">📁 Load Image</label>
+                
+                <button class="btn" onclick="loadSampleImage()">🖼️ Load Sample</button>
+                <button class="btn secondary" onclick="openOverlay()">🖼️ Open in Overlay</button>
+                <button class="btn secondary" onclick="resetView()">🔄 Reset View</button>
+                <button class="btn secondary" onclick="fitToView()">📐 Fit to View</button>
+            </div>
 
-            <a href="examples/annotation-demo.html" class="demo-card">
-                <h3>✏️ Annotation Demo</h3>
-                <p>Draw and annotate on images with various tools</p>
-                <ul class="features">
-                    <li>Drawing tools</li>
-                    <li>Text annotations</li>
-                    <li>Shape drawing</li>
-                    <li>Annotation export</li>
-                </ul>
-                <span class="btn">Try Demo</span>
-            </a>
+            <div class="status" id="status">
+                <strong>Status:</strong> Ready to load an image
+            </div>
 
-            <a href="examples/comparison-demo.html" class="demo-card">
-                <h3>⚖️ Image Comparison</h3>
-                <p>Compare two images side by side with synchronized controls</p>
-                <ul class="features">
-                    <li>Before/after comparison</li>
-                    <li>Synchronized zoom & pan</li>
-                    <li>Split view controls</li>
-                    <li>Image overlay</li>
-                </ul>
-                <span class="btn">Try Demo</span>
-            </a>
-
-            <a href="examples/photo-editor-demo.html" class="demo-card">
-                <h3>🎨 Photo Editor</h3>
-                <p>Professional image editing with advanced adjustment tools</p>
-                <ul class="features">
-                    <li>Light adjustments (brightness, contrast, exposure)</li>
-                    <li>Color corrections (saturation, temperature, tint)</li>
-                    <li>Real-time preview</li>
-                    <li>Professional UI overlay</li>
-                </ul>
-                <span class="btn">Try Demo</span>
-            </a>
+            <div class="canvas-container" id="canvasContainer"></div>
         </div>
 
         <div class="footer">
@@ -96,39 +208,95 @@
         </div>
     </div>
 
-    <script>
-        // Add smooth scrolling and some interactive effects
-        document.addEventListener('DOMContentLoaded', function() {
-            // Add click tracking for analytics (optional)
-            const demoCards = document.querySelectorAll('.demo-card');
-            demoCards.forEach(card => {
-                card.addEventListener('click', function(e) {
-                    // You can add analytics tracking here
-                });
+    <script type="module">
+        import { CanvasLens } from './dist/index.js';
+
+        let canvasLensInstance = null;
+        const container = document.getElementById('canvasContainer');
+        const status = document.getElementById('status');
+
+        // Initialize CanvasLens component
+        function initCanvasLens() {
+            if (canvasLensInstance) {
+                canvasLensInstance.destroy();
+            }
+
+            canvasLensInstance = CanvasLens.create(container, {
+                width: '100%',
+                height: '100%',
+                backgroundColor: '#f8f9fa',
+                enableZoom: true,
+                enablePan: true,
+                enableAnnotations: true,
+                enableComparison: true,
+                onImageLoad: (imageData) => {
+                    updateStatus(`Image loaded: ${imageData.naturalSize.width} × ${imageData.naturalSize.height}`);
+                },
+                onZoomChange: (scale) => {
+                    updateStatus(`Zoom level: ${(scale * 100).toFixed(0)}%`);
+                },
+                onAnnotationAdd: (annotation) => {
+                    updateStatus(`Annotation added: ${annotation.type}`);
+                },
+                onSave: (imageData) => {
+                    updateStatus('Changes saved successfully!');
+                },
+                onClose: () => {
+                    updateStatus('Overlay closed');
+                }
             });
+        }
 
-            // Add some subtle animations
-            const observerOptions = {
-                threshold: 0.1,
-                rootMargin: '0px 0px -50px 0px'
-            };
+        // Load sample image
+        window.loadSampleImage = function() {
+            if (canvasLensInstance) {
+                updateStatus('Loading sample image...');
+                canvasLensInstance.loadImage('https://picsum.photos/800/600', 'image/jpeg', 'sample.jpg');
+            }
+        };
 
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.style.opacity = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }
-                });
-            }, observerOptions);
+        // Open overlay
+        window.openOverlay = function() {
+            if (canvasLensInstance && canvasLensInstance.isImageLoaded()) {
+                canvasLensInstance.openOverlay();
+            } else {
+                updateStatus('Please load an image first');
+            }
+        };
 
-            // Observe demo cards for animation
-            demoCards.forEach(card => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                observer.observe(card);
-            });
+        // Reset view
+        window.resetView = function() {
+            if (canvasLensInstance) {
+                canvasLensInstance.getCanvasLens().resetView();
+                updateStatus('View reset');
+            }
+        };
+
+        // Fit to view
+        window.fitToView = function() {
+            if (canvasLensInstance) {
+                canvasLensInstance.getCanvasLens().fitToView();
+                updateStatus('Fitted to view');
+            }
+        };
+
+        // Update status
+        function updateStatus(message) {
+            status.innerHTML = `<strong>Status:</strong> ${message}`;
+        }
+
+        // File input handler
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && canvasLensInstance) {
+                updateStatus(`Loading ${file.name}...`);
+                canvasLensInstance.loadImageFromFile(file);
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initCanvasLens();
         });
     </script>
 </body>

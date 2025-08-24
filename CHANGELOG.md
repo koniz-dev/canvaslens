@@ -8,6 +8,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Unified CanvasLens Component**: Single component export for easier integration
+- **Overlay Mode**: Full-screen professional editing interface with save functionality
+- **Enhanced Tool Integration**: All 3 main tools (Zoom/Pan, Annotation, Comparison) always available
+- **Improved Component API**: Cleaner interface with better TypeScript support
+
+### Changed
+- **Component Structure**: Refactored from multiple components to single unified component
+- **File Organization**: Moved main component to `src/CanvasLens.ts` for better naming
+- **Export Structure**: Simplified exports to focus on main component
+- **Documentation**: Updated all documentation to reflect new unified approach
+
+### Removed
+- **Photo Editor Module**: Completely removed photo-editor functionality and related exports
+- **Multiple Examples**: Removed separate example files, now only single demo in `index.html`
+- **Old Component Structure**: Removed `src/components/` directory and old component files
+- **Photo Editor References**: Cleaned up all photo-editor related types, exports, and documentation
+
+### Fixed
+- **TypeScript Errors**: Resolved all type conflicts and naming issues
+- **Build Process**: Ensured clean build with no errors
+- **Import Structure**: Fixed circular imports and dependency issues
+
+## [0.0.8] - 2024-01-XX
+
+### Added
 - Logger utility (`src/utils/logger.ts`) for production-safe logging
 - Production build script (`npm run build:prod`) that automatically removes console.log statements
 - Console log removal script (`scripts/remove-console-logs.js`)
@@ -23,10 +48,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unnecessary console.log statements for production environment
 - Maintained important console.error and console.warn statements for debugging
 
-## [0.0.8] - 2024-01-XX
+## [0.0.7] - 2024-01-XX
 
 ### Added
-- Photo editor module with basic editing capabilities
 - Image comparison module for before/after comparison
 - Enhanced annotation tools with more drawing options
 - Zoom and pan functionality with smooth interactions
@@ -75,15 +99,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Customizable slider appearance (color, width)
   - Real-time comparison state tracking
 
-- **Module 5: Photo Editor**
-  - Professional image editing with overlay interface
-  - Light adjustments: brightness, exposure, contrast, highlights, shadows, vignette
-  - Color corrections: saturation, temperature, tint, vibrance
-  - Real-time preview with instant feedback
-  - Tool panel with multiple editing categories
-  - Slider-based adjustment controls
-  - Click-to-edit functionality
-
 ### Technical Features
 - Full TypeScript support with strict mode
 - Modular architecture for easy extension
@@ -94,25 +109,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation & Examples
 - Complete API documentation
-- Interactive HTML demos for each module
+- Interactive HTML demo
 - Usage examples and code snippets
 - Project structure documentation
-
-### Build System
-- TypeScript compilation with source maps
-- NPM package configuration
-- Development and production builds
-- Clean build process
-
-## [Unreleased]
-
-### Planned
-- Performance optimizations
-- Touch support for mobile devices
-- Advanced annotation features (circle, line tools)
-- Undo/Redo functionality
-- Collaborative annotations
-- Plugin system
-- Export comparison as video/GIF
-- Multiple comparison modes (side-by-side, overlay)
-- Folder tree organization for image collections

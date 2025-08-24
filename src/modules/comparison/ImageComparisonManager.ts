@@ -158,8 +158,8 @@ export class ImageComparisonManager {
     this.state.sliderPosition = clampedPosition;
     
     // Trigger event if handler exists
-    if (this.eventHandlers.onSliderChange) {
-      this.eventHandlers.onSliderChange(clampedPosition);
+    if (this.eventHandlers.onComparisonChange) {
+      this.eventHandlers.onComparisonChange(clampedPosition);
     }
   }
 
