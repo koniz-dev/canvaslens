@@ -197,8 +197,8 @@
 
     <div class="container">
         <div class="page-header">
-            <h1>🎨 Photo Editor</h1>
-            <p>Module 5: Professional Image Editing with Advanced Adjustment Tools</p>
+            <h1>🎨 Photo Editor Demo</h1>
+            <p>Demo sử dụng các tool từ 4 module chính: Annotation, Comparison, Zoom-Pan, Image Viewer</p>
         </div>
 
         <div class="main-content">
@@ -210,13 +210,13 @@
             
             <div class="controls-section">
                 <div class="instructions">
-                    <h4>🎨 How to Use Photo Editor:</h4>
+                    <h4>🎨 How to Use Photo Editor Demo:</h4>
                     <ul>
-                        <li><strong>Click on the image</strong> to open the photo editor overlay</li>
-                        <li>Use the <strong>tool panel on the right</strong> to switch between Light, Color, Retouching, Effects, and Info</li>
-                        <li>Adjust the <strong>sliders at the bottom</strong> to modify image properties</li>
-                        <li>Click the <strong>✕ button</strong> to close the editor</li>
-                        <li>Changes are applied in real-time to the image</li>
+                        <li><strong>Annotation Tools:</strong> Text, Arrow, Rectangle để chú thích ảnh</li>
+                        <li><strong>Comparison Tool:</strong> So sánh ảnh trước-sau</li>
+                        <li><strong>Zoom & Pan:</strong> Phóng to, thu nhỏ và di chuyển ảnh</li>
+                        <li><strong>Image Viewer:</strong> Xem và điều khiển ảnh cơ bản</li>
+                        <li>Sử dụng các nút bên dưới để kích hoạt từng tool</li>
                     </ul>
                 </div>
                 
@@ -233,10 +233,13 @@
                 </div>
                 
                 <div class="control-group">
-                    <h3>🎨 Photo Editor</h3>
+                    <h3>🛠️ Tools từ 4 Module</h3>
                     <div class="tool-buttons">
-                        <button onclick="openPhotoEditor()" class="btn btn-primary">🎨 Open Editor</button>
-                        <button onclick="resetImage()" class="btn btn-success">🔄 Reset Image</button>
+                        <button onclick="enableAnnotations()" class="btn btn-primary">✏️ Annotation Tools</button>
+                        <button onclick="enableComparison()" class="btn btn-primary">⚖️ Comparison Tool</button>
+                        <button onclick="enableZoomPan()" class="btn btn-primary">🔍 Zoom & Pan</button>
+                        <button onclick="resetView()" class="btn btn-secondary">🔄 Reset View</button>
+                        <button onclick="fitToView()" class="btn btn-success">📐 Fit to View</button>
                     </div>
                 </div>
                 

@@ -325,9 +325,16 @@ export class CanvasLens {
       return;
     }
 
-    // Get current image data
+    console.log('Opening photo editor...');
+
+    // First, open the photo editor to create overlay and image container
+    this.photoEditorManager.open();
+
+    // Then get current image data and load it
     const imageData = this.imageViewer.getImageData();
     if (imageData) {
+      console.log('Image data found:', imageData.naturalSize.width, 'x', imageData.naturalSize.height);
+      
       // Convert image to ImageData for processing
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
@@ -336,14 +343,14 @@ export class CanvasLens {
       ctx.drawImage(imageData.element, 0, 0);
       
       const processedImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      console.log('Processed image data:', processedImageData.width, 'x', processedImageData.height);
+      
       this.photoEditorManager.setOriginalImage(processedImageData);
-    }
-
-    this.photoEditorManager.open();
-    
-    // Load image into overlay container
-    if (imageData && this.photoEditorUI) {
-      this.photoEditorUI.loadImageToContainer(imageData.element);
+      
+      // Load the same ImageData into overlay container
+      this.photoEditorUI.loadImageDataToContainer(processedImageData);
+    } else {
+      console.warn('No image data found!');
     }
     
     if (this.eventHandlers.onPhotoEditorOpen) {
