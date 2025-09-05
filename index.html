@@ -26,16 +26,25 @@
         .demo-header {
             text-align: center;
             margin-bottom: 40px;
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
         }
 
         .demo-header h1 {
-            color: #2c3e50;
+            color: var(--text-light);
             margin-bottom: 10px;
+            font-size: var(--font-size-4xl);
+            text-shadow: var(--shadow-text);
+            font-weight: 700;
         }
 
         .demo-header p {
-            color: #7f8c8d;
-            font-size: 18px;
+            color: var(--text-light);
+            font-size: var(--font-size-lg);
+            opacity: 0.95;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
 
         .demo-section {
@@ -206,7 +215,7 @@
             </div>
 
             <div class="canvas-container">
-                <canvas-lens id="canvasContainer" src="https://picsum.photos/800/600" width="100%" height="100%"
+                <canvas-lens id="canvasContainer" width="100%" height="100%"
                     tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
                     background-color="#f8f9fa">
                 </canvas-lens>
@@ -234,6 +243,10 @@
             updateStatus(`Image loaded: ${e.detail.naturalSize.width} × ${e.detail.naturalSize.height}`);
         });
 
+        viewer.addEventListener('imageloaderror', (e) => {
+            updateStatus(`❌ Failed to load image: ${e.detail.message}`);
+        });
+
         viewer.addEventListener('zoomchange', (e) => {
             updateStatus(`Zoom level: ${(e.detail * 100).toFixed(0)}%`);
         });
@@ -245,7 +258,10 @@
         // Load sample image
         window.loadSampleImage = function () {
             updateStatus('Loading sample image...');
-            viewer.loadImage('https://picsum.photos/800/600', 'image/jpeg', 'sample.jpg');
+            // Use Picsum for reliable sample images
+                            viewer.loadImage('https://picsum.photos/800/600', 'image/jpeg', 'sample.jpg').catch(err => {
+                updateStatus(`❌ Failed to load sample image: ${err.message}`);
+            });
         };
 
         // Open overlay

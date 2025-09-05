@@ -1,5 +1,5 @@
 import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point, ToolConfig } from './types';
-import { CoreCanvasLens } from './index';
+import { CoreCanvasLens } from './CoreCanvasLens';
 
 // Web Component for CanvasLens
 export class CanvasLensElement extends HTMLElement {
@@ -57,8 +57,39 @@ export class CanvasLensElement extends HTMLElement {
         container
       });
 
+      // Set up event handlers to forward events to the web component
+      this.canvasLens.setEventHandlers({
+        onImageLoad: (imageData) => {
+          this.dispatchEvent(new CustomEvent('imageLoad', { detail: imageData }));
+        },
+        onImageLoadError: (error) => {
+          this.dispatchEvent(new CustomEvent('imageLoadError', { detail: error }));
+        },
+        onZoomChange: (zoom) => {
+          this.dispatchEvent(new CustomEvent('zoomChange', { detail: zoom }));
+        },
+        onPanChange: (pan) => {
+          this.dispatchEvent(new CustomEvent('panChange', { detail: pan }));
+        },
+        onAnnotationAdd: (annotation) => {
+          this.dispatchEvent(new CustomEvent('annotationAdd', { detail: annotation }));
+        },
+        onAnnotationRemove: (annotation) => {
+          this.dispatchEvent(new CustomEvent('annotationRemove', { detail: annotation }));
+        },
+        onToolChange: (tool) => {
+          this.dispatchEvent(new CustomEvent('toolChange', { detail: tool }));
+        },
+        onComparisonChange: (comparison) => {
+          this.dispatchEvent(new CustomEvent('comparisonChange', { detail: comparison }));
+        }
+      });
+
       // Set up event listeners
       this.setupEventListeners();
+
+      // Ensure canvas has proper size after rendering
+      this.ensureCanvasSize();
 
       // Load initial image if src is provided
       const src = this.getAttribute('src');
@@ -115,14 +146,37 @@ export class CanvasLensElement extends HTMLElement {
   private parseSize(size: string | null, defaultSize: number): number {
     if (!size) return defaultSize;
     if (size.endsWith('px')) return parseInt(size);
-    if (size.endsWith('%')) return (this.clientWidth * parseInt(size)) / 100;
+    if (size.endsWith('%')) {
+      const percentage = parseInt(size);
+      const containerSize = this.clientWidth || this.offsetWidth || 800;
+      return (containerSize * percentage) / 100;
+    }
     return parseInt(size) || defaultSize;
   }
 
+  private ensureCanvasSize(): void {
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    requestAnimationFrame(() => {
+      if (this.canvasLens && !this.isDestroyed) {
+        const width = this.parseSize(this.getAttribute('width'), 800);
+        const height = this.parseSize(this.getAttribute('height'), 600);
+        
+        // Only resize if we have valid dimensions
+        if (width > 0 && height > 0) {
+          this.canvasLens.resize(width, height);
+        }
+      }
+    });
+  }
+
   private setupEventListeners() {
-    // Listen for custom events
+    // Listen for custom events and forward them with lowercase names for external listeners
     this.addEventListener('imageLoad', (e: any) => {
       this.dispatchEvent(new CustomEvent('imageload', { detail: e.detail }));
+    });
+
+    this.addEventListener('imageLoadError', (e: any) => {
+      this.dispatchEvent(new CustomEvent('imageloaderror', { detail: e.detail }));
     });
 
     this.addEventListener('zoomChange', (e: any) => {
@@ -286,14 +340,14 @@ export class CanvasLensElement extends HTMLElement {
 
   getZoomLevel(): number {
     if (this.canvasLens && !this.isDestroyed) {
-      return this.canvasLens.getZoomLevel();
+      return this.canvasLens.getZoom();
     }
     return 1;
   }
 
   getPanOffset(): Point {
     if (this.canvasLens && !this.isDestroyed) {
-      return this.canvasLens.getPanOffset();
+      return this.canvasLens.getPan();
     }
     return { x: 0, y: 0 };
   }
@@ -312,7 +366,7 @@ export class CanvasLensElement extends HTMLElement {
 
   zoomTo(scale: number): void {
     if (this.canvasLens && !this.isDestroyed) {
-      this.canvasLens.zoomTo(scale);
+      this.canvasLens.setZoom(scale);
     }
   }
 

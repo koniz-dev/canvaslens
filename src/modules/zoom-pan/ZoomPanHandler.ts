@@ -256,14 +256,16 @@ export class ZoomPanHandler {
   fitToView(imageBounds: { x: number; y: number; width: number; height: number }): void {
     const canvasSize = this.canvas.getSize();
     
-    // Calculate scale to fit image
+    // Calculate scale to fit image within canvas
     const scaleX = canvasSize.width / imageBounds.width;
     const scaleY = canvasSize.height / imageBounds.height;
     const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 100%
     
     // Calculate center position to center the image
-    const offsetX = (canvasSize.width - imageBounds.width * scale) / 2;
-    const offsetY = (canvasSize.height - imageBounds.height * scale) / 2;
+    const scaledWidth = imageBounds.width * scale;
+    const scaledHeight = imageBounds.height * scale;
+    const offsetX = (canvasSize.width - scaledWidth) / 2;
+    const offsetY = (canvasSize.height - scaledHeight) / 2;
     
     this.updateViewState({
       scale,

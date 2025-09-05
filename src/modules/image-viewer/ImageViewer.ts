@@ -65,14 +65,9 @@ export class ImageViewer {
       
       this.render();
       
-      // Fit image to view if zoom/pan is enabled
-      if (this.zoomPanHandler && this.imageData) {
-        const bounds = this.getImageBounds();
-        if (bounds) {
-          this.zoomPanHandler.fitToView(bounds);
-          // Update initial view state after fitting
-          this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
-        }
+      // Reset zoom/pan to initial state to show image properly fitted
+      if (this.zoomPanHandler) {
+        this.zoomPanHandler.reset();
       }
       
       if (this.eventHandlers.onImageLoad) {
@@ -80,6 +75,9 @@ export class ImageViewer {
       }
     } catch (err) {
       error('Failed to load image:', err);
+      if (this.eventHandlers.onImageLoadError) {
+        this.eventHandlers.onImageLoadError(err as Error);
+      }
       throw err;
     }
   }
@@ -126,13 +124,17 @@ export class ImageViewer {
     this.canvas.applyViewTransform();
 
     // Draw image
-    ctx.drawImage(
-      this.imageData.element,
-      this.imageData.position.x,
-      this.imageData.position.y,
-      this.imageData.displaySize.width,
-      this.imageData.displaySize.height
-    );
+    try {
+      ctx.drawImage(
+        this.imageData.element,
+        this.imageData.position.x,
+        this.imageData.position.y,
+        this.imageData.displaySize.width,
+        this.imageData.displaySize.height
+      );
+    } catch (err) {
+      error('Error drawing image:', err);
+    }
 
     // Draw annotations if annotation manager is available
     // Annotations are now drawn with view transformations applied

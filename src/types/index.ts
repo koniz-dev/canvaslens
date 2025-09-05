@@ -74,6 +74,7 @@ export interface Tool {
 
 export interface EventHandlers {
   onImageLoad?: (imageData: ImageData) => void;
+  onImageLoadError?: (error: Error) => void;
   onZoomChange?: (scale: number) => void;
   onPanChange?: (offset: Point) => void;
   onAnnotationAdd?: (annotation: Annotation) => void;

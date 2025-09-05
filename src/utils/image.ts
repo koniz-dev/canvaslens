@@ -40,10 +40,26 @@ export function calculateFitDimensions(
 export function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    
+    // Try with CORS first, fallback to no CORS if it fails
     img.crossOrigin = 'anonymous';
     
     img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    img.onerror = (error) => {
+      // If CORS fails, try without CORS
+      if (img.crossOrigin === 'anonymous') {
+        const fallbackImg = new Image();
+        fallbackImg.onload = () => {
+          resolve(fallbackImg);
+        };
+        fallbackImg.onerror = (fallbackError) => {
+          reject(new Error(`Failed to load image: ${url}`));
+        };
+        fallbackImg.src = url;
+      } else {
+        reject(new Error(`Failed to load image: ${url}`));
+      }
+    };
     
     img.src = url;
   });
