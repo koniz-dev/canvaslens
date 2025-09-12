@@ -289,6 +289,16 @@
         function updateStatus(message) {
             status.innerHTML = `<strong>Status:</strong> ${message}`;
         }
+        
+        // Test zoom/pan disable
+        
+        // Add test button
+        const testButton = document.createElement('button');
+        testButton.textContent = 'Test Zoom';
+        testButton.onclick = () => {
+            viewer.zoomIn();
+        };
+        document.body.appendChild(testButton);
 
         // File input handler
         document.getElementById('imageInput').addEventListener('change', (e) => {

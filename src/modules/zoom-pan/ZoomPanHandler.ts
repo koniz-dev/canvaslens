@@ -1,6 +1,7 @@
 import { Canvas } from '../../core/Canvas';
 import { ViewState, Point, EventHandlers } from '../../types';
 import { screenToWorld, worldToScreen, clamp } from '../../utils/coordinate';
+import { log } from '../../utils/logger';
 
 export interface ZoomPanOptions {
   enableZoom?: boolean;
@@ -42,6 +43,9 @@ export class ZoomPanHandler {
     
     // Store initial view state
     this.initialViewState = { ...this.canvas.getViewState() };
+    
+    // Set initial cursor based on image loaded state
+    this.updateCursor();
   }
 
   /**
@@ -61,9 +65,46 @@ export class ZoomPanHandler {
   }
 
   /**
+   * Check if image is loaded
+   */
+  private isImageLoaded(): boolean {
+    const hasImageViewer = !!this.canvas.imageViewer;
+    const isLoaded = this.canvas.imageViewer ? this.canvas.imageViewer.isImageLoaded() : false;
+    return isLoaded;
+  }
+
+  /**
+   * Update cursor based on current state
+   */
+  private updateCursor(): void {
+    if (!this.isImageLoaded()) {
+      // No image loaded - use default cursor
+      this.canvas.getElement().style.cursor = 'default';
+    } else if (this.isPanning) {
+      // Currently panning - use grabbing cursor
+      this.canvas.getElement().style.cursor = 'grabbing';
+    } else {
+      // Image loaded and can pan - use grab cursor
+      this.canvas.getElement().style.cursor = 'grab';
+    }
+  }
+
+  /**
+   * Public method to update cursor (called when image is loaded/unloaded)
+   */
+  public updateCursorState(): void {
+    this.updateCursor();
+  }
+
+  /**
    * Handle mouse wheel for zooming
    */
   private handleWheel(event: WheelEvent): void {
+    // Don't handle zoom if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
     event.preventDefault();
     
     const currentViewState = this.canvas.getViewState();
@@ -103,6 +144,11 @@ export class ZoomPanHandler {
    * Handle mouse down for panning
    */
   private handleMouseDown(event: MouseEvent): void {
+    // Don't handle panning if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
     // Don't handle panning if annotation system is drawing
     if (this.isAnnotationDrawing()) {
       return;
@@ -111,7 +157,7 @@ export class ZoomPanHandler {
     if (event.button === 0) { // Left mouse button only
       this.isPanning = true;
       this.lastPanPoint = this.canvas.getMousePosition(event);
-      this.canvas.getElement().style.cursor = 'grabbing';
+      this.updateCursor();
     }
   }
 
@@ -145,7 +191,7 @@ export class ZoomPanHandler {
    */
   private handleMouseUp(event: MouseEvent): void {
     this.isPanning = false;
-    this.canvas.getElement().style.cursor = 'grab';
+    this.updateCursor();
   }
 
   /**
@@ -182,6 +228,11 @@ export class ZoomPanHandler {
    * Zoom to a specific scale
    */
   zoomTo(scale: number, center?: Point): void {
+    // Don't zoom if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
     const clampedScale = clamp(scale, this.options.minZoom, this.options.maxZoom);
     const currentState = this.canvas.getViewState();
     
@@ -223,6 +274,11 @@ export class ZoomPanHandler {
    * Zoom in by a factor
    */
   zoomIn(factor: number = 1.2): void {
+    // Don't zoom if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
     const currentState = this.canvas.getViewState();
     this.zoomTo(currentState.scale * factor);
   }
@@ -231,6 +287,11 @@ export class ZoomPanHandler {
    * Zoom out by a factor
    */
   zoomOut(factor: number = 1.2): void {
+    // Don't zoom if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
     const currentState = this.canvas.getViewState();
     this.zoomTo(currentState.scale / factor);
   }
@@ -254,6 +315,11 @@ export class ZoomPanHandler {
    * Fit image to view (if image bounds are available)
    */
   fitToView(imageBounds: { x: number; y: number; width: number; height: number }): void {
+    // Don't fit to view if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
     const canvasSize = this.canvas.getSize();
     
     // Calculate scale to fit image within canvas

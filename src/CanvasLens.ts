@@ -1,5 +1,6 @@
 import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point, ToolConfig } from './types';
 import { CoreCanvasLens } from './CoreCanvasLens';
+import { warn } from './utils/logger';
 
 // Web Component for CanvasLens
 export class CanvasLensElement extends HTMLElement {
@@ -124,7 +125,7 @@ export class CanvasLensElement extends HTMLElement {
       try {
         return JSON.parse(toolsAttr);
       } catch (e) {
-        console.warn('Invalid tools configuration:', toolsAttr);
+        warn('Invalid tools configuration:', toolsAttr);
       }
     }
 

@@ -68,6 +68,7 @@ export class ImageViewer {
       // Reset zoom/pan to initial state to show image properly fitted
       if (this.zoomPanHandler) {
         this.zoomPanHandler.reset();
+        this.zoomPanHandler.updateCursorState();
       }
       
       if (this.eventHandlers.onImageLoad) {
@@ -99,6 +100,7 @@ export class ImageViewer {
           // Update initial view state after fitting
           this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
         }
+        this.zoomPanHandler.updateCursorState();
       }
     
     if (this.eventHandlers.onImageLoad) {
@@ -238,6 +240,7 @@ export class ImageViewer {
   resetView(): void {
     if (this.zoomPanHandler) {
       this.zoomPanHandler.reset();
+      this.zoomPanHandler.updateCursorState();
     }
   }
 
