@@ -403,11 +403,26 @@ viewer.addEventListener('imageload', (event) => {
 
 ### Available Exports
 
-The library exports only the main Web Component:
+The library exports only the main Web Component and supporting types:
 
 ```typescript
 // Web Component
 import { CanvasLens } from '@koniz-dev/canvaslens';
+
+// Types (for TypeScript support)
+import type { 
+  CanvasLensOptions, 
+  EventHandlers, 
+  Size, 
+  ToolConfig, 
+  Annotation, 
+  AnnotationStyle, 
+  Point, 
+  Rectangle, 
+  ViewState, 
+  ImageData, 
+  Tool 
+} from '@koniz-dev/canvaslens';
 ```
 
 ## 🎮 Controls

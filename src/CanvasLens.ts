@@ -1,5 +1,5 @@
 import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point, ToolConfig } from './types';
-import { CoreCanvasLens } from './CoreCanvasLens';
+import { CoreCanvasLens } from './core/CoreCanvasLens.js';
 import { warn } from './utils/logger';
 
 // Web Component for CanvasLens
@@ -60,28 +60,28 @@ export class CanvasLensElement extends HTMLElement {
 
       // Set up event handlers to forward events to the web component
       this.canvasLens.setEventHandlers({
-        onImageLoad: (imageData) => {
+        onImageLoad: (imageData: ImageData) => {
           this.dispatchEvent(new CustomEvent('imageLoad', { detail: imageData }));
         },
-        onImageLoadError: (error) => {
+        onImageLoadError: (error: Error) => {
           this.dispatchEvent(new CustomEvent('imageLoadError', { detail: error }));
         },
-        onZoomChange: (zoom) => {
+        onZoomChange: (zoom: number) => {
           this.dispatchEvent(new CustomEvent('zoomChange', { detail: zoom }));
         },
-        onPanChange: (pan) => {
+        onPanChange: (pan: Point) => {
           this.dispatchEvent(new CustomEvent('panChange', { detail: pan }));
         },
-        onAnnotationAdd: (annotation) => {
+        onAnnotationAdd: (annotation: Annotation) => {
           this.dispatchEvent(new CustomEvent('annotationAdd', { detail: annotation }));
         },
-        onAnnotationRemove: (annotation) => {
+        onAnnotationRemove: (annotation: string) => {
           this.dispatchEvent(new CustomEvent('annotationRemove', { detail: annotation }));
         },
-        onToolChange: (tool) => {
+        onToolChange: (tool: string | null) => {
           this.dispatchEvent(new CustomEvent('toolChange', { detail: tool }));
         },
-        onComparisonChange: (comparison) => {
+        onComparisonChange: (comparison: number) => {
           this.dispatchEvent(new CustomEvent('comparisonChange', { detail: comparison }));
         }
       });
@@ -312,7 +312,7 @@ export class CanvasLensElement extends HTMLElement {
       const annotationManager = this.canvasLens.getAnnotationManager();
       if (annotationManager) {
         const annotations = annotationManager.getAllAnnotations();
-        annotations.forEach(annotation => {
+        annotations.forEach((annotation: Annotation) => {
           annotationManager.removeAnnotation(annotation.id);
         });
       }

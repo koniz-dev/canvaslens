@@ -1,10 +1,10 @@
 // Core CanvasLens class - separated to avoid circular imports
 
-import { CanvasLensOptions, EventHandlers, Size, ToolConfig } from './types';
-import { ImageViewer } from './modules/image-viewer/ImageViewer';
-import { ZoomPanOptions } from './modules/zoom-pan/ZoomPanHandler';
-import { AnnotationManagerOptions } from './modules/annotation/AnnotationManager';
-import { warn } from './utils/logger';
+import { CanvasLensOptions, EventHandlers, Size, ToolConfig } from '../types';
+import { ImageViewer } from '../modules/image-viewer/ImageViewer';
+import { ZoomPanOptions } from '../modules/zoom-pan/ZoomPanHandler';
+import { AnnotationManagerOptions } from '../modules/annotation/AnnotationManager';
+import { warn } from '../utils/logger';
 
 export class CoreCanvasLens {
   private container: HTMLElement;
