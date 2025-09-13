@@ -85,5 +85,12 @@ const server = http.createServer((req, res) => {
 
 const PORT = 3000;
 server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}/`);
+    const timestamp = new Date().toLocaleTimeString('vi-VN', { 
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    console.log(`[${timestamp}] [SRV] 🚀 CanvasLens development server running on http://localhost:${PORT}`);
+    console.log(`[${timestamp}] [SRV] 📁 Serving files from: ${process.cwd()}`);
 });

@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Process**: Ensured clean build with no errors
 - **Import Structure**: Fixed circular imports and dependency issues
 
-## [0.0.8] - 2024-01-XX
+## [0.0.8] - 2024-12-19
 
 ### Added
 - Logger utility (`src/utils/logger.ts`) for production-safe logging
@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unnecessary console.log statements for production environment
 - Maintained important console.error and console.warn statements for debugging
 
-## [0.0.7] - 2024-01-XX
+## [0.0.7] - 2024-12-18
 
 ### Added
 - Image comparison module for before/after comparison

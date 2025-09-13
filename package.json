@@ -19,7 +19,7 @@
     "build:prod": "tsc && npm run fix-imports && npm run remove-console-logs",
     "fix-imports": "node scripts/fix-imports.js",
     "remove-console-logs": "node scripts/remove-console-logs.js",
-    "dev": "concurrently \"tsc --watch\" \"node server.js\"",
+    "dev": "concurrently --names \"TSC,SRV\" --prefix-colors \"blue,green\" --kill-others-on-fail \"node scripts/dev-tsc.js\" \"node server.js\"",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
     "test": "jest",
