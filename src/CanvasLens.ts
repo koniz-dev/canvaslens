@@ -1,13 +1,13 @@
 import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point, ToolConfig } from './types';
-import { CoreCanvasLens } from './core/CoreCanvasLens.js';
+import { Engine } from './core/Engine';
 import { warn } from './utils/logger';
 
 // Web Component for CanvasLens
 export class CanvasLensElement extends HTMLElement {
-  private canvasLens: CoreCanvasLens | null = null;
+  private canvasLens: Engine | null = null;
   private isDestroyed = false;
   private overlayContainer: HTMLElement | null = null;
-  private overlayCanvasLens: CoreCanvasLens | null = null;
+  private overlayCanvasLens: Engine | null = null;
   private overlayOpen = false;
 
   // Define observed attributes for reactivity
@@ -53,7 +53,7 @@ export class CanvasLensElement extends HTMLElement {
       const options = this.parseAttributes();
       
       // Create CanvasLens instance
-      this.canvasLens = new CoreCanvasLens({
+      this.canvasLens = new Engine({
         ...options,
         container
       });
@@ -536,7 +536,7 @@ export class CanvasLensElement extends HTMLElement {
       minZoom: parseFloat(this.getAttribute('min-zoom') || '0.1')
     };
 
-    this.overlayCanvasLens = new CoreCanvasLens(overlayOptions);
+    this.overlayCanvasLens = new Engine(overlayOptions);
 
     // Load current image to overlay
     if (this.canvasLens && this.canvasLens.isImageLoaded()) {

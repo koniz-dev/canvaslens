@@ -1,4 +1,4 @@
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 import { Annotation, AnnotationStyle, Tool, Point } from '../../types';
 import { AnnotationRenderer } from './AnnotationRenderer';
 import { BaseTool, RectangleTool, ArrowTool, TextTool, ToolOptions } from './tools';
@@ -9,7 +9,7 @@ export interface ToolManagerOptions {
 }
 
 export class ToolManager {
-  private canvas: Canvas;
+  private canvas: Renderer;
   private renderer: AnnotationRenderer;
   private options: ToolManagerOptions;
   private tools: Map<string, BaseTool> = new Map();
@@ -31,7 +31,7 @@ export class ToolManager {
   private boundKeyUp: (event: KeyboardEvent) => void;
 
   constructor(
-    canvas: Canvas,
+    canvas: Renderer,
     renderer: AnnotationRenderer,
     options: ToolManagerOptions
   ) {

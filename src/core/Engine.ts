@@ -6,7 +6,7 @@ import { ZoomPanOptions } from '../modules/zoom-pan/ZoomPanHandler';
 import { AnnotationManagerOptions } from '../modules/annotation/AnnotationManager';
 import { warn } from '../utils/logger';
 
-export class CoreCanvasLens {
+export class Engine {
   private container: HTMLElement;
   private options: CanvasLensOptions;
   private imageViewer: ImageViewer;

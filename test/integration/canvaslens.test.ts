@@ -1,17 +1,50 @@
 import { CanvasLens } from '../../src/index';
 
+// Define interface for CanvasLens Web Component
+interface CanvasLensElement extends HTMLElement {
+  loadImage(src: string, type?: string, fileName?: string): Promise<void>;
+  loadImageFromFile(file: File): void;
+  resize(width: number, height: number): void;
+  activateTool(toolType: string): boolean;
+  deactivateTool(): boolean;
+  getActiveTool(): string | null;
+  addAnnotation(annotation: any): void;
+  removeAnnotation(annotationId: string): void;
+  clearAnnotations(): void;
+  getAnnotations(): any[];
+  fitToView(): void;
+  resetView(): void;
+  getZoomLevel(): number;
+  getPanOffset(): { x: number; y: number };
+  zoomIn(factor?: number): void;
+  zoomOut(factor?: number): void;
+  zoomTo(scale: number): void;
+  isImageLoaded(): boolean;
+  getImageData(): any;
+  openOverlay(): void;
+  closeOverlay(): void;
+  isOverlayOpen(): boolean;
+}
+
+// Ensure custom element is defined before tests
+beforeAll(() => {
+  if (!customElements.get('canvas-lens')) {
+    customElements.define('canvas-lens', CanvasLens);
+  }
+});
+
 describe('CanvasLens Web Component Integration Tests', () => {
   let container: HTMLElement;
-  let canvasLens: HTMLElement;
+  let canvasLens: CanvasLensElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     container = document.createElement('div');
     container.style.width = '800px';
     container.style.height = '600px';
     document.body.appendChild(container);
     
     // Create canvas-lens element
-    canvasLens = document.createElement('canvas-lens');
+    canvasLens = document.createElement('canvas-lens') as CanvasLensElement;
     canvasLens.setAttribute('width', '800px');
     canvasLens.setAttribute('height', '600px');
     canvasLens.setAttribute('background-color', '#f0f0f0');
@@ -28,12 +61,23 @@ describe('CanvasLens Web Component Integration Tests', () => {
       comparison: false
     }));
     container.appendChild(canvasLens);
+    
+    // Wait for custom element to be fully initialized
+    await new Promise(resolve => setTimeout(resolve, 100));
   });
 
   afterEach(() => {
+    // Clean up event listeners and timers
+    if (canvasLens && typeof canvasLens.closeOverlay === 'function') {
+      canvasLens.closeOverlay();
+    }
+    
     if (container && container.parentNode) {
       container.parentNode.removeChild(container);
     }
+    
+    // Clear any pending timers
+    jest.clearAllTimers();
   });
 
   describe('Initialization', () => {
@@ -149,7 +193,8 @@ describe('CanvasLens Web Component Integration Tests', () => {
     it('should return state information', () => {
       expect(typeof canvasLens.isImageLoaded()).toBe('boolean');
       expect(typeof canvasLens.getZoomLevel()).toBe('number');
-      expect(typeof canvasLens.getActiveTool()).toBe('string') || expect(canvasLens.getActiveTool()).toBeNull();
+      const activeTool = canvasLens.getActiveTool();
+      expect(typeof activeTool === 'string' || activeTool === null).toBe(true);
       expect(typeof canvasLens.isOverlayOpen()).toBe('boolean');
     });
 

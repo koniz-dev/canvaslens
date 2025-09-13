@@ -1,4 +1,4 @@
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 import { ImageData, Point, Size, EventHandlers } from '../../types';
 import { loadImage, getImageData, calculateFitDimensions } from '../../utils/image';
 import { error } from '../../utils/logger';
@@ -20,12 +20,12 @@ export interface ComparisonState {
 }
 
 export class ImageComparisonManager {
-  private canvas: Canvas;
+  private canvas: Renderer;
   private options: Required<ComparisonOptions>;
   private state: ComparisonState;
   private eventHandlers: EventHandlers;
 
-  constructor(canvas: Canvas, options: ComparisonOptions = {}) {
+  constructor(canvas: Renderer, options: ComparisonOptions = {}) {
     this.canvas = canvas;
     this.eventHandlers = options.eventHandlers || {};
     

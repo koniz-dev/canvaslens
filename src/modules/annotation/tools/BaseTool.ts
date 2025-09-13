@@ -1,5 +1,5 @@
 import { Point, Annotation, AnnotationStyle } from '../../../types';
-import { Canvas } from '../../../core/Canvas';
+import { Renderer } from '../../../core/Renderer';
 import { AnnotationRenderer } from '../AnnotationRenderer';
 
 export interface ToolOptions {
@@ -7,14 +7,14 @@ export interface ToolOptions {
 }
 
 export abstract class BaseTool {
-  protected canvas: Canvas;
+  protected canvas: Renderer;
   protected renderer: AnnotationRenderer;
   protected options: ToolOptions;
   protected isDrawing = false;
   protected currentPoints: Point[] = [];
   protected startPoint: Point | null = null;
 
-  constructor(canvas: Canvas, renderer: AnnotationRenderer, options: ToolOptions) {
+  constructor(canvas: Renderer, renderer: AnnotationRenderer, options: ToolOptions) {
     this.canvas = canvas;
     this.renderer = renderer;
     this.options = options;

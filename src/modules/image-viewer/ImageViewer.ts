@@ -1,4 +1,4 @@
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { loadImage, getImageData } from '../../utils/image';
 import { error } from '../../utils/logger';
@@ -6,7 +6,7 @@ import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
 import { AnnotationManager, AnnotationManagerOptions } from '../annotation/AnnotationManager';
 
 export class ImageViewer {
-  private canvas: Canvas;
+  private canvas: Renderer;
   private imageData: ImageData | null = null;
   private eventHandlers: EventHandlers;
   private zoomPanHandler: ZoomPanHandler | null = null;
@@ -19,7 +19,7 @@ export class ImageViewer {
     zoomPanOptions?: ZoomPanOptions,
     annotationOptions?: AnnotationManagerOptions
   ) {
-    this.canvas = new Canvas(container, size);
+    this.canvas = new Renderer(container, size);
     this.eventHandlers = eventHandlers;
     
     // Set reference to this viewer in canvas for annotation manager access
@@ -87,14 +87,19 @@ export class ImageViewer {
    * Load and display image from HTMLImageElement
    */
   loadImageElement(image: HTMLImageElement, type?: string, fileName?: string): void {
-    const canvasSize = this.canvas.getSize();
-    this.imageData = getImageData(image, canvasSize, type, fileName);
-    
-    this.render();
-    
-    // Fit image to view if zoom/pan is enabled
-    if (this.zoomPanHandler && this.imageData) {
-      const bounds = this.getImageBounds();
+    try {
+      if (!image || !image.complete || image.naturalWidth === 0) {
+        throw new Error('Invalid image element provided');
+      }
+
+      const canvasSize = this.canvas.getSize();
+      this.imageData = getImageData(image, canvasSize, type, fileName);
+      
+      this.render();
+      
+      // Fit image to view if zoom/pan is enabled
+      if (this.zoomPanHandler && this.imageData) {
+        const bounds = this.getImageBounds();
         if (bounds) {
           this.zoomPanHandler.fitToView(bounds);
           // Update initial view state after fitting
@@ -102,9 +107,16 @@ export class ImageViewer {
         }
         this.zoomPanHandler.updateCursorState();
       }
-    
-    if (this.eventHandlers.onImageLoad) {
-      this.eventHandlers.onImageLoad(this.imageData);
+      
+      if (this.eventHandlers.onImageLoad) {
+        this.eventHandlers.onImageLoad(this.imageData);
+      }
+    } catch (err) {
+      error('Failed to load image element:', err);
+      if (this.eventHandlers.onImageLoadError) {
+        this.eventHandlers.onImageLoadError(err as Error);
+      }
+      throw err;
     }
   }
 
@@ -181,7 +193,7 @@ export class ImageViewer {
   /**
    * Get canvas instance
    */
-  getCanvas(): Canvas {
+  getCanvas(): Renderer {
     return this.canvas;
   }
 

@@ -1,11 +1,44 @@
 import { Size, Point, ViewState } from '../types';
 
-export class Canvas {
+// Forward declarations to avoid circular imports
+export interface AnnotationManager {
+  destroy(): void;
+  isToolActive(): boolean;
+  getActiveToolType(): string | null;
+  activateTool(toolType: string): boolean;
+  deactivateTool(): void;
+  addAnnotation(annotation: any): void;
+  removeAnnotation(id: string): void;
+  getAllAnnotations(): any[];
+  clearAll(): void;
+  getImageBounds(): any;
+  isDrawing(): boolean;
+}
+
+export interface ImageViewer {
+  getImageData(): any;
+  isImageLoaded(): boolean;
+  getZoomLevel(): number;
+  getPanOffset(): { x: number; y: number };
+  resize(size: Size): void;
+  fitToView(): void;
+  resetView(): void;
+  getCanvas(): Renderer;
+  getZoomPanHandler(): any;
+  getAnnotationManager(): AnnotationManager | null;
+  setEventHandlers(handlers: any): void;
+  render(): void;
+  getImageBounds(): any;
+}
+
+export class Renderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private viewState: ViewState;
-  public annotationManager: any = null; // Reference to annotation manager
-  public imageViewer: any = null; // Reference to image viewer
+  public annotationManager: AnnotationManager | null = null;
+  public imageViewer: ImageViewer | null = null;
+  private resizeTimeout: number | null = null;
+  private renderRequestId: number | null = null;
 
   constructor(container: HTMLElement, size: Size) {
     this.canvas = document.createElement('canvas');
@@ -30,9 +63,24 @@ export class Canvas {
   }
 
   /**
-   * Resize canvas to new dimensions
+   * Resize canvas to new dimensions with debouncing
    */
   resize(size: Size): void {
+    // Clear existing timeout
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+    }
+    
+    // Debounce resize operations
+    this.resizeTimeout = window.setTimeout(() => {
+      this.performResize(size);
+    }, 16); // ~60fps
+  }
+
+  /**
+   * Perform actual resize operation
+   */
+  private performResize(size: Size): void {
     this.canvas.width = size.width;
     this.canvas.height = size.height;
     
@@ -43,6 +91,9 @@ export class Canvas {
     this.canvas.width = size.width * dpr;
     this.canvas.height = size.height * dpr;
     this.ctx.scale(dpr, dpr);
+    
+    // Trigger re-render after resize
+    this.requestRender();
   }
 
   /**
@@ -104,6 +155,23 @@ export class Canvas {
    */
   setViewState(viewState: Partial<ViewState>): void {
     this.viewState = { ...this.viewState, ...viewState };
+    this.requestRender();
+  }
+
+  /**
+   * Request a render frame using requestAnimationFrame
+   */
+  requestRender(): void {
+    if (this.renderRequestId) {
+      cancelAnimationFrame(this.renderRequestId);
+    }
+    
+    this.renderRequestId = requestAnimationFrame(() => {
+      if (this.imageViewer) {
+        this.imageViewer.render();
+      }
+      this.renderRequestId = null;
+    });
   }
 
   /**
@@ -140,5 +208,26 @@ export class Canvas {
    */
   removeEventListener(type: string, listener: EventListener): void {
     this.canvas.removeEventListener(type, listener);
+  }
+
+  /**
+   * Clean up resources and cancel pending operations
+   */
+  destroy(): void {
+    // Cancel pending resize operations
+    if (this.resizeTimeout) {
+      clearTimeout(this.resizeTimeout);
+      this.resizeTimeout = null;
+    }
+    
+    // Cancel pending render requests
+    if (this.renderRequestId) {
+      cancelAnimationFrame(this.renderRequestId);
+      this.renderRequestId = null;
+    }
+    
+    // Clear references
+    this.annotationManager = null;
+    this.imageViewer = null;
   }
 }

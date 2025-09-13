@@ -76,3 +76,24 @@ global.console = {
   warn: jest.fn(),
   error: jest.fn(),
 };
+
+// Global test cleanup
+afterEach(() => {
+  // Clear all timers
+  jest.clearAllTimers();
+  
+  // Clear any pending animation frames
+  if (typeof cancelAnimationFrame !== 'undefined') {
+    // Cancel any pending animation frames
+    for (let i = 1; i < 1000; i++) {
+      cancelAnimationFrame(i);
+    }
+  }
+  
+  // Clear any pending timeouts
+  if (typeof clearTimeout !== 'undefined') {
+    for (let i = 1; i < 1000; i++) {
+      clearTimeout(i);
+    }
+  }
+});

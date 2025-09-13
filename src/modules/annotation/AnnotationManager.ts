@@ -1,4 +1,4 @@
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '../../types';
 import { AnnotationRenderer } from './AnnotationRenderer';
 import { ToolManager, ToolManagerOptions } from './ToolManager';
@@ -12,7 +12,7 @@ export interface AnnotationManagerOptions {
 }
 
 export class AnnotationManager {
-  private canvas: Canvas;
+  private canvas: Renderer;
   private renderer: AnnotationRenderer;
   private toolManager: ToolManager;
   private annotations: Map<string, Annotation> = new Map();
@@ -20,7 +20,7 @@ export class AnnotationManager {
   private eventHandlers: EventHandlers;
   private enabled = true;
 
-  constructor(canvas: Canvas, options: AnnotationManagerOptions = {}) {
+  constructor(canvas: Renderer, options: AnnotationManagerOptions = {}) {
     this.canvas = canvas;
     this.eventHandlers = options.eventHandlers || {};
     this.enabled = options.enabled !== false;

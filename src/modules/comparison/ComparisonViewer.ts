@@ -1,10 +1,10 @@
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { ImageComparisonManager, ComparisonOptions } from './ImageComparisonManager';
 import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
 
 export class ComparisonViewer {
-  private canvas: Canvas;
+  private canvas: Renderer;
   private comparisonManager: ImageComparisonManager;
   private zoomPanHandler: ZoomPanHandler | null = null;
   private eventHandlers: EventHandlers;
@@ -16,7 +16,7 @@ export class ComparisonViewer {
     comparisonOptions?: ComparisonOptions,
     zoomPanOptions?: ZoomPanOptions
   ) {
-    this.canvas = new Canvas(container, size);
+    this.canvas = new Renderer(container, size);
     this.eventHandlers = eventHandlers;
 
     // Initialize comparison manager
@@ -130,7 +130,7 @@ export class ComparisonViewer {
   /**
    * Get canvas instance
    */
-  getCanvas(): Canvas {
+  getCanvas(): Renderer {
     return this.canvas;
   }
 

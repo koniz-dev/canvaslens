@@ -1,11 +1,11 @@
 import { Annotation, Point, AnnotationStyle } from '../../types';
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 
 export class AnnotationRenderer {
   private ctx: CanvasRenderingContext2D;
-  private canvas: Canvas;
+  private canvas: Renderer;
 
-  constructor(canvas: Canvas) {
+  constructor(canvas: Renderer) {
     this.canvas = canvas;
     this.ctx = canvas.getContext();
   }

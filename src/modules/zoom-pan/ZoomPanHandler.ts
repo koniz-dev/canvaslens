@@ -1,4 +1,4 @@
-import { Canvas } from '../../core/Canvas';
+import { Renderer } from '../../core/Renderer';
 import { ViewState, Point, EventHandlers } from '../../types';
 import { screenToWorld, worldToScreen, clamp } from '../../utils/coordinate';
 import { log } from '../../utils/logger';
@@ -13,16 +13,18 @@ export interface ZoomPanOptions {
 }
 
 export class ZoomPanHandler {
-  private canvas: Canvas;
+  private canvas: Renderer;
   private options: Required<ZoomPanOptions>;
   private eventHandlers: EventHandlers;
   private isPanning = false;
   private lastPanPoint: Point = { x: 0, y: 0 };
   private initialViewState: ViewState | null = null;
-  private annotationManager: any = null; // Reference to annotation manager
+  private annotationManager: any = null; // Reference to annotation manager - will be properly typed when circular dependency is resolved
+  private wheelTimeout: number | null = null;
+  private lastWheelTime = 0;
 
   constructor(
-    canvas: Canvas,
+    canvas: Renderer,
     options: ZoomPanOptions = {},
     eventHandlers: EventHandlers = {}
   ) {
@@ -97,7 +99,7 @@ export class ZoomPanHandler {
   }
 
   /**
-   * Handle mouse wheel for zooming
+   * Handle mouse wheel for zooming with throttling
    */
   private handleWheel(event: WheelEvent): void {
     // Don't handle zoom if no image is loaded
@@ -106,6 +108,13 @@ export class ZoomPanHandler {
     }
     
     event.preventDefault();
+    
+    // Throttle wheel events to improve performance
+    const now = Date.now();
+    if (now - this.lastWheelTime < 16) { // ~60fps
+      return;
+    }
+    this.lastWheelTime = now;
     
     const currentViewState = this.canvas.getViewState();
     const mousePos = this.canvas.getMousePosition(event);
@@ -380,8 +389,16 @@ export class ZoomPanHandler {
    * Destroy the handler and remove event listeners
    */
   destroy(): void {
-    // Note: In a real implementation, you'd want to store references to bound methods
-    // and remove them properly. For simplicity, we'll just clear the handlers.
+    // Clear pending wheel timeout
+    if (this.wheelTimeout) {
+      clearTimeout(this.wheelTimeout);
+      this.wheelTimeout = null;
+    }
+    
+    // Reset state
     this.isPanning = false;
+    this.lastPanPoint = { x: 0, y: 0 };
+    this.initialViewState = null;
+    this.annotationManager = null;
   }
 }
