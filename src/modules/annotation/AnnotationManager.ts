@@ -97,7 +97,8 @@ export class AnnotationManager {
     const annotation = this.getAnnotationAt(worldPoint);
     if (annotation) {
       this.selectAnnotation(annotation);
-      // TODO: Show context menu for delete/edit
+      // Show context menu for delete/edit
+      this.showContextMenu(event, annotation);
     }
   }
 
@@ -227,7 +228,11 @@ export class AnnotationManager {
   selectAnnotation(annotation: Annotation | null): void {
     this.selectedAnnotation = annotation;
     
-    // TODO: Trigger selection event
+    // Trigger selection event
+    const event = new CustomEvent('annotationselect', {
+      detail: annotation
+    });
+    this.canvas.getElement().dispatchEvent(event);
   }
 
   /**
@@ -463,6 +468,60 @@ export class AnnotationManager {
       return this.canvas.imageViewer.getImageBounds();
     }
     return null;
+  }
+
+  /**
+   * Show context menu for annotation
+   */
+  private showContextMenu(event: MouseEvent, annotation: Annotation): void {
+    // Create context menu
+    const contextMenu = document.createElement('div');
+    contextMenu.className = 'annotation-context-menu';
+    contextMenu.style.cssText = `
+      position: fixed;
+      top: ${event.clientY}px;
+      left: ${event.clientX}px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 1000;
+      padding: 4px 0;
+      min-width: 120px;
+    `;
+
+    // Delete option
+    const deleteOption = document.createElement('div');
+    deleteOption.textContent = 'Delete';
+    deleteOption.style.cssText = `
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+    `;
+    deleteOption.addEventListener('click', () => {
+      this.removeAnnotation(annotation.id);
+      document.body.removeChild(contextMenu);
+    });
+    deleteOption.addEventListener('mouseenter', () => {
+      deleteOption.style.backgroundColor = '#f0f0f0';
+    });
+    deleteOption.addEventListener('mouseleave', () => {
+      deleteOption.style.backgroundColor = 'transparent';
+    });
+
+    contextMenu.appendChild(deleteOption);
+
+    // Add to document
+    document.body.appendChild(contextMenu);
+
+    // Remove menu when clicking outside
+    const removeMenu = (e: Event) => {
+      if (!contextMenu.contains(e.target as Node)) {
+        document.body.removeChild(contextMenu);
+        document.removeEventListener('click', removeMenu);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', removeMenu), 0);
   }
 
   /**

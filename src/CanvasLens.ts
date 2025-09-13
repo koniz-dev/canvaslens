@@ -243,22 +243,55 @@ export class CanvasLensElement extends HTMLElement {
   // Public API methods
   async loadImage(src: string, type?: string, fileName?: string): Promise<void> {
     if (this.canvasLens && !this.isDestroyed) {
-      await this.canvasLens.loadImage(src, type, fileName);
+      try {
+        await this.canvasLens.loadImage(src, type, fileName);
+      } catch (error) {
+        console.error('Failed to load image:', error);
+        throw error;
+      }
+    } else {
+      throw new Error('CanvasLens is not initialized or has been destroyed');
     }
   }
 
   loadImageFromFile(file: File): void {
-    if (this.canvasLens && !this.isDestroyed) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          this.canvasLens!.loadImageElement(img, file.type, file.name);
-        };
-        img.src = e.target!.result as string;
-      };
-      reader.readAsDataURL(file);
+    if (!this.canvasLens || this.isDestroyed) {
+      console.error('CanvasLens is not initialized or has been destroyed');
+      return;
     }
+
+    if (!file || !file.type.startsWith('image/')) {
+      console.error('Invalid file: not an image');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (!e.target?.result) {
+        console.error('Failed to read file');
+        return;
+      }
+      
+      const img = new Image();
+      img.onload = () => {
+        // Check if canvasLens still exists and is not destroyed
+        if (this.canvasLens && !this.isDestroyed) {
+          try {
+            this.canvasLens.loadImageElement(img, file.type, file.name);
+          } catch (error) {
+            console.error('Failed to load image element:', error);
+          }
+        }
+      };
+      img.onerror = () => {
+        console.error('Failed to load image from file');
+      };
+      img.src = e.target.result as string;
+    };
+    reader.onerror = () => {
+      console.error('Failed to read file');
+    };
+    reader.readAsDataURL(file);
   }
 
   resize(width: number, height: number): void {
@@ -294,6 +327,8 @@ export class CanvasLensElement extends HTMLElement {
       const annotationManager = this.canvasLens.getAnnotationManager();
       if (annotationManager) {
         annotationManager.addAnnotation(annotation);
+      } else {
+        console.warn('Annotation manager not available');
       }
     }
   }
@@ -303,6 +338,8 @@ export class CanvasLensElement extends HTMLElement {
       const annotationManager = this.canvasLens.getAnnotationManager();
       if (annotationManager) {
         annotationManager.removeAnnotation(annotationId);
+      } else {
+        console.warn('Annotation manager not available');
       }
     }
   }
@@ -311,10 +348,9 @@ export class CanvasLensElement extends HTMLElement {
     if (this.canvasLens && !this.isDestroyed) {
       const annotationManager = this.canvasLens.getAnnotationManager();
       if (annotationManager) {
-        const annotations = annotationManager.getAllAnnotations();
-        annotations.forEach((annotation: Annotation) => {
-          annotationManager.removeAnnotation(annotation.id);
-        });
+        annotationManager.clearAll();
+      } else {
+        console.warn('Annotation manager not available');
       }
     }
   }
@@ -400,9 +436,17 @@ export class CanvasLensElement extends HTMLElement {
     if (!this.overlayOpen) return;
     
     if (this.overlayContainer) {
-      document.body.removeChild(this.overlayContainer);
+      // Destroy overlay canvas lens first
+      if (this.overlayCanvasLens) {
+        this.overlayCanvasLens.destroy();
+        this.overlayCanvasLens = null;
+      }
+      
+      // Remove overlay container from DOM
+      if (this.overlayContainer.parentNode) {
+        this.overlayContainer.parentNode.removeChild(this.overlayContainer);
+      }
       this.overlayContainer = null;
-      this.overlayCanvasLens = null;
       this.overlayOpen = false;
     }
   }
@@ -551,8 +595,27 @@ export class CanvasLensElement extends HTMLElement {
   private destroy(): void {
     if (!this.isDestroyed) {
       this.isDestroyed = true;
+      
+      // Close overlay if open
       this.closeOverlay();
-      this.canvasLens = null;
+      
+      // Destroy canvas lens instance
+      if (this.canvasLens) {
+        this.canvasLens.destroy();
+        this.canvasLens = null;
+      }
+      
+      // Clear overlay container
+      if (this.overlayContainer && this.overlayContainer.parentNode) {
+        this.overlayContainer.parentNode.removeChild(this.overlayContainer);
+        this.overlayContainer = null;
+      }
+      
+      // Clear overlay canvas lens
+      if (this.overlayCanvasLens) {
+        this.overlayCanvasLens.destroy();
+        this.overlayCanvasLens = null;
+      }
     }
   }
 }

@@ -215,12 +215,66 @@ describe('CanvasLens Web Component Integration Tests', () => {
         canvasLens.loadImageFromFile(file);
       }).not.toThrow();
     });
+
+    it('should handle invalid file types', () => {
+      const file = new File(['test'], 'test.txt', { type: 'text/plain' });
+      
+      expect(() => {
+        canvasLens.loadImageFromFile(file);
+      }).not.toThrow();
+    });
+
+    it('should handle null file', () => {
+      expect(() => {
+        canvasLens.loadImageFromFile(null as any);
+      }).not.toThrow();
+    });
   });
 
   describe('Resize', () => {
     it('should handle resize', () => {
       expect(() => {
         canvasLens.resize(1000, 800);
+      }).not.toThrow();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle destroyed component gracefully', () => {
+      // Simulate destroyed component
+      const destroyedCanvasLens = document.createElement('canvas-lens') as CanvasLensElement;
+      destroyedCanvasLens.setAttribute('width', '800px');
+      destroyedCanvasLens.setAttribute('height', '600px');
+      
+      // Test methods on destroyed component
+      expect(() => {
+        destroyedCanvasLens.zoomIn();
+        destroyedCanvasLens.zoomOut();
+        destroyedCanvasLens.fitToView();
+        destroyedCanvasLens.resetView();
+        destroyedCanvasLens.activateTool('rect');
+        destroyedCanvasLens.deactivateTool();
+        destroyedCanvasLens.clearAnnotations();
+        destroyedCanvasLens.getAnnotations();
+        destroyedCanvasLens.getZoomLevel();
+        destroyedCanvasLens.getPanOffset();
+        destroyedCanvasLens.getActiveTool();
+        destroyedCanvasLens.isImageLoaded();
+        destroyedCanvasLens.isOverlayOpen();
+      }).not.toThrow();
+    });
+
+    it('should handle invalid tool activation', () => {
+      expect(() => {
+        canvasLens.activateTool('invalid-tool');
+      }).not.toThrow();
+    });
+
+    it('should handle annotation operations without manager', () => {
+      expect(() => {
+        canvasLens.addAnnotation({} as any);
+        canvasLens.removeAnnotation('invalid-id');
+        canvasLens.clearAnnotations();
       }).not.toThrow();
     });
   });
