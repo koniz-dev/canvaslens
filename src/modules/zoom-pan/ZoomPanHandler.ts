@@ -339,8 +339,41 @@ export class ZoomPanHandler {
     // Calculate center position to center the image
     const scaledWidth = imageBounds.width * scale;
     const scaledHeight = imageBounds.height * scale;
-    const offsetX = (canvasSize.width - scaledWidth) / 2;
-    const offsetY = (canvasSize.height - scaledHeight) / 2;
+    
+    // Calculate offset to center the image, accounting for its current position
+    const offsetX = (canvasSize.width - scaledWidth) / 2 - imageBounds.x * scale;
+    const offsetY = (canvasSize.height - scaledHeight) / 2 - imageBounds.y * scale;
+    
+    this.updateViewState({
+      scale,
+      offsetX,
+      offsetY
+    });
+  }
+
+  /**
+   * Fit image to view for overlay mode (allows scaling up)
+   */
+  fitToViewOverlay(imageBounds: { x: number; y: number; width: number; height: number }): void {
+    // Don't fit to view if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+    
+    const canvasSize = this.canvas.getSize();
+    
+    // Calculate scale to fit image within canvas
+    const scaleX = canvasSize.width / imageBounds.width;
+    const scaleY = canvasSize.height / imageBounds.height;
+    const scale = Math.min(scaleX, scaleY); // Allow scaling up for overlay
+    
+    // Calculate center position to center the image
+    const scaledWidth = imageBounds.width * scale;
+    const scaledHeight = imageBounds.height * scale;
+    
+    // Calculate offset to center the image, accounting for its current position
+    const offsetX = (canvasSize.width - scaledWidth) / 2 - imageBounds.x * scale;
+    const offsetY = (canvasSize.height - scaledHeight) / 2 - imageBounds.y * scale;
     
     this.updateViewState({
       scale,

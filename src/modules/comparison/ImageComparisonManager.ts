@@ -216,8 +216,8 @@ export class ImageComparisonManager {
     const ctx = this.canvas.getContext();
     const canvasSize = this.canvas.getSize();
 
-    // Clear canvas
-    this.canvas.clearWithBackground('#f0f0f0');
+    // Clear canvas without background (transparent)
+    this.canvas.clear();
 
     // Apply view transformations
     this.canvas.applyViewTransform();

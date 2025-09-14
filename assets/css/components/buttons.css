@@ -21,7 +21,6 @@ button,
 button:hover,
 .btn:hover {
     background: var(--primary-dark);
-    transform: translateY(-1px);
     box-shadow: var(--shadow-sm);
 }
 

@@ -556,7 +556,23 @@ export class CanvasLensElement extends HTMLElement {
       align-items: center;
     `;
 
-    const closeButton = createToolButton('Close', '✕', () => this.closeOverlay());
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '✕';
+    closeButton.style.cssText = `
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    `;
+    closeButton.onmouseover = () => closeButton.style.background = 'rgba(255, 255, 255, 0.1)';
+    closeButton.onmouseout = () => closeButton.style.background = 'none';
+    closeButton.onclick = () => this.closeOverlay();
 
     actionButtons.appendChild(closeButton);
 
@@ -570,7 +586,7 @@ export class CanvasLensElement extends HTMLElement {
       margin-top: 60px;
       width: 90vw;
       height: calc(90vh - 60px);
-      background: white;
+      background: transparent;
       border-radius: 8px;
       overflow: hidden;
     `;
@@ -578,27 +594,40 @@ export class CanvasLensElement extends HTMLElement {
     this.overlayContainer.appendChild(header);
     this.overlayContainer.appendChild(canvasContainer);
 
-    // Create overlay CanvasLens instance
-    const overlayOptions: CanvasLensOptions = {
-      container: canvasContainer,
-      width: canvasContainer.clientWidth,
-      height: canvasContainer.clientHeight,
-      backgroundColor: this.getAttribute('background-color') || '#f0f0f0',
-      tools: this.parseToolsConfig(),
-      maxZoom: parseFloat(this.getAttribute('max-zoom') || '10'),
-      minZoom: parseFloat(this.getAttribute('min-zoom') || '0.1')
-    };
+    // Wait for the container to be rendered before creating the Engine
+    // Use requestAnimationFrame to ensure the DOM is updated
+    requestAnimationFrame(() => {
+      // Get actual dimensions after rendering
+      const actualWidth = canvasContainer.clientWidth || window.innerWidth * 0.9;
+      const actualHeight = canvasContainer.clientHeight || (window.innerHeight * 0.9 - 60);
+      
 
-    this.overlayCanvasLens = new Engine(overlayOptions);
+      // Create overlay CanvasLens instance
+      const overlayOptions: CanvasLensOptions = {
+        container: canvasContainer,
+        width: actualWidth,
+        height: actualHeight,
+        backgroundColor: this.getAttribute('background-color') || '#f0f0f0',
+        tools: this.parseToolsConfig(),
+        maxZoom: parseFloat(this.getAttribute('max-zoom') || '10'),
+        minZoom: parseFloat(this.getAttribute('min-zoom') || '0.1')
+      };
 
-    // Load current image to overlay
-    if (this.canvasLens && this.canvasLens.isImageLoaded()) {
-      const imageViewer = this.canvasLens.getImageViewer();
-      const imageData = imageViewer ? imageViewer.getImageData() : null;
-      if (imageData) {
-        this.overlayCanvasLens.loadImageElement(imageData.element, imageData.type, imageData.fileName);
+      this.overlayCanvasLens = new Engine(overlayOptions);
+
+      // Load current image to overlay
+      if (this.canvasLens && this.canvasLens.isImageLoaded()) {
+        const imageViewer = this.canvasLens.getImageViewer();
+        const imageData = imageViewer ? imageViewer.getImageData() : null;
+        if (imageData) {
+          this.overlayCanvasLens.loadImageElementOverlay(imageData.element, imageData.type, imageData.fileName);
+        } else {
+          console.warn('No image data available for overlay');
+        }
+      } else {
+        console.warn('Main canvas lens not loaded or no image loaded');
       }
-    }
+    });
   }
 
   private destroy(): void {

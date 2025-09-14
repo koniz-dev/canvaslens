@@ -85,6 +85,10 @@ export class Engine {
     this.imageViewer.loadImageElement(image, imageType, fileName);
   }
 
+  loadImageElementOverlay(image: HTMLImageElement, imageType?: string, fileName?: string): void {
+    this.imageViewer.loadImageElementOverlay(image, imageType, fileName);
+  }
+
   setZoom(zoom: number): void {
     const handler = this.imageViewer.getZoomPanHandler();
     if (handler) {
@@ -127,6 +131,10 @@ export class Engine {
 
   fitToView(): void {
     this.imageViewer.fitToView();
+  }
+
+  fitToViewOverlay(): void {
+    this.imageViewer.fitToViewOverlay();
   }
 
   setPan(x: number, y: number): void {

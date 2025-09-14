@@ -2,6 +2,7 @@ import { Size, Point, ImageData } from '../types';
 
 /**
  * Calculate aspect ratio preserving dimensions to fit within container
+ * Only scales down (scale <= 1), never scales up to avoid image quality loss
  */
 export function calculateFitDimensions(
   naturalSize: Size,
@@ -13,15 +14,51 @@ export function calculateFitDimensions(
   let displayWidth: number;
   let displayHeight: number;
 
-  if (naturalAspectRatio > containerAspectRatio) {
-    // Image is wider than container - fit to width
-    displayWidth = containerSize.width;
-    displayHeight = displayWidth / naturalAspectRatio;
-  } else {
-    // Image is taller than container - fit to height
-    displayHeight = containerSize.height;
-    displayWidth = displayHeight * naturalAspectRatio;
-  }
+  // Calculate scale factors for both dimensions
+  const scaleX = containerSize.width / naturalSize.width;
+  const scaleY = containerSize.height / naturalSize.height;
+  
+  // Use the smaller scale factor to ensure image fits within container
+  // But don't scale up (scale > 1) - only scale down (scale <= 1)
+  const scale = Math.min(scaleX, scaleY, 1);
+
+  displayWidth = naturalSize.width * scale;
+  displayHeight = naturalSize.height * scale;
+
+  const position: Point = {
+    x: (containerSize.width - displayWidth) / 2,
+    y: (containerSize.height - displayHeight) / 2
+  };
+
+  return {
+    displaySize: { width: displayWidth, height: displayHeight },
+    position
+  };
+}
+
+/**
+ * Calculate aspect ratio preserving dimensions to fit within container
+ * Allows scaling up for overlay mode to use full container space
+ */
+export function calculateFitDimensionsOverlay(
+  naturalSize: Size,
+  containerSize: Size
+): { displaySize: Size; position: Point } {
+  const naturalAspectRatio = naturalSize.width / naturalSize.height;
+  const containerAspectRatio = containerSize.width / containerSize.height;
+
+  let displayWidth: number;
+  let displayHeight: number;
+
+  // Calculate scale factors for both dimensions
+  const scaleX = containerSize.width / naturalSize.width;
+  const scaleY = containerSize.height / naturalSize.height;
+  
+  // For overlay mode, don't scale - keep original size
+  const scale = 1;
+
+  displayWidth = naturalSize.width * scale;
+  displayHeight = naturalSize.height * scale;
 
   const position: Point = {
     x: (containerSize.width - displayWidth) / 2,
@@ -80,6 +117,43 @@ export function getImageData(
   };
 
   const { displaySize, position } = calculateFitDimensions(
+    naturalSize,
+    containerSize
+  );
+
+  const imageData: ImageData = {
+    element: image,
+    naturalSize,
+    displaySize,
+    position
+  };
+
+  if (type) {
+    imageData.type = type;
+  }
+
+  if (fileName) {
+    imageData.fileName = fileName;
+  }
+
+  return imageData;
+}
+
+/**
+ * Get image data from loaded image for overlay mode (allows scaling up)
+ */
+export function getImageDataOverlay(
+  image: HTMLImageElement,
+  containerSize: Size,
+  type?: string,
+  fileName?: string
+): ImageData {
+  const naturalSize: Size = {
+    width: image.naturalWidth,
+    height: image.naturalHeight
+  };
+
+  const { displaySize, position } = calculateFitDimensionsOverlay(
     naturalSize,
     containerSize
   );

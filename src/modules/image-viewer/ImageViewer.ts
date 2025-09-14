@@ -1,6 +1,6 @@
 import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
-import { loadImage, getImageData } from '../../utils/image';
+import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image';
 import { error } from '../../utils/logger';
 import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
 import { AnnotationManager, AnnotationManagerOptions } from '../annotation/AnnotationManager';
@@ -96,6 +96,7 @@ export class ImageViewer {
       }
 
       const canvasSize = this.canvas.getSize();
+      
       this.imageData = getImageData(image, canvasSize, type, fileName);
       
       this.render();
@@ -122,6 +123,46 @@ export class ImageViewer {
   }
 
   /**
+   * Load and display image from HTMLImageElement for overlay mode (allows scaling up)
+   */
+  loadImageElementOverlay(image: HTMLImageElement, type?: string, fileName?: string): void {
+    try {
+      if (!image || !image.complete || image.naturalWidth === 0) {
+        throw new Error('Invalid image element provided');
+      }
+
+      const canvasSize = this.canvas.getSize();
+      
+      // For overlay mode, use window dimensions as fallback
+      const overlaySize = {
+        width: window.innerWidth * 0.9,
+        height: (window.innerHeight * 0.9) - 60
+      };
+      
+      this.imageData = getImageDataOverlay(image, overlaySize, type, fileName);
+      
+      this.render();
+      
+      // For overlay mode, don't reset zoom/pan - keep the calculated position
+      // The image position is already calculated by getImageDataOverlay
+      if (this.zoomPanHandler && this.imageData) {
+        // Just update cursor state without resetting position
+        this.zoomPanHandler.updateCursorState();
+      }
+      
+      if (this.eventHandlers.onImageLoad) {
+        this.eventHandlers.onImageLoad(this.imageData);
+      }
+    } catch (err) {
+      error('Failed to load image element for overlay:', err);
+      if (this.eventHandlers.onImageLoadError) {
+        this.eventHandlers.onImageLoadError(err as Error);
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Render the image on canvas
    */
   render(): void {
@@ -132,8 +173,9 @@ export class ImageViewer {
     const ctx = this.canvas.getContext();
     const canvasSize = this.canvas.getSize();
 
-    // Clear canvas with background
-    this.canvas.clearWithBackground('#f0f0f0');
+
+    // Clear canvas without background (transparent)
+    this.canvas.clear();
 
     // Apply view transformations
     this.canvas.applyViewTransform();
@@ -242,6 +284,18 @@ export class ImageViewer {
       const bounds = this.getImageBounds();
       if (bounds) {
         this.zoomPanHandler.fitToView(bounds);
+      }
+    }
+  }
+
+  /**
+   * Zoom to fit image in view for overlay mode (allows scaling up)
+   */
+  fitToViewOverlay(): void {
+    if (this.zoomPanHandler && this.imageData) {
+      const bounds = this.getImageBounds();
+      if (bounds) {
+        this.zoomPanHandler.fitToViewOverlay(bounds);
       }
     }
   }

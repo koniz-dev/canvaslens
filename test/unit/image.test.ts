@@ -56,20 +56,37 @@ describe('Image Utilities', () => {
       });
     });
 
+    it('should not scale up when image is smaller than container', () => {
+      const naturalSize: Size = { width: 400, height: 300 }; // Small image
+      const containerSize: Size = { width: 800, height: 600 }; // Large container
+
+      const result = calculateFitDimensions(naturalSize, containerSize);
+
+      // Should keep original size (scale = 1), not scale up
+      expect(result.displaySize).toEqual({
+        width: 400,
+        height: 300
+      });
+      expect(result.position).toEqual({
+        x: 200, // Centered horizontally
+        y: 150  // Centered vertically
+      });
+    });
+
     it('should handle zero dimensions', () => {
       const naturalSize: Size = { width: 0, height: 0 };
       const containerSize: Size = { width: 800, height: 600 };
 
       const result = calculateFitDimensions(naturalSize, containerSize);
 
-      // When both dimensions are 0, aspect ratio is NaN, so width becomes NaN
+      // When both dimensions are 0, scale calculation results in 0
       expect(result.displaySize).toEqual({
-        width: NaN,
-        height: 600
+        width: 0,
+        height: 0
       });
       expect(result.position).toEqual({
-        x: NaN,
-        y: 0
+        x: 400, // Centered horizontally
+        y: 300  // Centered vertically
       });
     });
   });
