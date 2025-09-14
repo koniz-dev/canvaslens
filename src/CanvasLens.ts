@@ -149,8 +149,8 @@ export class CanvasLensElement extends HTMLElement {
     if (size.endsWith('px')) return parseInt(size);
     if (size.endsWith('%')) {
       const percentage = parseInt(size);
-      const containerSize = this.clientWidth || this.offsetWidth || 800;
-      return (containerSize * percentage) / 100;
+      // Use the provided defaultSize which should be the actual container size
+      return (defaultSize * percentage) / 100;
     }
     return parseInt(size) || defaultSize;
   }
@@ -159,8 +159,12 @@ export class CanvasLensElement extends HTMLElement {
     // Use requestAnimationFrame to ensure DOM is fully rendered
     requestAnimationFrame(() => {
       if (this.canvasLens && !this.isDestroyed) {
-        const width = this.parseSize(this.getAttribute('width'), 800);
-        const height = this.parseSize(this.getAttribute('height'), 600);
+        // Get actual container dimensions
+        const containerWidth = this.clientWidth || this.offsetWidth || 800;
+        const containerHeight = this.clientHeight || this.offsetHeight || 600;
+        
+        const width = this.parseSize(this.getAttribute('width'), containerWidth);
+        const height = this.parseSize(this.getAttribute('height'), containerHeight);
         
         // Only resize if we have valid dimensions
         if (width > 0 && height > 0) {
@@ -202,6 +206,11 @@ export class CanvasLensElement extends HTMLElement {
 
     this.addEventListener('comparisonChange', (e: any) => {
       this.dispatchEvent(new CustomEvent('comparisonchange', { detail: e.detail }));
+    });
+
+    // Listen for window resize to recalculate canvas size
+    window.addEventListener('resize', () => {
+      this.ensureCanvasSize();
     });
   }
 

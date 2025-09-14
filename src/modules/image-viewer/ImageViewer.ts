@@ -67,7 +67,10 @@ export class ImageViewer {
       
       // Reset zoom/pan to initial state to show image properly fitted
       if (this.zoomPanHandler) {
+        // Reset to initial state (scale=1, offset=0,0) since getImageData already calculated proper fit
         this.zoomPanHandler.reset();
+        // Update initial view state after reset
+        this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
         this.zoomPanHandler.updateCursorState();
       }
       
@@ -97,14 +100,12 @@ export class ImageViewer {
       
       this.render();
       
-      // Fit image to view if zoom/pan is enabled
+      // Reset zoom/pan to initial state if zoom/pan is enabled
       if (this.zoomPanHandler && this.imageData) {
-        const bounds = this.getImageBounds();
-        if (bounds) {
-          this.zoomPanHandler.fitToView(bounds);
-          // Update initial view state after fitting
-          this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
-        }
+        // Reset to initial state (scale=1, offset=0,0) since getImageData already calculated proper fit
+        this.zoomPanHandler.reset();
+        // Update initial view state after reset
+        this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
         this.zoomPanHandler.updateCursorState();
       }
       
@@ -171,12 +172,11 @@ export class ImageViewer {
     if (this.imageData) {
       this.imageData = getImageData(this.imageData.element, size, this.imageData.type, this.imageData.fileName);
       
-      // Refit image to view after resize
+      // Reset zoom/pan to initial state after resize since getImageData already calculated proper fit
       if (this.zoomPanHandler) {
-        const bounds = this.getImageBounds();
-        if (bounds) {
-          this.zoomPanHandler.fitToView(bounds);
-        }
+        this.zoomPanHandler.reset();
+        // Update initial view state after reset
+        this.zoomPanHandler.updateInitialViewState(this.canvas.getViewState());
       }
     }
     
