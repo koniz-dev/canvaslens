@@ -26,13 +26,13 @@ button:hover,
 .btn:hover {
     background: var(--primary-dark);
     box-shadow: var(--button-shadow-hover);
-    transform: translateY(-1px);
+    /* NOTE: Do NOT add transform here - user specifically requested no transform effects */
 }
 
 /* Active state */
 button:active,
 .btn:active {
-    transform: translateY(0);
+    /* NOTE: Do NOT add transform here - user specifically requested no transform effects */
     box-shadow: var(--button-shadow-active);
     background: var(--primary-light);
 }
@@ -46,24 +46,34 @@ button:focus,
 
 /* Disabled state */
 button:disabled,
-.btn:disabled {
-    background: var(--gray-300);
-    color: var(--gray-500);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    opacity: 0.6;
+.btn:disabled,
+button.btn:disabled,
+.btn.info:disabled,
+.btn.warning:disabled,
+.btn.secondary:disabled,
+.btn.success:disabled {
+    background: var(--gray-300) !important;
+    color: var(--gray-500) !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.6 !important;
 }
 
 /* Disabled state hover - prevent any hover effects */
 button:disabled:hover,
-.btn:disabled:hover {
-    background: var(--gray-300);
-    color: var(--gray-500);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-    opacity: 0.6;
+.btn:disabled:hover,
+button.btn:disabled:hover,
+.btn.info:disabled:hover,
+.btn.warning:disabled:hover,
+.btn.secondary:disabled:hover,
+.btn.success:disabled:hover {
+    background: var(--gray-300) !important;
+    color: var(--gray-500) !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+    opacity: 0.6 !important;
 }
 
 /* Disabled state active - prevent any active effects */
@@ -86,13 +96,11 @@ button.secondary {
 .btn-secondary:hover,
 button.secondary:hover {
     background: var(--secondary-dark);
-    transform: translateY(-1px);
 }
 
 .btn-secondary:active,
 button.secondary:active {
     background: var(--secondary-light);
-    transform: translateY(0);
 }
 
 /* Disabled state for secondary buttons */
@@ -118,13 +126,11 @@ button.accent {
 .btn-accent:hover,
 button.accent:hover {
     background: var(--accent-dark);
-    transform: translateY(-1px);
 }
 
 .btn-accent:active,
 button.accent:active {
     background: var(--accent-light);
-    transform: translateY(0);
 }
 
 /* Disabled state for accent buttons */
@@ -150,13 +156,11 @@ button.success {
 .btn-success:hover,
 button.success:hover {
     background: var(--success-dark);
-    transform: translateY(-1px);
 }
 
 .btn-success:active,
 button.success:active {
     background: var(--success-light);
-    transform: translateY(0);
 }
 
 /* Disabled state for success buttons */
@@ -183,13 +187,11 @@ button.warning {
 .btn-warning:hover,
 button.warning:hover {
     background: var(--warning-dark);
-    transform: translateY(-1px);
 }
 
 .btn-warning:active,
 button.warning:active {
     background: var(--warning-light);
-    transform: translateY(0);
 }
 
 /* Disabled state for warning buttons */
@@ -215,13 +217,11 @@ button.danger {
 .btn-danger:hover,
 button.danger:hover {
     background: var(--error-dark);
-    transform: translateY(-1px);
 }
 
 .btn-danger:active,
 button.danger:active {
     background: var(--error-light);
-    transform: translateY(0);
 }
 
 /* Disabled state for danger buttons */
@@ -247,13 +247,11 @@ button.info {
 .btn-info:hover,
 button.info:hover {
     background: var(--info-dark);
-    transform: translateY(-1px);
 }
 
 .btn-info:active,
 button.info:active {
     background: var(--info-light);
-    transform: translateY(0);
 }
 
 /* Disabled state for info buttons */

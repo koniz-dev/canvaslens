@@ -14,11 +14,19 @@ const buttons = {
     setToolsCustom: document.querySelector('button[onclick="setToolsCustom()"]')
 };
 
+// Tool button group for managing active states
+const toolButtons = [
+    buttons.setToolsAll,
+    buttons.setToolsZoomOnly,
+    buttons.setToolsAnnotationOnly,
+    buttons.setToolsCustom
+];
+
 // Function to update button states based on image load status
 function updateButtonStates() {
     const hasImage = viewer.isImageLoaded();
     
-    // Buttons that require an image to be loaded
+    // All buttons that require an image to be loaded
     const imageDependentButtons = [
         buttons.openOverlay,
         buttons.resetView,
@@ -29,6 +37,7 @@ function updateButtonStates() {
         buttons.setToolsCustom
     ];
     
+    // Disable all buttons when no image is loaded
     imageDependentButtons.forEach(button => {
         if (button) {
             button.disabled = !hasImage;
@@ -36,10 +45,23 @@ function updateButtonStates() {
     });
 }
 
+// Function to set active tool button
+function setActiveToolButton(activeButton) {
+    toolButtons.forEach(button => {
+        if (button) {
+            button.classList.remove('active');
+        }
+    });
+    if (activeButton) {
+        activeButton.classList.add('active');
+    }
+}
+
 // Set up event listeners
 viewer.addEventListener('imageload', (e) => {
     updateStatus(`Image loaded: ${e.detail.naturalSize.width} × ${e.detail.naturalSize.height}`);
     updateButtonStates(); // Enable buttons when image loads
+    setActiveToolButton(buttons.setToolsAll); // Set "All Tools" as default active when image loads
 });
 
 viewer.addEventListener('imageloaderror', (e) => {
@@ -109,7 +131,6 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
 
 // Tool configuration functions
 window.setToolsAll = function () {
-    if (buttons.setToolsAll.disabled) return;
     const config = {
         zoom: true,
         pan: true,
@@ -123,11 +144,11 @@ window.setToolsAll = function () {
         comparison: true
     };
     viewer.setAttribute('tools', JSON.stringify(config));
+    setActiveToolButton(buttons.setToolsAll);
     updateStatus('All tools enabled');
 };
 
 window.setToolsZoomOnly = function () {
-    if (buttons.setToolsZoomOnly.disabled) return;
     const config = {
         zoom: true,
         pan: true,
@@ -141,11 +162,11 @@ window.setToolsZoomOnly = function () {
         comparison: false
     };
     viewer.setAttribute('tools', JSON.stringify(config));
+    setActiveToolButton(buttons.setToolsZoomOnly);
     updateStatus('Zoom and pan only');
 };
 
 window.setToolsAnnotationOnly = function () {
-    if (buttons.setToolsAnnotationOnly.disabled) return;
     const config = {
         zoom: false,
         pan: false,
@@ -159,11 +180,11 @@ window.setToolsAnnotationOnly = function () {
         comparison: false
     };
     viewer.setAttribute('tools', JSON.stringify(config));
+    setActiveToolButton(buttons.setToolsAnnotationOnly);
     updateStatus('Annotation tools only');
 };
 
 window.setToolsCustom = function () {
-    if (buttons.setToolsCustom.disabled) return;
     const config = {
         zoom: true,
         pan: false,
@@ -177,11 +198,30 @@ window.setToolsCustom = function () {
         comparison: true
     };
     viewer.setAttribute('tools', JSON.stringify(config));
+    setActiveToolButton(buttons.setToolsCustom);
     updateStatus('Custom configuration applied');
 };
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     updateStatus('CanvasLens Web Component ready!');
-    updateButtonStates(); // Initialize button states (all disabled initially)
+    
+    // Force disable all buttons initially (except Load Image and Load Sample)
+    const allButtons = [
+        buttons.openOverlay, 
+        buttons.resetView, 
+        buttons.fitToView,
+        buttons.setToolsAll,
+        buttons.setToolsZoomOnly,
+        buttons.setToolsAnnotationOnly,
+        buttons.setToolsCustom
+    ];
+    allButtons.forEach(button => {
+        if (button) {
+            button.disabled = true;
+        }
+    });
+    
+    updateButtonStates(); // Initialize button states
+    // Don't set active tool button initially since all are disabled
 });
