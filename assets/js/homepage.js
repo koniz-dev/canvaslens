@@ -11,7 +11,7 @@ const buttons = {
     setToolsAll: document.querySelector('button[onclick="setToolsAll()"]'),
     setToolsZoomOnly: document.querySelector('button[onclick="setToolsZoomOnly()"]'),
     setToolsAnnotationOnly: document.querySelector('button[onclick="setToolsAnnotationOnly()"]'),
-    setToolsCustom: document.querySelector('button[onclick="setToolsCustom()"]')
+    toggleComparison: document.querySelector('button[onclick="toggleComparison()"]')
 };
 
 // Tool button group for managing active states
@@ -19,7 +19,7 @@ const toolButtons = [
     buttons.setToolsAll,
     buttons.setToolsZoomOnly,
     buttons.setToolsAnnotationOnly,
-    buttons.setToolsCustom
+    buttons.toggleComparison
 ];
 
 // Function to update button states based on image load status
@@ -34,7 +34,7 @@ function updateButtonStates() {
         buttons.setToolsAll,
         buttons.setToolsZoomOnly,
         buttons.setToolsAnnotationOnly,
-        buttons.setToolsCustom
+        buttons.toggleComparison
     ];
     
     // Disable all buttons when no image is loaded
@@ -288,24 +288,23 @@ window.setToolsAnnotationOnly = function () {
     updateStatus('Annotation tools only - select a tool to start drawing');
 };
 
-window.setToolsCustom = function () {
-    const config = {
-        zoom: true,
-        pan: false,
-        annotation: {
-            rect: true,
-            arrow: false,
-            text: true,
-            circle: false,
-            line: false
-        },
-        comparison: true
-    };
-    // Use new API instead of setAttribute to avoid reinitializing
-    viewer.updateTools(config);
-    setActiveToolButton(buttons.setToolsCustom);
-    toggleAnnotationTools(false); // Hide annotation tools
-    updateStatus('Custom configuration applied');
+window.toggleComparison = function () {
+    // Toggle comparison mode
+    if (viewer.canvasLens && viewer.canvasLens.imageViewer) {
+        const currentComparison = viewer.canvasLens.getComparisonEnabled();
+        viewer.canvasLens.setComparisonEnabled(!currentComparison);
+        
+        if (!currentComparison) {
+            setActiveToolButton(buttons.toggleComparison);
+            toggleAnnotationTools(false); // Hide annotation tools
+            updateStatus('Comparison mode enabled - Load before/after images to compare');
+        } else {
+            setActiveToolButton(null);
+            updateStatus('Comparison mode disabled');
+        }
+    } else {
+        updateStatus('Comparison functionality not available');
+    }
 };
 
 // Annotation tool functions
@@ -389,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         buttons.setToolsAll,
         buttons.setToolsZoomOnly,
         buttons.setToolsAnnotationOnly,
-        buttons.setToolsCustom
+        buttons.toggleComparison
     ];
     allButtons.forEach(button => {
         if (button) {
