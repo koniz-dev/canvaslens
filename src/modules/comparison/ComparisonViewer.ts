@@ -3,6 +3,9 @@ import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { ImageComparisonManager, ComparisonOptions } from './ImageComparisonManager';
 import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
 
+// Re-export ComparisonOptions for external use
+export { ComparisonOptions } from './ImageComparisonManager';
+
 export class ComparisonViewer {
   private canvas: Renderer;
   private comparisonManager: ImageComparisonManager;
@@ -167,6 +170,29 @@ export class ComparisonViewer {
    */
   updateComparisonOptions(options: Partial<ComparisonOptions>): void {
     this.comparisonManager.updateOptions(options);
+  }
+
+  /**
+   * Toggle comparison mode
+   */
+  toggleComparisonMode(): void {
+    this.comparisonManager.toggleComparisonMode();
+    this.render();
+  }
+
+  /**
+   * Set comparison mode
+   */
+  setComparisonMode(enabled: boolean): void {
+    this.comparisonManager.setComparisonMode(enabled);
+    this.render();
+  }
+
+  /**
+   * Check if comparison mode is enabled
+   */
+  isComparisonMode(): boolean {
+    return this.comparisonManager.isComparisonMode();
   }
 
   /**

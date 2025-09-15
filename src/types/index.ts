@@ -82,4 +82,5 @@ export interface EventHandlers {
   onAnnotationRemove?: (annotationId: string) => void;
   onToolChange?: (toolType: string | null) => void;
   onComparisonChange?: (position: number) => void;
+  onComparisonModeChange?: (enabled: boolean) => void;
 }

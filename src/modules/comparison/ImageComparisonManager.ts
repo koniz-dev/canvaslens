@@ -10,6 +10,7 @@ export interface ComparisonOptions {
   enableSynchronizedZoom?: boolean;
   enableSynchronizedPan?: boolean;
   eventHandlers?: EventHandlers;
+  comparisonMode?: boolean; // Enable comparison mode (before/after with annotations)
 }
 
 export interface ComparisonState {
@@ -17,6 +18,7 @@ export interface ComparisonState {
   afterImage: ImageData | null;
   sliderPosition: number;
   isDragging: boolean;
+  comparisonMode: boolean;
 }
 
 export class ImageComparisonManager {
@@ -24,6 +26,11 @@ export class ImageComparisonManager {
   private options: Required<ComparisonOptions>;
   private state: ComparisonState;
   private eventHandlers: EventHandlers;
+  private boundHandlers: {
+    handleMouseDown: (event: MouseEvent) => void;
+    handleMouseMove: (event: MouseEvent) => void;
+    handleMouseUp: (event: MouseEvent) => void;
+  };
 
   constructor(canvas: Renderer, options: ComparisonOptions = {}) {
     this.canvas = canvas;
@@ -36,6 +43,7 @@ export class ImageComparisonManager {
       enableSynchronizedZoom: true,
       enableSynchronizedPan: true,
       eventHandlers: {},
+      comparisonMode: false,
       ...options
     };
 
@@ -43,7 +51,15 @@ export class ImageComparisonManager {
       beforeImage: null,
       afterImage: null,
       sliderPosition: this.options.sliderPosition,
-      isDragging: false
+      isDragging: false,
+      comparisonMode: this.options.comparisonMode
+    };
+
+    // Bind event handlers to maintain proper context
+    this.boundHandlers = {
+      handleMouseDown: this.handleMouseDown.bind(this),
+      handleMouseMove: this.handleMouseMove.bind(this),
+      handleMouseUp: this.handleMouseUp.bind(this)
     };
 
     this.setupEventListeners();
@@ -56,26 +72,34 @@ export class ImageComparisonManager {
     const canvasElement = this.canvas.getElement();
     
     // Use capture phase to handle events before zoom/pan
-    canvasElement.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
-    canvasElement.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener, true);
-    canvasElement.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener, true);
-    canvasElement.addEventListener('mouseleave', this.handleMouseUp.bind(this) as EventListener, true);
+    canvasElement.addEventListener('mousedown', this.boundHandlers.handleMouseDown as EventListener, true);
+    canvasElement.addEventListener('mousemove', this.boundHandlers.handleMouseMove as EventListener, true);
+    canvasElement.addEventListener('mouseup', this.boundHandlers.handleMouseUp as EventListener, true);
+    canvasElement.addEventListener('mouseleave', this.boundHandlers.handleMouseUp as EventListener, true);
   }
 
   /**
    * Handle mouse down for slider dragging
    */
   private handleMouseDown(event: MouseEvent): void {
-    if (!this.state.beforeImage || !this.state.afterImage) return;
+    // Only handle comparison mode
+    if (!this.state.comparisonMode) return;
 
     const mousePos = this.canvas.getMousePosition(event);
     const canvasSize = this.canvas.getSize();
     
-    // Check if click is near the slider
-    const sliderX = (canvasSize.width * this.state.sliderPosition) / 100;
+    // Get image bounds to position slider correctly
+    const imageBounds = this.getImageBounds();
+    if (!imageBounds) return;
+    
+    // Calculate slider position relative to image bounds
+    const sliderX = imageBounds.x + (imageBounds.width * this.state.sliderPosition) / 100;
     const tolerance = 30; // Increased tolerance for easier interaction
     
-    if (Math.abs(mousePos.x - sliderX) <= tolerance) {
+    // Check if click is near the slider and within image bounds
+    if (Math.abs(mousePos.x - sliderX) <= tolerance && 
+        mousePos.y >= imageBounds.y && 
+        mousePos.y <= imageBounds.y + imageBounds.height) {
       this.state.isDragging = true;
       this.canvas.getElement().style.cursor = 'ew-resize';
       event.preventDefault();
@@ -87,17 +111,52 @@ export class ImageComparisonManager {
    * Handle mouse move for slider dragging
    */
   private handleMouseMove(event: MouseEvent): void {
-    if (!this.state.isDragging || !this.state.beforeImage || !this.state.afterImage) return;
+    if (!this.state.comparisonMode) return;
 
     const mousePos = this.canvas.getMousePosition(event);
     const canvasSize = this.canvas.getSize();
     
-    // Calculate new slider position
-    const newPosition = Math.max(0, Math.min(100, (mousePos.x / canvasSize.width) * 100));
-    this.setSliderPosition(newPosition);
+    // Get image bounds to position slider correctly
+    const imageBounds = this.getImageBounds();
+    if (!imageBounds) return;
     
-    event.preventDefault();
-    event.stopPropagation(); // Prevent zoom/pan from handling this event
+    // Check if mouse is near slider for cursor change
+    const sliderX = imageBounds.x + (imageBounds.width * this.state.sliderPosition) / 100;
+    const tolerance = 30;
+    const isNearSlider = Math.abs(mousePos.x - sliderX) <= tolerance && 
+                        mousePos.y >= imageBounds.y && 
+                        mousePos.y <= imageBounds.y + imageBounds.height;
+    
+    // Update cursor based on proximity to slider
+    if (isNearSlider && !this.state.isDragging) {
+      this.canvas.getElement().style.cursor = 'ew-resize';
+    } else if (!this.state.isDragging) {
+      this.canvas.getElement().style.cursor = 'default';
+    }
+    
+    // Handle dragging
+    if (this.state.isDragging) {
+      // Get image bounds to limit slider movement
+      const imageBounds = this.getImageBounds();
+      if (imageBounds) {
+        // Calculate slider position relative to image bounds
+        const relativeX = mousePos.x - imageBounds.x;
+        const imageWidth = imageBounds.width;
+        
+        // Clamp slider position to image bounds
+        const clampedX = Math.max(0, Math.min(imageWidth, relativeX));
+        const newPosition = (clampedX / imageWidth) * 100;
+        
+        this.setSliderPosition(newPosition);
+      } else {
+        // Fallback to canvas bounds if image bounds not available
+        const newPosition = Math.max(0, Math.min(100, (mousePos.x / canvasSize.width) * 100));
+        this.setSliderPosition(newPosition);
+      }
+      
+      event.preventDefault();
+      event.stopPropagation(); // Prevent zoom/pan from handling this event
+    }
   }
 
   /**
@@ -110,6 +169,24 @@ export class ImageComparisonManager {
       event.preventDefault();
       event.stopPropagation(); // Prevent zoom/pan from handling this event
     }
+  }
+
+  /**
+   * Restore cursor state when exiting comparison mode
+   */
+  private restoreCursorState(): void {
+    // Let the annotation manager or zoom/pan handler manage cursor
+    this.canvas.getElement().style.cursor = '';
+  }
+
+  /**
+   * Get image bounds for limiting slider movement
+   */
+  private getImageBounds(): { x: number; y: number; width: number; height: number } | null {
+    if (this.canvas.imageViewer) {
+      return (this.canvas.imageViewer as any).getImageBounds();
+    }
+    return null;
   }
 
   /**
@@ -157,6 +234,11 @@ export class ImageComparisonManager {
     const clampedPosition = Math.max(0, Math.min(100, position));
     this.state.sliderPosition = clampedPosition;
     
+    // Trigger re-render through the image viewer
+    if (this.state.comparisonMode && this.canvas.imageViewer) {
+      this.canvas.imageViewer.render();
+    }
+    
     // Trigger event if handler exists
     if (this.eventHandlers.onComparisonChange) {
       this.eventHandlers.onComparisonChange(clampedPosition);
@@ -194,6 +276,63 @@ export class ImageComparisonManager {
   }
 
   /**
+   * Toggle comparison mode
+   */
+  toggleComparisonMode(): void {
+    this.state.comparisonMode = !this.state.comparisonMode;
+    this.options.comparisonMode = this.state.comparisonMode;
+    
+    // Clear any selected annotations when entering comparison mode
+    if (this.state.comparisonMode && this.canvas.annotationManager) {
+      (this.canvas.annotationManager as any).selectAnnotation(null);
+    }
+    
+    // Handle cursor state
+    if (this.state.comparisonMode) {
+      this.canvas.getElement().style.cursor = 'default';
+    } else {
+      this.restoreCursorState();
+    }
+    
+    // Trigger event if handler exists
+    if (this.eventHandlers.onComparisonModeChange) {
+      this.eventHandlers.onComparisonModeChange(this.state.comparisonMode);
+    }
+  }
+
+  /**
+   * Set comparison mode
+   */
+  setComparisonMode(enabled: boolean): void {
+    this.state.comparisonMode = enabled;
+    this.options.comparisonMode = enabled;
+    
+    // Clear any selected annotations when entering comparison mode
+    if (enabled && this.canvas.annotationManager) {
+      (this.canvas.annotationManager as any).selectAnnotation(null);
+    }
+    
+    // Handle cursor state
+    if (enabled) {
+      this.canvas.getElement().style.cursor = 'default';
+    } else {
+      this.restoreCursorState();
+    }
+    
+    // Trigger event if handler exists
+    if (this.eventHandlers.onComparisonModeChange) {
+      this.eventHandlers.onComparisonModeChange(enabled);
+    }
+  }
+
+  /**
+   * Get comparison mode status
+   */
+  isComparisonMode(): boolean {
+    return this.state.comparisonMode;
+  }
+
+  /**
    * Get comparison state
    */
   getState(): ComparisonState {
@@ -222,21 +361,39 @@ export class ImageComparisonManager {
     // Apply view transformations
     this.canvas.applyViewTransform();
 
-    // Draw before image (full canvas)
-    this.drawImage(ctx, this.state.beforeImage!);
-
-    // Create clipping region for after image
     const sliderX = (canvasSize.width * this.state.sliderPosition) / 100;
-    
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(sliderX, 0, canvasSize.width - sliderX, canvasSize.height);
-    ctx.clip();
 
-    // Draw after image (only in clipped region)
-    this.drawImage(ctx, this.state.afterImage!);
-    
-    ctx.restore();
+    if (this.state.comparisonMode) {
+      // Comparison mode: Left = current image with annotations, Right = original image
+      // Draw original image (right side)
+      this.drawImage(ctx, this.state.beforeImage!);
+
+      // Create clipping region for current image with annotations (left side)
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, sliderX, canvasSize.height);
+      ctx.clip();
+
+      // Draw current image with annotations (only in clipped region)
+      this.drawImage(ctx, this.state.afterImage!);
+      
+      ctx.restore();
+    } else {
+      // Normal mode: Left = before image, Right = after image
+      // Draw before image (full canvas)
+      this.drawImage(ctx, this.state.beforeImage!);
+
+      // Create clipping region for after image
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(sliderX, 0, canvasSize.width - sliderX, canvasSize.height);
+      ctx.clip();
+
+      // Draw after image (only in clipped region)
+      this.drawImage(ctx, this.state.afterImage!);
+      
+      ctx.restore();
+    }
 
     // Draw slider
     this.drawSlider(ctx, sliderX, canvasSize);
@@ -339,18 +496,19 @@ export class ImageComparisonManager {
    * Destroy comparison manager
    */
   destroy(): void {
-    // Remove event listeners
-    this.canvas.removeEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener);
-    this.canvas.removeEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
-    this.canvas.removeEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
-    this.canvas.removeEventListener('mouseleave', this.handleMouseUp.bind(this) as EventListener);
+    // Remove event listeners with same options as when added
+    this.canvas.getElement().removeEventListener('mousedown', this.boundHandlers.handleMouseDown as EventListener, true);
+    this.canvas.getElement().removeEventListener('mousemove', this.boundHandlers.handleMouseMove as EventListener, true);
+    this.canvas.getElement().removeEventListener('mouseup', this.boundHandlers.handleMouseUp as EventListener, true);
+    this.canvas.getElement().removeEventListener('mouseleave', this.boundHandlers.handleMouseUp as EventListener, true);
 
     // Clear state
     this.state = {
       beforeImage: null,
       afterImage: null,
       sliderPosition: 50,
-      isDragging: false
+      isDragging: false,
+      comparisonMode: false
     };
   }
 }

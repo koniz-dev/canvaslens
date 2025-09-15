@@ -117,6 +117,12 @@ export class AnnotationManager {
   private handleMouseDown(event: MouseEvent): void {
     if (!this.enabled || this.toolManager.isDrawing() || event.button !== 0) return;
     
+    // Don't allow selection if no annotation tools are enabled
+    if (!this.hasEnabledAnnotationTools()) return;
+    
+    // Don't allow selection if comparison mode is active
+    if (this.isComparisonModeActive()) return;
+    
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
@@ -800,6 +806,28 @@ export class AnnotationManager {
       }
     };
     setTimeout(() => document.addEventListener('click', removeMenu), 0);
+  }
+
+  /**
+   * Check if any annotation tools are enabled
+   */
+  private hasEnabledAnnotationTools(): boolean {
+    if (!this.toolManager) return false;
+    
+    const toolConfig = this.toolManager.getToolConfig();
+    return toolConfig.rect || toolConfig.arrow || toolConfig.text || 
+           toolConfig.circle || toolConfig.line;
+  }
+
+  /**
+   * Check if comparison mode is active
+   */
+  private isComparisonModeActive(): boolean {
+    // Check if the canvas has an imageViewer with comparison mode
+    if (this.canvas.imageViewer && (this.canvas.imageViewer as any).isComparisonMode) {
+      return (this.canvas.imageViewer as any).isComparisonMode();
+    }
+    return false;
   }
 
   /**

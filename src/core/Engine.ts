@@ -4,6 +4,7 @@ import { CanvasLensOptions, EventHandlers, Size, ToolConfig } from '../types';
 import { ImageViewer } from '../modules/image-viewer/ImageViewer';
 import { ZoomPanOptions } from '../modules/zoom-pan/ZoomPanHandler';
 import { AnnotationManagerOptions } from '../modules/annotation/AnnotationManager';
+import { ComparisonOptions } from '../modules/comparison/ComparisonViewer';
 import { warn } from '../utils/logger';
 
 export class Engine {
@@ -58,13 +59,19 @@ export class Engine {
       enabled: true
     } : undefined;
 
+    // Configure comparison options
+    const comparisonOptions: ComparisonOptions | undefined = tools.comparison ? {
+      comparisonMode: false
+    } : undefined;
+
     // Initialize image viewer
     this.imageViewer = new ImageViewer(
       this.container,
       size,
       this.eventHandlers,
       zoomPanOptions,
-      annotationOptions
+      annotationOptions,
+      comparisonOptions
     );
 
     // Set up event forwarding
@@ -414,6 +421,13 @@ export class Engine {
   }
 
   /**
+   * Alias for updateToolConfig for compatibility with homepage.js
+   */
+  updateTools(toolConfig: ToolConfig): void {
+    this.updateToolConfig(toolConfig);
+  }
+
+  /**
    * Check if there are any changes to the image (annotations)
    */
   hasChanges(): boolean {
@@ -429,5 +443,34 @@ export class Engine {
     if (annotationManager) {
       annotationManager.resetChanges();
     }
+  }
+
+  // Comparison methods
+  /**
+   * Toggle comparison mode
+   */
+  toggleComparisonMode(): void {
+    this.imageViewer.toggleComparisonMode();
+  }
+
+  /**
+   * Set comparison mode
+   */
+  setComparisonMode(enabled: boolean): void {
+    this.imageViewer.setComparisonMode(enabled);
+  }
+
+  /**
+   * Check if comparison mode is enabled
+   */
+  isComparisonMode(): boolean {
+    return this.imageViewer.isComparisonMode();
+  }
+
+  /**
+   * Get comparison manager
+   */
+  getComparisonManager() {
+    return this.imageViewer.getComparisonManager();
   }
 }

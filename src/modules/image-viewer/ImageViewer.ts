@@ -4,6 +4,7 @@ import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image'
 import { error } from '../../utils/logger';
 import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
 import { AnnotationManager, AnnotationManagerOptions } from '../annotation/AnnotationManager';
+import { ImageComparisonManager, ComparisonOptions } from '../comparison/ImageComparisonManager';
 
 export class ImageViewer {
   private canvas: Renderer;
@@ -11,13 +12,15 @@ export class ImageViewer {
   private eventHandlers: EventHandlers;
   private zoomPanHandler: ZoomPanHandler | null = null;
   private annotationManager: AnnotationManager | null = null;
+  private comparisonManager: ImageComparisonManager | null = null;
 
   constructor(
     container: HTMLElement,
     size: Size,
     eventHandlers: EventHandlers = {},
     zoomPanOptions?: ZoomPanOptions,
-    annotationOptions?: AnnotationManagerOptions
+    annotationOptions?: AnnotationManagerOptions,
+    comparisonOptions?: ComparisonOptions
   ) {
     this.canvas = new Renderer(container, size);
     this.eventHandlers = eventHandlers;
@@ -51,6 +54,17 @@ export class ImageViewer {
       
       // Set reference to annotation manager in canvas for ZoomPanHandler
       this.canvas.annotationManager = this.annotationManager;
+    }
+
+    // Initialize comparison manager if options are provided
+    if (comparisonOptions) {
+      this.comparisonManager = new ImageComparisonManager(
+        this.canvas,
+        {
+          ...comparisonOptions,
+          eventHandlers
+        }
+      );
     }
   }
 
@@ -170,9 +184,14 @@ export class ImageViewer {
       return;
     }
 
+    // If comparison mode is enabled, use comparison manager
+    if (this.comparisonManager && this.comparisonManager.isComparisonMode()) {
+      this.renderComparison();
+      return;
+    }
+
     const ctx = this.canvas.getContext();
     const canvasSize = this.canvas.getSize();
-
 
     // Clear canvas without background (transparent)
     this.canvas.clear();
@@ -202,6 +221,126 @@ export class ImageViewer {
 
     // Restore transformations after drawing everything
     this.canvas.restoreViewTransform();
+  }
+
+  /**
+   * Render comparison mode
+   */
+  private renderComparison(): void {
+    if (!this.comparisonManager || !this.imageData) {
+      return;
+    }
+
+    const ctx = this.canvas.getContext();
+    const canvasSize = this.canvas.getSize();
+
+    // Clear canvas without background (transparent)
+    this.canvas.clear();
+
+    // Apply view transformations
+    this.canvas.applyViewTransform();
+
+    // Get comparison state
+    const comparisonState = this.comparisonManager.getState();
+    
+    // Get image bounds to position slider correctly
+    const imageBounds = this.getImageBounds();
+    let sliderX: number;
+    
+    if (imageBounds) {
+      // Position slider relative to image bounds
+      sliderX = imageBounds.x + (imageBounds.width * comparisonState.sliderPosition) / 100;
+    } else {
+      // Fallback to canvas bounds
+      sliderX = (canvasSize.width * comparisonState.sliderPosition) / 100;
+    }
+
+    // Draw original image (right side - before)
+    ctx.drawImage(
+      this.imageData.element,
+      this.imageData.position.x,
+      this.imageData.position.y,
+      this.imageData.displaySize.width,
+      this.imageData.displaySize.height
+    );
+
+    // Create clipping region for current image with annotations (left side - after)
+    ctx.save();
+    ctx.beginPath();
+    
+    if (imageBounds) {
+      // Clip within image bounds
+      ctx.rect(imageBounds.x, imageBounds.y, sliderX - imageBounds.x, imageBounds.height);
+    } else {
+      // Fallback to canvas bounds
+      ctx.rect(0, 0, sliderX, canvasSize.height);
+    }
+    
+    ctx.clip();
+
+    // Draw current image with annotations (only in clipped region)
+    ctx.drawImage(
+      this.imageData.element,
+      this.imageData.position.x,
+      this.imageData.position.y,
+      this.imageData.displaySize.width,
+      this.imageData.displaySize.height
+    );
+
+    // Draw annotations if annotation manager is available
+    if (this.annotationManager) {
+      this.annotationManager.render();
+    }
+    
+    ctx.restore();
+
+    // Draw slider
+    this.drawComparisonSlider(ctx, sliderX, canvasSize);
+
+    // Restore transformations after drawing everything
+    this.canvas.restoreViewTransform();
+  }
+
+  /**
+   * Draw the comparison slider
+   */
+  private drawComparisonSlider(ctx: CanvasRenderingContext2D, x: number, canvasSize: Size): void {
+    const sliderWidth = 4;
+    const sliderColor = '#ffffff';
+
+    // Get image bounds to limit slider drawing
+    const imageBounds = this.getImageBounds();
+    
+    if (!imageBounds) {
+      return; // Don't draw slider if no image bounds
+    }
+
+    // Draw slider line
+    ctx.save();
+    ctx.strokeStyle = sliderColor;
+    ctx.lineWidth = sliderWidth;
+    ctx.setLineDash([]);
+    
+    ctx.beginPath();
+    ctx.moveTo(x, imageBounds.y);
+    ctx.lineTo(x, imageBounds.y + imageBounds.height);
+    ctx.stroke();
+
+    // Draw slider handle
+    const handleSize = 20;
+    const handleY = imageBounds.y + (imageBounds.height / 2);
+    
+    ctx.fillStyle = sliderColor;
+    ctx.beginPath();
+    ctx.arc(x, handleY, handleSize / 2, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Draw handle border
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.restore();
   }
 
   /**
@@ -251,6 +390,13 @@ export class ImageViewer {
    */
   getAnnotationManager(): AnnotationManager | null {
     return this.annotationManager;
+  }
+
+  /**
+   * Get comparison manager
+   */
+  getComparisonManager(): ImageComparisonManager | null {
+    return this.comparisonManager;
   }
 
   /**
@@ -331,6 +477,33 @@ export class ImageViewer {
   }
 
   /**
+   * Toggle comparison mode
+   */
+  toggleComparisonMode(): void {
+    if (this.comparisonManager) {
+      this.comparisonManager.toggleComparisonMode();
+      this.render();
+    }
+  }
+
+  /**
+   * Set comparison mode
+   */
+  setComparisonMode(enabled: boolean): void {
+    if (this.comparisonManager) {
+      this.comparisonManager.setComparisonMode(enabled);
+      this.render();
+    }
+  }
+
+  /**
+   * Check if comparison mode is enabled
+   */
+  isComparisonMode(): boolean {
+    return this.comparisonManager ? this.comparisonManager.isComparisonMode() : false;
+  }
+
+  /**
    * Update event handlers
    */
   setEventHandlers(handlers: EventHandlers): void {
@@ -344,6 +517,11 @@ export class ImageViewer {
     // Update event handlers in AnnotationManager if it exists
     if (this.annotationManager) {
       this.annotationManager.setEventHandlers(this.eventHandlers);
+    }
+
+    // Update event handlers in ComparisonManager if it exists
+    if (this.comparisonManager) {
+      this.comparisonManager.setEventHandlers(this.eventHandlers);
     }
   }
 }

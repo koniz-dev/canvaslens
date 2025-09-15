@@ -318,13 +318,13 @@ window.setToolsAnnotationOnly = function () {
 window.toggleComparison = function () {
     // Toggle comparison mode
     if (viewer.canvasLens && viewer.canvasLens.imageViewer) {
-        const currentComparison = viewer.canvasLens.getComparisonEnabled();
-        viewer.canvasLens.setComparisonEnabled(!currentComparison);
+        const currentComparison = viewer.canvasLens.isComparisonMode();
+        viewer.canvasLens.toggleComparisonMode();
         
         if (!currentComparison) {
             setActiveToolButton(buttons.toggleComparison);
             toggleAnnotationTools(false); // Hide annotation tools
-            updateStatus('Comparison mode enabled - Load before/after images to compare');
+            updateStatus('Comparison mode enabled - Compare original image with current annotations');
         } else {
             setActiveToolButton(null);
             updateStatus('Comparison mode disabled');

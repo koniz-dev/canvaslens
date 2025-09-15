@@ -603,6 +603,19 @@ export class ToolManager {
   }
 
   /**
+   * Get current tool configuration
+   */
+  getToolConfig(): { rect: boolean; arrow: boolean; text: boolean; circle: boolean; line: boolean } {
+    return {
+      rect: this.tools.has('rect'),
+      arrow: this.tools.has('arrow'),
+      text: this.tools.has('text'),
+      circle: this.tools.has('circle'),
+      line: this.tools.has('line')
+    };
+  }
+
+  /**
    * Destroy tool manager and clean up
    */
   destroy(): void {
