@@ -22,6 +22,7 @@ export class AnnotationManager {
   private isDragging = false;
   private dragStartPoint: Point | null = null;
   private dragOffset: Point | null = null;
+  private _hasChanges = false;
 
   constructor(canvas: Renderer, options: AnnotationManagerOptions = {}) {
     this.canvas = canvas;
@@ -249,7 +250,7 @@ export class AnnotationManager {
    */
   addAnnotation(annotation: Annotation): void {
     this.annotations.set(annotation.id, annotation);
-    
+    this._hasChanges = true;
     
     // Trigger re-render
     this.canvas.getElement().dispatchEvent(new CustomEvent('viewStateChange'));
@@ -267,6 +268,7 @@ export class AnnotationManager {
     if (!annotation) return false;
 
     this.annotations.delete(id);
+    this._hasChanges = true;
     
     // Clear selection if removing selected annotation
     if (this.selectedAnnotation?.id === id) {
@@ -385,6 +387,7 @@ export class AnnotationManager {
     const annotationIds = Array.from(this.annotations.keys());
     this.annotations.clear();
     this.selectedAnnotation = null;
+    this._hasChanges = true;
 
     // Trigger remove events for all annotations
     if (this.eventHandlers.onAnnotationRemove) {
@@ -828,5 +831,19 @@ export class AnnotationManager {
     this.isDragging = false;
     this.dragStartPoint = null;
     this.dragOffset = null;
+  }
+
+  /**
+   * Check if there are any changes to annotations
+   */
+  hasChanges(): boolean {
+    return this._hasChanges;
+  }
+
+  /**
+   * Reset the changes flag
+   */
+  resetChanges(): void {
+    this._hasChanges = false;
   }
 }

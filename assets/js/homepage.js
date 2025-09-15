@@ -43,6 +43,27 @@ function updateButtonStates() {
             button.disabled = !hasImage;
         }
     });
+    
+    // Update comparison button state based on changes
+    updateComparisonButtonState();
+}
+
+// Function to update comparison button state based on changes
+function updateComparisonButtonState() {
+    if (buttons.toggleComparison) {
+        const hasImage = viewer.isImageLoaded();
+        const hasChanges = hasImage && viewer.hasChanges();
+        
+        // Enable comparison button only when there are changes to the original image
+        buttons.toggleComparison.disabled = !hasImage || !hasChanges;
+        
+        // Update button text to indicate state
+        if (hasChanges) {
+            buttons.toggleComparison.title = 'Compare with original image';
+        } else {
+            buttons.toggleComparison.title = 'No changes to compare';
+        }
+    }
 }
 
 // Function to set active tool button
@@ -162,6 +183,12 @@ viewer.addEventListener('zoomchange', (e) => {
 
 viewer.addEventListener('annotationadd', (e) => {
     updateStatus(`Annotation added: ${e.detail.type}`);
+    updateComparisonButtonState();
+});
+
+viewer.addEventListener('annotationremove', (e) => {
+    updateStatus(`Annotation removed: ${e.detail}`);
+    updateComparisonButtonState();
 });
 
 viewer.addEventListener('toolchange', (e) => {

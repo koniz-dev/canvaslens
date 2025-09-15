@@ -412,4 +412,22 @@ export class Engine {
       // Comparison functionality would be updated here when implemented
     }
   }
+
+  /**
+   * Check if there are any changes to the image (annotations)
+   */
+  hasChanges(): boolean {
+    const annotationManager = this.getAnnotationManager();
+    return annotationManager ? annotationManager.hasChanges() : false;
+  }
+
+  /**
+   * Reset the changes flag
+   */
+  resetChanges(): void {
+    const annotationManager = this.getAnnotationManager();
+    if (annotationManager) {
+      annotationManager.resetChanges();
+    }
+  }
 }

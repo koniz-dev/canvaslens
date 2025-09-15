@@ -221,6 +221,8 @@ export class CanvasLensElement extends HTMLElement {
       case 'src':
         if (value) {
           this.canvasLens.loadImage(value, this.getAttribute('image-type') || undefined, this.getAttribute('file-name') || undefined);
+          // Reset changes when new image is loaded
+          this.resetChanges();
         }
         break;
       case 'width':
@@ -264,6 +266,8 @@ export class CanvasLensElement extends HTMLElement {
     if (this.canvasLens && !this.isDestroyed) {
       try {
         await this.canvasLens.loadImage(src, type, fileName);
+        // Reset changes when new image is loaded
+        this.resetChanges();
       } catch (error) {
         console.error('Failed to load image:', error);
         throw error;
@@ -297,6 +301,8 @@ export class CanvasLensElement extends HTMLElement {
         if (this.canvasLens && !this.isDestroyed) {
           try {
             this.canvasLens.loadImageElement(img, file.type, file.name);
+            // Reset changes when new image is loaded
+            this.resetChanges();
           } catch (error) {
             console.error('Failed to load image element:', error);
           }
@@ -483,6 +489,25 @@ export class CanvasLensElement extends HTMLElement {
 
   isOverlayOpen(): boolean {
     return this.overlayOpen;
+  }
+
+  /**
+   * Check if there are any changes to the image (annotations)
+   */
+  hasChanges(): boolean {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.hasChanges();
+    }
+    return false;
+  }
+
+  /**
+   * Reset the changes flag
+   */
+  resetChanges(): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.resetChanges();
+    }
   }
 
   private createOverlay(): void {
