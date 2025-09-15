@@ -50,10 +50,14 @@ function setActiveToolButton(activeButton) {
     toolButtons.forEach(button => {
         if (button) {
             button.classList.remove('active');
+            // Add secondary class to make it gray
+            button.classList.add('secondary');
         }
     });
     if (activeButton) {
         activeButton.classList.add('active');
+        // Remove secondary class to make it blue
+        activeButton.classList.remove('secondary');
     }
 }
 
@@ -143,7 +147,8 @@ window.setToolsAll = function () {
         },
         comparison: true
     };
-    viewer.setAttribute('tools', JSON.stringify(config));
+    // Use new API instead of setAttribute to avoid reinitializing
+    viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsAll);
     updateStatus('All tools enabled');
 };
@@ -161,7 +166,8 @@ window.setToolsZoomOnly = function () {
         },
         comparison: false
     };
-    viewer.setAttribute('tools', JSON.stringify(config));
+    // Use new API instead of setAttribute to avoid reinitializing
+    viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsZoomOnly);
     updateStatus('Zoom and pan only');
 };
@@ -179,7 +185,8 @@ window.setToolsAnnotationOnly = function () {
         },
         comparison: false
     };
-    viewer.setAttribute('tools', JSON.stringify(config));
+    // Use new API instead of setAttribute to avoid reinitializing
+    viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsAnnotationOnly);
     updateStatus('Annotation tools only');
 };
@@ -197,7 +204,8 @@ window.setToolsCustom = function () {
         },
         comparison: true
     };
-    viewer.setAttribute('tools', JSON.stringify(config));
+    // Use new API instead of setAttribute to avoid reinitializing
+    viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsCustom);
     updateStatus('Custom configuration applied');
 };

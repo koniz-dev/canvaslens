@@ -307,6 +307,21 @@ button.large {
     margin: 0;
 }
 
+/* Active state for all buttons */
+.btn.active,
+button.active {
+    background: var(--primary-color) !important;
+    color: var(--text-light) !important;
+    box-shadow: var(--button-shadow-hover);
+}
+
+/* Override secondary class when active */
+.btn.active.secondary,
+button.active.secondary {
+    background: var(--primary-color) !important;
+    color: var(--text-light) !important;
+}
+
 /* Annotation Controls */
 .annotation-controls {
     display: flex;
@@ -325,7 +340,6 @@ button.large {
 .annotation-controls .btn.active,
 .annotation-controls button.active {
     background: var(--success-color);
-    font-weight: bold;
 }
 
 /* Zoom Controls */

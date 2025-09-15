@@ -505,4 +505,20 @@ export class ToolManager {
     this.currentTool = null;
     this.activeToolType = null;
   }
+
+  /**
+   * Update tool configuration
+   */
+  updateToolConfig(annotationConfig: any): void {
+    // Update tool availability based on configuration
+    this.tools.forEach((tool, toolType) => {
+      const isEnabled = annotationConfig[toolType];
+      if (isEnabled === false) {
+        // If tool is disabled and currently active, deactivate it
+        if (this.activeToolType === toolType) {
+          this.deactivateTool();
+        }
+      }
+    });
+  }
 }

@@ -382,4 +382,34 @@ export class Engine {
       annotationManager.deactivateTool();
     }
   }
+
+  /**
+   * Update tool configuration without reinitializing the entire engine
+   */
+  updateToolConfig(toolConfig: ToolConfig): void {
+    // Update options
+    this.options.tools = { ...this.options.tools, ...toolConfig };
+    
+    // Update zoom/pan handler configuration
+    const zoomPanHandler = this.getZoomPanHandler();
+    if (zoomPanHandler) {
+      zoomPanHandler.updateOptions({
+        enableZoom: toolConfig.zoom ?? this.options.tools.zoom ?? true,
+        enablePan: toolConfig.pan ?? this.options.tools.pan ?? true,
+        maxZoom: this.options.maxZoom ?? 10,
+        minZoom: this.options.minZoom ?? 0.1
+      });
+    }
+    
+    // Update annotation manager configuration
+    const annotationManager = this.getAnnotationManager();
+    if (annotationManager && toolConfig.annotation) {
+      annotationManager.updateToolConfig(toolConfig.annotation);
+    }
+    
+    // Update comparison configuration if needed
+    if (toolConfig.comparison !== undefined) {
+      // Comparison functionality would be updated here when implemented
+    }
+  }
 }

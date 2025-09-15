@@ -230,9 +230,19 @@ export class CanvasLensElement extends HTMLElement {
         this.canvasLens.resize(width, height);
         break;
       case 'tools':
+        // Update tool configuration without reinitializing
+        if (this.canvasLens) {
+          try {
+            const toolConfig = JSON.parse(value);
+            this.canvasLens.updateToolConfig(toolConfig);
+          } catch (error) {
+            warn('Invalid tools configuration:', error);
+          }
+        }
+        break;
       case 'max-zoom':
       case 'min-zoom':
-        // Reinitialize with new options
+        // Reinitialize with new options (zoom limits require reinitialization)
         this.reinitialize();
         break;
     }
@@ -429,6 +439,17 @@ export class CanvasLensElement extends HTMLElement {
       return imageViewer ? imageViewer.getImageData() : null;
     }
     return null;
+  }
+
+  /**
+   * Update tool configuration without reinitializing the component
+   */
+  updateTools(toolConfig: ToolConfig): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.updateToolConfig(toolConfig);
+    } else {
+      warn('CanvasLens is not initialized or has been destroyed');
+    }
   }
 
   openOverlay(): void {

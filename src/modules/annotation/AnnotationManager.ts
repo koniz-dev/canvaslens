@@ -525,6 +525,16 @@ export class AnnotationManager {
   }
 
   /**
+   * Update tool configuration
+   */
+  updateToolConfig(annotationConfig: any): void {
+    // Update tool manager with new configuration
+    if (this.toolManager) {
+      this.toolManager.updateToolConfig(annotationConfig);
+    }
+  }
+
+  /**
    * Destroy annotation manager
    */
   destroy(): void {
