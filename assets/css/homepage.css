@@ -63,35 +63,20 @@ ul {
     flex-wrap: wrap;
 }
 
+/* Homepage specific button overrides - using new color system */
 .btn {
-    background: #3498db;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.2s;
-}
-
-.btn:hover {
-    background: #2980b9;
+    /* Inherits from components/buttons.css */
+    /* Override only specific homepage needs */
 }
 
 .btn.secondary {
-    background: #95a5a6;
-}
-
-.btn.secondary:hover {
-    background: #7f8c8d;
+    /* Inherits from components/buttons.css */
+    /* No additional overrides needed */
 }
 
 .btn.success {
-    background: #27ae60;
-}
-
-.btn.success:hover {
-    background: #229954;
+    /* Inherits from components/buttons.css */
+    /* No additional overrides needed */
 }
 
 .file-input {
@@ -99,18 +84,46 @@ ul {
 }
 
 .file-label {
-    background: #9b59b6;
-    color: white;
+    background: var(--accent-color);
+    color: var(--text-light);
     border: none;
     padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    transition: background 0.2s;
+    transition: all var(--transition-base);
+    box-shadow: var(--button-shadow);
+    display: inline-block;
+    text-decoration: none;
+    font-weight: 500;
 }
 
 .file-label:hover {
-    background: #8e44ad;
+    background: var(--accent-dark);
+    box-shadow: var(--button-shadow-hover);
+    transform: translateY(-1px);
+}
+
+.file-label:active {
+    transform: translateY(0);
+    box-shadow: var(--button-shadow-active);
+    background: var(--accent-light);
+}
+
+/* Disabled state for file label */
+.file-label:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.5;
+}
+
+.file-label:disabled:hover {
+    background: var(--gray-300);
+    transform: none;
+    box-shadow: none;
 }
 
 .status {

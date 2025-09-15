@@ -1,4 +1,4 @@
-/* CanvasLens - Button Styles */
+/* CanvasLens - Enhanced Button Styles */
 
 /* Base Button - Element and Class */
 button,
@@ -16,33 +16,132 @@ button,
     transition: all var(--transition-base);
     margin: var(--spacing-xs);
     font-family: inherit;
+    box-shadow: var(--button-shadow);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Enhanced hover effects */
 button:hover,
 .btn:hover {
     background: var(--primary-dark);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--button-shadow-hover);
+    transform: translateY(-1px);
 }
 
+/* Active state */
+button:active,
+.btn:active {
+    transform: translateY(0);
+    box-shadow: var(--button-shadow-active);
+    background: var(--primary-light);
+}
+
+/* Focus state for accessibility */
+button:focus,
+.btn:focus {
+    outline: none;
+    box-shadow: var(--button-shadow-hover), var(--focus-primary);
+}
+
+/* Disabled state */
 button:disabled,
 .btn:disabled {
-    background: var(--gray-500);
+    background: var(--gray-300);
+    color: var(--gray-500);
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
+    opacity: 0.6;
 }
 
-/* Button Variations */
+/* Disabled state hover - prevent any hover effects */
+button:disabled:hover,
+.btn:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+/* Disabled state active - prevent any active effects */
+button:disabled:active,
+.btn:disabled:active {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+/* Button Variations with Enhanced Effects */
 .btn-secondary,
 button.secondary {
-    background: var(--gray-600);
+    background: var(--secondary-color);
 }
 
 .btn-secondary:hover,
 button.secondary:hover {
-    background: var(--gray-700);
+    background: var(--secondary-dark);
+    transform: translateY(-1px);
 }
 
+.btn-secondary:active,
+button.secondary:active {
+    background: var(--secondary-light);
+    transform: translateY(0);
+}
+
+/* Disabled state for secondary buttons */
+.btn-secondary:disabled,
+button.secondary:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+}
+
+.btn-secondary:disabled:hover,
+button.secondary:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    transform: none;
+}
+
+/* Accent buttons (for special actions like Load Image) */
+.btn-accent,
+button.accent {
+    background: var(--accent-color);
+}
+
+.btn-accent:hover,
+button.accent:hover {
+    background: var(--accent-dark);
+    transform: translateY(-1px);
+}
+
+.btn-accent:active,
+button.accent:active {
+    background: var(--accent-light);
+    transform: translateY(0);
+}
+
+/* Disabled state for accent buttons */
+.btn-accent:disabled,
+button.accent:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+}
+
+.btn-accent:disabled:hover,
+button.accent:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    transform: none;
+}
+
+/* Success buttons */
 .btn-success,
 button.success {
     background: var(--success-color);
@@ -51,8 +150,30 @@ button.success {
 .btn-success:hover,
 button.success:hover {
     background: var(--success-dark);
+    transform: translateY(-1px);
 }
 
+.btn-success:active,
+button.success:active {
+    background: var(--success-light);
+    transform: translateY(0);
+}
+
+/* Disabled state for success buttons */
+.btn-success:disabled,
+button.success:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+}
+
+.btn-success:disabled:hover,
+button.success:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    transform: none;
+}
+
+/* Warning buttons */
 .btn-warning,
 button.warning {
     background: var(--warning-color);
@@ -62,8 +183,30 @@ button.warning {
 .btn-warning:hover,
 button.warning:hover {
     background: var(--warning-dark);
+    transform: translateY(-1px);
 }
 
+.btn-warning:active,
+button.warning:active {
+    background: var(--warning-light);
+    transform: translateY(0);
+}
+
+/* Disabled state for warning buttons */
+.btn-warning:disabled,
+button.warning:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+}
+
+.btn-warning:disabled:hover,
+button.warning:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    transform: none;
+}
+
+/* Danger buttons */
 .btn-danger,
 button.danger {
     background: var(--error-color);
@@ -72,8 +215,30 @@ button.danger {
 .btn-danger:hover,
 button.danger:hover {
     background: var(--error-dark);
+    transform: translateY(-1px);
 }
 
+.btn-danger:active,
+button.danger:active {
+    background: var(--error-light);
+    transform: translateY(0);
+}
+
+/* Disabled state for danger buttons */
+.btn-danger:disabled,
+button.danger:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+}
+
+.btn-danger:disabled:hover,
+button.danger:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    transform: none;
+}
+
+/* Info buttons */
 .btn-info,
 button.info {
     background: var(--info-color);
@@ -82,6 +247,27 @@ button.info {
 .btn-info:hover,
 button.info:hover {
     background: var(--info-dark);
+    transform: translateY(-1px);
+}
+
+.btn-info:active,
+button.info:active {
+    background: var(--info-light);
+    transform: translateY(0);
+}
+
+/* Disabled state for info buttons */
+.btn-info:disabled,
+button.info:disabled {
+    background: var(--gray-300);
+    color: var(--gray-500);
+}
+
+.btn-info:disabled:hover,
+button.info:disabled:hover {
+    background: var(--gray-300);
+    color: var(--gray-500);
+    transform: none;
 }
 
 /* Button Sizes */

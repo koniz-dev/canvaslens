@@ -1,19 +1,34 @@
 /* CanvasLens - CSS Variables */
 
 :root {
-    /* Color Palette */
-    --primary-color: #667eea;
-    --primary-dark: #5a6fd8;
-    --secondary-color: #764ba2;
-    --accent-color: #28a745;
-    --success-color: #4f46e5;
-    --success-dark: #4338ca;
-    --warning-color: #ffc107;
-    --warning-dark: #e0a800;
-    --error-color: #dc3545;
-    --error-dark: #c82333;
-    --info-color: #17a2b8;
-    --info-dark: #138496;
+    /* Color Palette - Improved for better UX */
+    --primary-color: #3b82f6;        /* Blue - Primary actions */
+    --primary-dark: #2563eb;         /* Darker blue for hover */
+    --primary-light: #60a5fa;        /* Lighter blue for active states */
+    
+    --secondary-color: #6b7280;      /* Gray - Secondary actions */
+    --secondary-dark: #4b5563;       /* Darker gray for hover */
+    --secondary-light: #9ca3af;      /* Lighter gray for disabled */
+    
+    --accent-color: #8b5cf6;         /* Purple - Special actions (Load Image) */
+    --accent-dark: #7c3aed;          /* Darker purple for hover */
+    --accent-light: #a78bfa;         /* Lighter purple for active */
+    
+    --success-color: #10b981;        /* Green - Success/positive actions */
+    --success-dark: #059669;         /* Darker green for hover */
+    --success-light: #34d399;        /* Lighter green for active */
+    
+    --warning-color: #f59e0b;        /* Orange - Warning/caution actions */
+    --warning-dark: #d97706;         /* Darker orange for hover */
+    --warning-light: #fbbf24;        /* Lighter orange for active */
+    
+    --error-color: #ef4444;          /* Red - Error/destructive actions */
+    --error-dark: #dc2626;           /* Darker red for hover */
+    --error-light: #f87171;          /* Lighter red for active */
+    
+    --info-color: #06b6d4;           /* Cyan - Informational actions */
+    --info-dark: #0891b2;            /* Darker cyan for hover */
+    --info-light: #22d3ee;           /* Lighter cyan for active */
     
     /* Neutral Colors */
     --white: #ffffff;
@@ -69,6 +84,19 @@
     
     /* Shadows */
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --shadow-xl: 0 20px 25px rgba(0,0,0,0.1);
+    
+    /* Button specific shadows */
+    --button-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    --button-shadow-hover: 0 4px 6px rgba(0,0,0,0.1);
+    --button-shadow-active: 0 2px 4px rgba(0,0,0,0.1);
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease-in-out;
+    --transition-base: 0.2s ease-in-out;
+    --transition-slow: 0.3s ease-in-out;
     --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
     --shadow-lg: 0 8px 16px rgba(0,0,0,0.1);
     --shadow-xl: 0 12px 24px rgba(0,0,0,0.15);

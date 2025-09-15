@@ -3,13 +3,48 @@ import { CanvasLens } from '../../dist/index.js';
 const viewer = document.getElementById('canvasContainer');
 const status = document.getElementById('status');
 
+// Button references for state management
+const buttons = {
+    openOverlay: document.querySelector('button[onclick="openOverlay()"]'),
+    resetView: document.querySelector('button[onclick="resetView()"]'),
+    fitToView: document.querySelector('button[onclick="fitToView()"]'),
+    setToolsAll: document.querySelector('button[onclick="setToolsAll()"]'),
+    setToolsZoomOnly: document.querySelector('button[onclick="setToolsZoomOnly()"]'),
+    setToolsAnnotationOnly: document.querySelector('button[onclick="setToolsAnnotationOnly()"]'),
+    setToolsCustom: document.querySelector('button[onclick="setToolsCustom()"]')
+};
+
+// Function to update button states based on image load status
+function updateButtonStates() {
+    const hasImage = viewer.isImageLoaded();
+    
+    // Buttons that require an image to be loaded
+    const imageDependentButtons = [
+        buttons.openOverlay,
+        buttons.resetView,
+        buttons.fitToView,
+        buttons.setToolsAll,
+        buttons.setToolsZoomOnly,
+        buttons.setToolsAnnotationOnly,
+        buttons.setToolsCustom
+    ];
+    
+    imageDependentButtons.forEach(button => {
+        if (button) {
+            button.disabled = !hasImage;
+        }
+    });
+}
+
 // Set up event listeners
 viewer.addEventListener('imageload', (e) => {
     updateStatus(`Image loaded: ${e.detail.naturalSize.width} × ${e.detail.naturalSize.height}`);
+    updateButtonStates(); // Enable buttons when image loads
 });
 
 viewer.addEventListener('imageloaderror', (e) => {
     updateStatus(`❌ Failed to load image: ${e.detail.message}`);
+    updateButtonStates(); // Keep buttons disabled on error
 });
 
 viewer.addEventListener('zoomchange', (e) => {
@@ -33,6 +68,7 @@ window.loadSampleImage = function () {
 
 // Open overlay
 window.openOverlay = function () {
+    if (buttons.openOverlay.disabled) return;
     if (viewer.isImageLoaded()) {
         viewer.openOverlay();
     } else {
@@ -42,12 +78,14 @@ window.openOverlay = function () {
 
 // Reset view
 window.resetView = function () {
+    if (buttons.resetView.disabled) return;
     viewer.resetView();
     updateStatus('View reset');
 };
 
 // Fit to view
 window.fitToView = function () {
+    if (buttons.fitToView.disabled) return;
     viewer.fitToView();
     updateStatus('Fitted to view');
 };
@@ -71,6 +109,7 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
 
 // Tool configuration functions
 window.setToolsAll = function () {
+    if (buttons.setToolsAll.disabled) return;
     const config = {
         zoom: true,
         pan: true,
@@ -88,6 +127,7 @@ window.setToolsAll = function () {
 };
 
 window.setToolsZoomOnly = function () {
+    if (buttons.setToolsZoomOnly.disabled) return;
     const config = {
         zoom: true,
         pan: true,
@@ -105,6 +145,7 @@ window.setToolsZoomOnly = function () {
 };
 
 window.setToolsAnnotationOnly = function () {
+    if (buttons.setToolsAnnotationOnly.disabled) return;
     const config = {
         zoom: false,
         pan: false,
@@ -122,6 +163,7 @@ window.setToolsAnnotationOnly = function () {
 };
 
 window.setToolsCustom = function () {
+    if (buttons.setToolsCustom.disabled) return;
     const config = {
         zoom: true,
         pan: false,
@@ -141,4 +183,5 @@ window.setToolsCustom = function () {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     updateStatus('CanvasLens Web Component ready!');
+    updateButtonStates(); // Initialize button states (all disabled initially)
 });
