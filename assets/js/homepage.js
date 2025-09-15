@@ -23,6 +23,8 @@ viewer.addEventListener('annotationadd', (e) => {
 // Load sample image
 window.loadSampleImage = function () {
     updateStatus('Loading sample image...');
+    // Reset file input to allow selecting the same file again
+    document.getElementById('imageInput').value = '';
     // Use Picsum for reliable sample images
     viewer.loadImage('https://picsum.photos/800/600', 'image/jpeg', 'sample.jpg').catch(err => {
         updateStatus(`❌ Failed to load sample image: ${err.message}`);
@@ -62,6 +64,8 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
     if (file) {
         updateStatus(`Loading ${file.name}...`);
         viewer.loadImageFromFile(file);
+        // Reset input value to allow selecting the same file again
+        e.target.value = '';
     }
 });
 
