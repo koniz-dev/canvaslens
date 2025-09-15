@@ -62,6 +62,7 @@ export interface AnnotationStyle {
   strokeColor: string;
   fillColor?: string;
   strokeWidth: number;
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
   fontSize?: number;
   fontFamily?: string;
 }

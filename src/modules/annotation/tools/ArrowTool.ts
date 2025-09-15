@@ -5,10 +5,11 @@ export class ArrowTool extends BaseTool {
   /**
    * Start drawing arrow
    */
-  startDrawing(point: Point): void {
+  startDrawing(point: Point): Annotation | null {
     this.isDrawing = true;
     this.startPoint = { ...point };
     this.currentPoints = [this.startPoint];
+    return null; // Arrow tool doesn't create annotation immediately
   }
 
   /**

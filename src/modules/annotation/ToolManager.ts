@@ -1,11 +1,12 @@
 import { Renderer } from '../../core/Renderer';
 import { Annotation, AnnotationStyle, Tool, Point } from '../../types';
 import { AnnotationRenderer } from './AnnotationRenderer';
-import { BaseTool, RectangleTool, ArrowTool, TextTool, ToolOptions } from './tools';
+import { BaseTool, RectangleTool, ArrowTool, TextTool, CircleTool, LineTool, ToolOptions } from './tools';
 
 export interface ToolManagerOptions {
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
+  annotationManager?: any; // Reference to AnnotationManager for keyboard shortcuts
 }
 
 export class ToolManager {
@@ -19,8 +20,17 @@ export class ToolManager {
   private isCtrlPressed = false;
   private isAltPressed = false;
   private activeToolType: string | null = null; // Track which tool is currently active
-  private toolActivatedByKeyboard = false; // Track if tool was activated by Alt+R/A/T
+  private toolActivatedByKeyboard = false; // Track if tool was activated by Alt+R/A/T/C/L
   private onToolChange?: (toolType: string | null) => void; // Callback for UI updates
+  
+  // Minimum size thresholds for annotations (in pixels)
+  private static readonly MIN_SIZE_THRESHOLDS = {
+    rect: 10,    // Minimum 10px width or height
+    circle: 10,  // Minimum 10px radius
+    line: 8,     // Minimum 8px length
+    arrow: 8,    // Minimum 8px length
+    text: 0      // Text doesn't have size constraint
+  };
   
   // Store bound event handlers for proper cleanup
   private boundMouseDown: (event: MouseEvent) => void;
@@ -63,6 +73,8 @@ export class ToolManager {
     this.tools.set('rect', new RectangleTool(this.canvas, this.renderer, toolOptions));
     this.tools.set('arrow', new ArrowTool(this.canvas, this.renderer, toolOptions));
     this.tools.set('text', new TextTool(this.canvas, this.renderer, toolOptions));
+    this.tools.set('circle', new CircleTool(this.canvas, this.renderer, toolOptions));
+    this.tools.set('line', new LineTool(this.canvas, this.renderer, toolOptions));
 
     // Set default tool to rectangle
     this.currentTool = this.tools.get('rect') || null;
@@ -84,9 +96,9 @@ export class ToolManager {
     // Listen for custom annotation creation events (from TextTool)
     this.canvas.getElement().addEventListener('annotationCreated', this.handleAnnotationCreated.bind(this) as EventListener);
 
-    // Keyboard shortcuts - use window to ensure global capture
-    window.addEventListener('keydown', this.boundKeyDown);
-    window.addEventListener('keyup', this.boundKeyUp);
+    // Keyboard shortcuts - use document with capture to ensure we get events first
+    document.addEventListener('keydown', this.boundKeyDown, true);
+    document.addEventListener('keyup', this.boundKeyUp, true);
   }
 
   /**
@@ -97,19 +109,16 @@ export class ToolManager {
       return; // Only left mouse button
     }
     
-    // Start drawing if:
-    // 1. Tool is active by Alt+R/A/T (keyboard) - just click to draw
-    // 2. OR Tool is active by UI button + Ctrl is pressed - Ctrl+Click to draw
-    if (this.activeToolType) {
-      if (this.toolActivatedByKeyboard) {
-        // Tool activated by Alt+R/A/T - just click to draw
-      } else if (event.ctrlKey) {
-        // Tool activated by UI button - need Ctrl+Click to draw
-      } else {
-        return; // Tool activated by UI but no Ctrl pressed
-      }
-    } else {
+    // Start drawing if tool is active
+    if (!this.activeToolType) {
       return; // No active tool
+    }
+
+    // Check if tool was activated by keyboard shortcut
+    // If activated by Alt+shortcut, allow direct drawing (no Ctrl required)
+    // If activated by button click, require Ctrl+Click
+    if (!this.toolActivatedByKeyboard && !event.ctrlKey) {
+      return; // Need Ctrl+Click to draw when tool was activated by button
     }
 
     // Stop all event propagation immediately to prevent zoom/pan from interfering
@@ -125,8 +134,31 @@ export class ToolManager {
       return; // Don't start drawing outside image bounds
     }
     
-    this.currentTool.startDrawing(worldPoint);
+    const annotation = this.currentTool.startDrawing(worldPoint);
     this.toolManagerDrawing = true;
+    
+    // Clear any existing selection when starting new drawing
+    if (this.canvas.annotationManager) {
+      (this.canvas.annotationManager as any).selectAnnotation(null);
+    }
+    
+    // If annotation was created immediately, add it to the manager
+    if (annotation) {
+      // Check if annotation meets minimum size requirements
+      if (this.meetsMinimumSize(annotation)) {
+        // Annotation is large enough, create it
+        if (this.onAnnotationCreate) {
+          this.onAnnotationCreate(annotation);
+        }
+        
+        // Select the newly created annotation
+        if (this.options.annotationManager) {
+          this.options.annotationManager.selectAnnotation(annotation);
+        }
+      } else {
+        // Annotation is too small, cancel it
+      }
+    }
   }
 
   /**
@@ -147,6 +179,9 @@ export class ToolManager {
     const clampedPoint = this.clampPointToImageBounds(worldPoint);
     
     this.currentTool.continueDrawing(clampedPoint);
+    
+    // Trigger re-render to show updated annotation
+    this.canvas.getElement().dispatchEvent(new CustomEvent('viewStateChange'));
   }
 
   /**
@@ -168,8 +203,21 @@ export class ToolManager {
     
     const annotation = this.currentTool.finishDrawing(clampedPoint);
     
-    if (annotation && this.onAnnotationCreate) {
-      this.onAnnotationCreate(annotation);
+    if (annotation) {
+      // Check if annotation meets minimum size requirements
+      if (this.meetsMinimumSize(annotation)) {
+        // Annotation is large enough, create it
+        if (this.onAnnotationCreate) {
+          this.onAnnotationCreate(annotation);
+        }
+        
+        // Select the newly created annotation
+        if (this.options.annotationManager) {
+          this.options.annotationManager.selectAnnotation(annotation);
+        }
+      } else {
+        // Annotation is too small, cancel it
+      }
     }
     
     this.toolManagerDrawing = false;
@@ -207,6 +255,15 @@ export class ToolManager {
       this.isAltPressed = true;
     }
 
+    // Delete selected annotation
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (this.options.annotationManager && this.options.annotationManager.selectedAnnotation) {
+        this.options.annotationManager.removeAnnotation(this.options.annotationManager.selectedAnnotation.id);
+        event.preventDefault();
+        return;
+      }
+    }
+
     // Escape key cancels current drawing or deactivates tool
     if (event.key === 'Escape') {
       if (this.currentTool && this.toolManagerDrawing) {
@@ -214,6 +271,9 @@ export class ToolManager {
         this.toolManagerDrawing = false;
       } else if (this.activeToolType) {
         this.deactivateTool();
+      } else if (this.options.annotationManager) {
+        // Clear selection if no tool is active
+        this.options.annotationManager.selectAnnotation(null);
       }
       return;
     }
@@ -245,6 +305,24 @@ export class ToolManager {
             this.deactivateTool();
           } else {
             this.activateTool('text');
+            this.toolActivatedByKeyboard = true; // Mark as activated by keyboard
+          }
+          break;
+        case 'c':
+          event.preventDefault();
+          if (this.activeToolType === 'circle') {
+            this.deactivateTool();
+          } else {
+            this.activateTool('circle');
+            this.toolActivatedByKeyboard = true; // Mark as activated by keyboard
+          }
+          break;
+        case 'l':
+          event.preventDefault();
+          if (this.activeToolType === 'line') {
+            this.deactivateTool();
+          } else {
+            this.activateTool('line');
             this.toolActivatedByKeyboard = true; // Mark as activated by keyboard
           }
           break;
@@ -303,6 +381,51 @@ export class ToolManager {
   }
 
   /**
+   * Check if annotation meets minimum size requirements
+   */
+  private meetsMinimumSize(annotation: Annotation): boolean {
+    if (!this.activeToolType) return true;
+    
+    const minSize = ToolManager.MIN_SIZE_THRESHOLDS[this.activeToolType as keyof typeof ToolManager.MIN_SIZE_THRESHOLDS];
+    if (minSize === undefined || minSize === 0) return true; // No size constraint
+    
+    switch (annotation.type) {
+      case 'rect':
+        if (annotation.points.length < 2) return false;
+        const start = annotation.points[0]!;
+        const end = annotation.points[1]!;
+        const width = Math.abs(end.x - start.x);
+        const height = Math.abs(end.y - start.y);
+        return width >= minSize || height >= minSize;
+        
+      case 'circle':
+        if (annotation.points.length < 2) return false;
+        const center = annotation.points[0]!;
+        const edge = annotation.points[1]!;
+        const radius = Math.sqrt(
+          Math.pow(edge.x - center.x, 2) + Math.pow(edge.y - center.y, 2)
+        );
+        return radius >= minSize;
+        
+      case 'line':
+      case 'arrow':
+        if (annotation.points.length < 2) return false;
+        const lineStart = annotation.points[0]!;
+        const lineEnd = annotation.points[annotation.points.length - 1]!;
+        const length = Math.sqrt(
+          Math.pow(lineEnd.x - lineStart.x, 2) + Math.pow(lineEnd.y - lineStart.y, 2)
+        );
+        return length >= minSize;
+        
+      case 'text':
+        return true; // Text doesn't have size constraint
+        
+      default:
+        return true;
+    }
+  }
+
+  /**
    * Clamp a point to image bounds
    */
   private clampPointToImageBounds(point: Point): Point {
@@ -325,6 +448,9 @@ export class ToolManager {
     if (!tool) {
       return false;
     }
+
+    // For now, allow all tools to be activated
+    // Tool availability is controlled by the UI configuration
 
     // Cancel current drawing if switching tools
     if (this.currentTool && this.currentTool !== tool) {
@@ -490,9 +616,9 @@ export class ToolManager {
     document.removeEventListener('mousemove', this.boundMouseMove as EventListener);
     document.removeEventListener('mouseup', this.boundMouseUp as EventListener);
     
-    // Remove window event listeners
-    window.removeEventListener('keydown', this.boundKeyDown);
-    window.removeEventListener('keyup', this.boundKeyUp);
+    // Remove document event listeners
+    document.removeEventListener('keydown', this.boundKeyDown, true);
+    document.removeEventListener('keyup', this.boundKeyUp, true);
 
     // Remove custom event listener
     this.canvas.getElement().removeEventListener('annotationCreated', this.handleAnnotationCreated.bind(this) as EventListener);

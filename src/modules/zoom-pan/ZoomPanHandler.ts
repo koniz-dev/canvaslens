@@ -22,6 +22,12 @@ export class ZoomPanHandler {
   private annotationManager: any = null; // Reference to annotation manager - will be properly typed when circular dependency is resolved
   private wheelTimeout: number | null = null;
   private lastWheelTime = 0;
+  
+  // Bound event handlers to maintain references for proper removal
+  private boundHandleWheel: EventListener;
+  private boundHandleMouseDown: EventListener;
+  private boundHandleMouseMove: EventListener;
+  private boundHandleMouseUp: EventListener;
 
   constructor(
     canvas: Renderer,
@@ -41,6 +47,12 @@ export class ZoomPanHandler {
       ...options
     };
 
+    // Bind event handlers to maintain references for proper removal
+    this.boundHandleWheel = this.handleWheel.bind(this) as EventListener;
+    this.boundHandleMouseDown = this.handleMouseDown.bind(this) as EventListener;
+    this.boundHandleMouseMove = this.handleMouseMove.bind(this) as EventListener;
+    this.boundHandleMouseUp = this.handleMouseUp.bind(this) as EventListener;
+
     this.setupEventListeners();
     
     // Store initial view state
@@ -54,16 +66,38 @@ export class ZoomPanHandler {
    * Setup event listeners for zoom and pan
    */
   private setupEventListeners(): void {
+    this.updateEventListeners();
+  }
+
+  /**
+   * Update event listeners based on current options
+   */
+  private updateEventListeners(): void {
+    // Remove all existing event listeners first
+    this.removeEventListeners();
+    
+    // Add event listeners based on current options
     if (this.options.enableZoom) {
-      this.canvas.addEventListener('wheel', this.handleWheel.bind(this) as EventListener);
+      this.canvas.addEventListener('wheel', this.boundHandleWheel);
     }
 
     if (this.options.enablePan) {
-      this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener);
-      this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
-      this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
-      this.canvas.addEventListener('mouseleave', this.handleMouseUp.bind(this) as EventListener);
+      this.canvas.addEventListener('mousedown', this.boundHandleMouseDown);
+      this.canvas.addEventListener('mousemove', this.boundHandleMouseMove);
+      this.canvas.addEventListener('mouseup', this.boundHandleMouseUp);
+      this.canvas.addEventListener('mouseleave', this.boundHandleMouseUp);
     }
+  }
+
+  /**
+   * Remove all event listeners
+   */
+  private removeEventListeners(): void {
+    this.canvas.removeEventListener('wheel', this.boundHandleWheel);
+    this.canvas.removeEventListener('mousedown', this.boundHandleMouseDown);
+    this.canvas.removeEventListener('mousemove', this.boundHandleMouseMove);
+    this.canvas.removeEventListener('mouseup', this.boundHandleMouseUp);
+    this.canvas.removeEventListener('mouseleave', this.boundHandleMouseUp);
   }
 
   /**
@@ -82,12 +116,15 @@ export class ZoomPanHandler {
     if (!this.isImageLoaded()) {
       // No image loaded - use default cursor
       this.canvas.getElement().style.cursor = 'default';
-    } else if (this.isPanning) {
-      // Currently panning - use grabbing cursor
+    } else if (this.isPanning && this.options.enablePan) {
+      // Currently panning and pan is enabled - use grabbing cursor
       this.canvas.getElement().style.cursor = 'grabbing';
-    } else {
+    } else if (this.options.enablePan) {
       // Image loaded and can pan - use grab cursor
       this.canvas.getElement().style.cursor = 'grab';
+    } else {
+      // Pan is disabled - use default cursor
+      this.canvas.getElement().style.cursor = 'default';
     }
   }
 
@@ -104,6 +141,11 @@ export class ZoomPanHandler {
   private handleWheel(event: WheelEvent): void {
     // Don't handle zoom if no image is loaded
     if (!this.isImageLoaded()) {
+      return;
+    }
+    
+    // Don't handle zoom if zoom is disabled
+    if (!this.options.enableZoom) {
       return;
     }
     
@@ -158,8 +200,18 @@ export class ZoomPanHandler {
       return;
     }
     
+    // Don't handle panning if pan is disabled
+    if (!this.options.enablePan) {
+      return;
+    }
+    
     // Don't handle panning if annotation system is drawing
     if (this.isAnnotationDrawing()) {
+      return;
+    }
+    
+    // Don't handle panning if annotation tool is active
+    if (this.canvas.annotationManager && this.canvas.annotationManager.isToolActive()) {
       return;
     }
     
@@ -174,6 +226,11 @@ export class ZoomPanHandler {
    * Handle mouse move for panning
    */
   private handleMouseMove(event: MouseEvent): void {
+    // Don't handle panning if pan is disabled
+    if (!this.options.enablePan) {
+      return;
+    }
+    
     // Don't handle panning if annotation system is drawing
     if (this.isAnnotationDrawing()) {
       return;
@@ -401,7 +458,17 @@ export class ZoomPanHandler {
    * Update options
    */
   updateOptions(newOptions: Partial<ZoomPanOptions>): void {
+    const oldOptions = { ...this.options };
     this.options = { ...this.options, ...newOptions };
+    
+    // Update event listeners if zoom/pan settings changed
+    if (oldOptions.enableZoom !== this.options.enableZoom || 
+        oldOptions.enablePan !== this.options.enablePan) {
+      this.updateEventListeners();
+    }
+    
+    // Update cursor state
+    this.updateCursor();
   }
 
   /**
@@ -422,6 +489,9 @@ export class ZoomPanHandler {
    * Destroy the handler and remove event listeners
    */
   destroy(): void {
+    // Remove all event listeners
+    this.removeEventListeners();
+    
     // Clear pending wheel timeout
     if (this.wheelTimeout) {
       clearTimeout(this.wheelTimeout);

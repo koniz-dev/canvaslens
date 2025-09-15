@@ -8,10 +8,11 @@ export class TextTool extends BaseTool {
   /**
    * Start drawing text (show input dialog)
    */
-  startDrawing(point: Point): void {
+  startDrawing(point: Point): Annotation | null {
     this.isDrawing = true;
     this.startPoint = { ...point };
     this.showTextInput(point);
+    return null; // Text tool doesn't create annotation immediately
   }
 
   /**

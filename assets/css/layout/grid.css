@@ -80,7 +80,6 @@
 .controls {
     padding: var(--spacing-lg);
     background: var(--gray-100);
-    border-top: 1px solid var(--border-color);
 }
 
 /* Control Groups */

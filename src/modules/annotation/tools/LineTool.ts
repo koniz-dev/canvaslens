@@ -1,11 +1,11 @@
 import { Point, Annotation } from '../../../types';
 import { BaseTool } from './BaseTool';
 
-export class RectangleTool extends BaseTool {
+export class LineTool extends BaseTool {
   private currentAnnotation: Annotation | null = null;
 
   /**
-   * Start drawing rectangle
+   * Start drawing line
    */
   startDrawing(point: Point): Annotation | null {
     this.isDrawing = true;
@@ -18,7 +18,7 @@ export class RectangleTool extends BaseTool {
   }
 
   /**
-   * Continue drawing rectangle (update end point)
+   * Continue drawing line (update end point)
    */
   continueDrawing(point: Point): void {
     if (!this.isDrawing || !this.startPoint || !this.currentAnnotation) return;
@@ -31,7 +31,7 @@ export class RectangleTool extends BaseTool {
   }
 
   /**
-   * Finish drawing rectangle
+   * Finish drawing line
    */
   finishDrawing(point: Point): Annotation | null {
     if (!this.isDrawing || !this.startPoint || !this.currentAnnotation) return null;
@@ -39,13 +39,15 @@ export class RectangleTool extends BaseTool {
     const endPoint = { ...point };
     const startPoint = { ...this.startPoint };
     
-    // Only keep annotation if it has meaningful size
-    const width = Math.abs(endPoint.x - startPoint.x);
-    const height = Math.abs(endPoint.y - startPoint.y);
+    // Calculate line length
+    const length = Math.sqrt(
+      Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2)
+    );
     
-    if (width < 5 || height < 5) {
+    // Only keep annotation if it has meaningful length
+    if (length < 5) {
       this.cancelDrawing();
-      return null; // Too small to be meaningful
+      return null; // Too short to be meaningful
     }
 
     // Finalize the annotation
@@ -79,6 +81,6 @@ export class RectangleTool extends BaseTool {
    * Get tool type
    */
   getType(): Annotation['type'] {
-    return 'rect';
+    return 'line';
   }
 }

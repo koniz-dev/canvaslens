@@ -61,6 +61,89 @@ function setActiveToolButton(activeButton) {
     }
 }
 
+// Function to show/hide annotation tools
+function toggleAnnotationTools(show) {
+    const annotationTools = document.getElementById('annotationTools');
+    const annotationSettings = document.getElementById('annotationSettings');
+    if (annotationTools) {
+        annotationTools.style.display = show ? 'flex' : 'none';
+    }
+    if (annotationSettings) {
+        annotationSettings.style.display = show ? 'flex' : 'none';
+    }
+}
+
+// Function to change annotation color
+window.changeAnnotationColor = function(color) {
+    if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+        viewer.canvasLens.imageViewer.annotationManager.updateStyle({ strokeColor: color });
+        // Sync hex input
+        document.getElementById('colorHex').value = color;
+        updateStatus(`Color changed to: ${color}`);
+    }
+};
+
+// Function to change color from hex input
+window.changeAnnotationColorFromHex = function(hex) {
+    // Validate hex color
+    if (/^#[0-9A-F]{6}$/i.test(hex)) {
+        if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+            viewer.canvasLens.imageViewer.annotationManager.updateStyle({ strokeColor: hex });
+            // Sync color picker
+            document.getElementById('colorPicker').value = hex;
+            updateStatus(`Color changed to: ${hex}`);
+        }
+    } else {
+        // Invalid hex, revert to previous value
+        const colorPicker = document.getElementById('colorPicker');
+        document.getElementById('colorHex').value = colorPicker.value;
+        updateStatus('Invalid hex color format');
+    }
+};
+
+// Function to change stroke width
+window.changeStrokeWidth = function(width) {
+    const numWidth = parseInt(width);
+    if (numWidth >= 1 && numWidth <= 20) {
+        if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+            viewer.canvasLens.imageViewer.annotationManager.updateStyle({ strokeWidth: numWidth });
+            updateStatus(`Stroke width changed to: ${numWidth}px`);
+        }
+    } else {
+        // Invalid width, revert to previous value
+        const currentWidth = document.getElementById('strokeWidth').value;
+        updateStatus('Width must be between 1-20px');
+    }
+};
+
+// Function to increase stroke width
+window.increaseWidth = function() {
+    const widthInput = document.getElementById('strokeWidth');
+    const currentWidth = parseInt(widthInput.value);
+    if (currentWidth < 20) {
+        widthInput.value = currentWidth + 1;
+        changeStrokeWidth(widthInput.value);
+    }
+};
+
+// Function to decrease stroke width
+window.decreaseWidth = function() {
+    const widthInput = document.getElementById('strokeWidth');
+    const currentWidth = parseInt(widthInput.value);
+    if (currentWidth > 1) {
+        widthInput.value = currentWidth - 1;
+        changeStrokeWidth(widthInput.value);
+    }
+};
+
+// Function to change line style
+window.changeLineStyle = function(style) {
+    if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+        viewer.canvasLens.imageViewer.annotationManager.updateStyle({ lineStyle: style });
+        updateStatus(`Line style changed to: ${style}`);
+    }
+};
+
 // Set up event listeners
 viewer.addEventListener('imageload', (e) => {
     updateStatus(`Image loaded: ${e.detail.naturalSize.width} × ${e.detail.naturalSize.height}`);
@@ -79,6 +162,17 @@ viewer.addEventListener('zoomchange', (e) => {
 
 viewer.addEventListener('annotationadd', (e) => {
     updateStatus(`Annotation added: ${e.detail.type}`);
+});
+
+viewer.addEventListener('toolchange', (e) => {
+    const toolType = e.detail;
+    if (toolType) {
+        updateStatus(`Tool activated: ${toolType} - Click and drag to draw`);
+        updateToolButtonStates(toolType);
+    } else {
+        updateStatus('Tool deactivated');
+        updateToolButtonStates(null);
+    }
 });
 
 // Load sample image
@@ -150,6 +244,7 @@ window.setToolsAll = function () {
     // Use new API instead of setAttribute to avoid reinitializing
     viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsAll);
+    toggleAnnotationTools(false); // Hide annotation tools
     updateStatus('All tools enabled');
 };
 
@@ -169,6 +264,7 @@ window.setToolsZoomOnly = function () {
     // Use new API instead of setAttribute to avoid reinitializing
     viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsZoomOnly);
+    toggleAnnotationTools(false); // Hide annotation tools
     updateStatus('Zoom and pan only');
 };
 
@@ -188,7 +284,8 @@ window.setToolsAnnotationOnly = function () {
     // Use new API instead of setAttribute to avoid reinitializing
     viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsAnnotationOnly);
-    updateStatus('Annotation tools only');
+    toggleAnnotationTools(true); // Show annotation tools
+    updateStatus('Annotation tools only - select a tool to start drawing');
 };
 
 window.setToolsCustom = function () {
@@ -207,8 +304,78 @@ window.setToolsCustom = function () {
     // Use new API instead of setAttribute to avoid reinitializing
     viewer.updateTools(config);
     setActiveToolButton(buttons.setToolsCustom);
+    toggleAnnotationTools(false); // Hide annotation tools
     updateStatus('Custom configuration applied');
 };
+
+// Annotation tool functions
+window.activateTool = function(toolType) {
+    if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+        const success = viewer.canvasLens.imageViewer.annotationManager.activateTool(toolType);
+        if (success) {
+            updateStatus(`Tool activated: ${toolType} - Click and drag to draw`);
+            // Update button states
+            updateToolButtonStates(toolType);
+        } else {
+            updateStatus(`Failed to activate tool: ${toolType}`);
+        }
+    } else {
+        updateStatus('Annotation manager not available');
+    }
+};
+
+window.toggleTool = function(toolType) {
+    if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+        const annotationManager = viewer.canvasLens.imageViewer.annotationManager;
+        const currentTool = annotationManager.getActiveToolType();
+        
+        // If the same tool is already active, deactivate it
+        if (currentTool === toolType) {
+            annotationManager.deactivateTool();
+            updateStatus('Tool deactivated');
+            updateToolButtonStates(null);
+        } else {
+            // Otherwise, activate the new tool
+            const success = annotationManager.activateTool(toolType);
+            if (success) {
+                updateStatus(`Tool activated: ${toolType} - Click and drag to draw`);
+                updateToolButtonStates(toolType);
+            } else {
+                updateStatus(`Failed to activate tool: ${toolType}`);
+            }
+        }
+    } else {
+        updateStatus('Annotation manager not available');
+    }
+};
+
+window.deactivateTool = function() {
+    if (viewer.canvasLens && viewer.canvasLens.imageViewer && viewer.canvasLens.imageViewer.annotationManager) {
+        viewer.canvasLens.imageViewer.annotationManager.deactivateTool();
+        updateStatus('Tool deactivated');
+        // Update button states
+        updateToolButtonStates(null);
+    } else {
+        updateStatus('Annotation manager not available');
+    }
+};
+
+// Function to update tool button states
+function updateToolButtonStates(activeTool) {
+    const toolButtons = document.querySelectorAll('[onclick^="activateTool"], [onclick^="toggleTool"]');
+    toolButtons.forEach(button => {
+        const onclick = button.getAttribute('onclick');
+        const toolType = onclick.match(/activateTool\('([^']+)'\)/)?.[1] || 
+                        onclick.match(/toggleTool\('([^']+)'\)/)?.[1];
+        if (toolType === activeTool) {
+            button.classList.add('active');
+            button.classList.remove('secondary');
+        } else {
+            button.classList.remove('active');
+            button.classList.add('secondary');
+        }
+    });
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {

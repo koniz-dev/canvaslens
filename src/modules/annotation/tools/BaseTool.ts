@@ -23,7 +23,7 @@ export abstract class BaseTool {
   /**
    * Start drawing
    */
-  abstract startDrawing(point: Point): void;
+  abstract startDrawing(point: Point): Annotation | null;
 
   /**
    * Continue drawing (mouse move)

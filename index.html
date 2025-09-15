@@ -13,6 +13,7 @@
 
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/homepage.css">
+    <link rel="stylesheet" href="assets/css/annotation-settings.css">
 </head>
 
 <body class="home-page">
@@ -61,6 +62,42 @@
                 <button class="btn secondary" onclick="setToolsZoomOnly()">🔍 Zoom Only</button>
                 <button class="btn secondary" onclick="setToolsAnnotationOnly()">✏️ Annotation Only</button>
                 <button class="btn secondary" onclick="setToolsCustom()">⚙️ Custom Config</button>
+            </div>
+
+            <div class="controls" id="annotationTools" style="display: none;">
+                <button class="btn secondary" onclick="toggleTool('rect')">⬜ Rectangle (Alt+R)</button>
+                <button class="btn secondary" onclick="toggleTool('arrow')">↗ Arrow (Alt+A)</button>
+                <button class="btn secondary" onclick="toggleTool('text')">T Text (Alt+T)</button>
+                <button class="btn secondary" onclick="toggleTool('circle')">⭕ Circle (Alt+C)</button>
+                <button class="btn secondary" onclick="toggleTool('line')">📏 Line (Alt+L)</button>
+            </div>
+
+            <div class="controls" id="annotationSettings" style="display: none;">
+                <div class="setting-group">
+                    <label>Color</label>
+                    <div class="controls-row">
+                        <input type="color" id="colorPicker" value="#ff0000" onchange="changeAnnotationColor(this.value)">
+                        <input type="text" id="colorHex" value="#ff0000" placeholder="#ff0000" onchange="changeAnnotationColorFromHex(this.value)">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Width</label>
+                    <div class="controls-row">
+                        <button type="button" onclick="decreaseWidth()">−</button>
+                        <input type="number" id="strokeWidth" min="1" max="20" value="2" onchange="changeStrokeWidth(this.value)">
+                        <button type="button" onclick="increaseWidth()">+</button>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <label>Style</label>
+                    <div class="controls-row">
+                        <select id="lineStyle" onchange="changeLineStyle(this.value)">
+                            <option value="solid">━━━</option>
+                            <option value="dashed">┅┅┅</option>
+                            <option value="dotted">┈┈┈</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="status" id="status">

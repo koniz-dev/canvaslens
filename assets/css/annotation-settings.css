@@ -1,0 +1,119 @@
+/* Annotation Settings Styles */
+#annotationSettings {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    padding: 12px 16px;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.setting-group label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #495057;
+    margin: 0;
+}
+
+.setting-group .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Color picker group */
+#colorPicker {
+    width: 32px;
+    height: 32px;
+    border: 2px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+}
+
+#colorHex {
+    width: 80px;
+    height: 32px;
+    padding: 4px 8px;
+    border: 2px solid #dee2e6;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
+    text-align: center;
+}
+
+#colorHex:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Width group - Override all button styles */
+.setting-group button,
+.setting-group .controls-row button,
+.setting-group .controls-row button[type="button"] {
+    width: 28px !important;
+    height: 28px !important;
+    border: 2px solid #dee2e6 !important;
+    background-color: white !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    color: #333 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+.setting-group button:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+}
+
+.setting-group button:active {
+    background-color: #e9ecef;
+}
+
+#strokeWidth {
+    width: 50px;
+    height: 28px;
+    padding: 4px;
+    border: 2px solid #dee2e6;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 12px;
+}
+
+#strokeWidth:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #annotationSettings {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    
+    .setting-group {
+        justify-content: center;
+    }
+}

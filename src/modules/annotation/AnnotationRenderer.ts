@@ -54,6 +54,24 @@ export class AnnotationRenderer {
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
 
+    // Apply line style
+    if (style.lineStyle) {
+      switch (style.lineStyle) {
+        case 'dashed':
+          this.ctx.setLineDash([5, 5]);
+          break;
+        case 'dotted':
+          this.ctx.setLineDash([2, 2]);
+          break;
+        case 'solid':
+        default:
+          this.ctx.setLineDash([]);
+          break;
+      }
+    } else {
+      this.ctx.setLineDash([]); // Default to solid
+    }
+
     if (style.fillColor) {
       this.ctx.fillStyle = style.fillColor;
     }
@@ -183,9 +201,14 @@ export class AnnotationRenderer {
 
     const position = annotation.points[0]!;
     const text = annotation.data.text as string;
+    const fontSize = annotation.style.fontSize || 16;
+    const fontFamily = annotation.style.fontFamily || 'Arial, sans-serif';
 
-    // Draw text
+    // Set font properties
+    this.ctx.font = `${fontSize}px ${fontFamily}`;
     this.ctx.fillStyle = annotation.style.strokeColor;
+    
+    // Draw text
     this.ctx.fillText(text, position.x, position.y);
   }
 
@@ -199,7 +222,9 @@ export class AnnotationRenderer {
       points,
       style: {
         ...style,
+        // Use same color as final annotation but with transparency
         strokeColor: style.strokeColor + '80', // Add transparency
+        strokeWidth: style.strokeWidth,
       },
       data
     };
@@ -220,7 +245,10 @@ export class AnnotationRenderer {
     const minY = Math.min(start.y, end.y);
     const maxY = Math.max(start.y, end.y);
 
-    return point.x >= minX && point.x <= maxX && point.y >= minY && point.y <= maxY;
+    // Add tolerance for easier selection
+    const tolerance = 5;
+    return point.x >= (minX - tolerance) && point.x <= (maxX + tolerance) && 
+           point.y >= (minY - tolerance) && point.y <= (maxY + tolerance);
   }
 
   /**
@@ -238,13 +266,15 @@ export class AnnotationRenderer {
       Math.pow(point.x - center.x, 2) + Math.pow(point.y - center.y, 2)
     );
 
-    return distance <= radius;
+    // Add tolerance for easier selection
+    const tolerance = 5;
+    return distance <= (radius + tolerance);
   }
 
   /**
    * Check if a point is near a line annotation
    */
-  isPointNearLine(point: Point, annotation: Annotation, threshold: number = 5): boolean {
+  isPointNearLine(point: Point, annotation: Annotation, threshold: number = 15): boolean {
     if ((annotation.type !== 'line' && annotation.type !== 'arrow') || annotation.points.length < 2) {
       return false;
     }
@@ -299,13 +329,23 @@ export class AnnotationRenderer {
       case 'arrow':
         return this.isPointNearLine(point, annotation);
       case 'text':
-        // Simple bounding box check for text
+        // Accurate bounding box check for text
         if (annotation.points.length < 1 || !annotation.data?.text) return false;
         const textPos = annotation.points[0]!;
+        const text = annotation.data.text as string;
         const fontSize = annotation.style.fontSize || 16;
-        const textWidth = (annotation.data.text as string).length * fontSize * 0.6; // Rough estimation
-        return point.x >= textPos.x && point.x <= textPos.x + textWidth &&
-               point.y >= textPos.y && point.y <= textPos.y + fontSize;
+        const fontFamily = annotation.style.fontFamily || 'Arial, sans-serif';
+        
+        // Set font to match text rendering
+        this.ctx.font = `${fontSize}px ${fontFamily}`;
+        const textMetrics = this.ctx.measureText(text);
+        const textWidth = textMetrics.width;
+        const textHeight = fontSize * 0.8; // Match selection calculation
+        
+        // Add tolerance for easier selection
+        const tolerance = 5;
+        return point.x >= (textPos.x - tolerance) && point.x <= (textPos.x + textWidth + tolerance) &&
+               point.y >= (textPos.y - textHeight - tolerance) && point.y <= (textPos.y + tolerance);
       default:
         return false;
     }

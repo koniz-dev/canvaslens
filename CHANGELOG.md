@@ -8,12 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Circle Tool**: New annotation tool for drawing circles with Alt+C keyboard shortcut
+- **Line Tool**: New annotation tool for drawing lines with Alt+L keyboard shortcut
+- **Line Style Options**: Choose between solid, dashed, and dotted line styles for annotations
+- **Tool Toggle Functionality**: Click same tool button or use same keyboard shortcut to toggle tool on/off
 - **Unified CanvasLens Component**: Single component export for easier integration
 - **Overlay Mode**: Full-screen professional editing interface with save functionality
 - **Enhanced Tool Integration**: All 3 main tools (Zoom/Pan, Annotation, Comparison) always available
 - **Improved Component API**: Cleaner interface with better TypeScript support
 
 ### Changed
+- **UI Simplification**: Removed "Deactivate Tool" button - now click same tool button to toggle
+- **Tool Interaction**: All tool buttons now toggle on/off when clicked repeatedly
 - **Component Structure**: Refactored from multiple components to single unified component
 - **File Organization**: Moved main component to `src/CanvasLens.ts` for better naming
 - **Export Structure**: Simplified exports to focus on main component

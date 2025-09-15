@@ -433,16 +433,16 @@ import type {
 - **Double Click**: Reset view to initial state
 
 ### Keyboard Shortcuts
-- **R**: Activate rectangle tool
-- **A**: Activate arrow tool  
-- **T**: Activate text tool
-- **C**: Activate circle tool
-- **L**: Activate line tool
+- **Alt+R**: Toggle rectangle tool (activate/deactivate)
+- **Alt+A**: Toggle arrow tool (activate/deactivate)
+- **Alt+T**: Toggle text tool (activate/deactivate)
+- **Alt+C**: Toggle circle tool (activate/deactivate)
+- **Alt+L**: Toggle line tool (activate/deactivate)
 - **Escape**: Deactivate current tool
 - **Delete/Backspace**: Delete selected annotation
 
 ### Annotation Controls
-- **Tool Selection**: Use `activateTool()` method or keyboard shortcuts
+- **Tool Selection**: Click tool buttons or use keyboard shortcuts to toggle tools
 - **Drawing**: Click and drag to draw annotations
 - **Text**: Click to place text, type content, press Enter to confirm
 - **Selection**: Click on existing annotations to select them
