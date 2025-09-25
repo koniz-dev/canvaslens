@@ -16,9 +16,12 @@
   },
   "scripts": {
     "build": "tsc && npm run fix-imports",
-    "build:prod": "tsc && npm run fix-imports && npm run remove-console-logs",
+    "build:prod": "NODE_ENV=production tsc && npm run fix-imports && npm run remove-console-logs && npm run remove-source-maps && npm run minify",
+    "build:dev": "NODE_ENV=development tsc && npm run fix-imports",
     "fix-imports": "node scripts/fix-imports.js",
     "remove-console-logs": "node scripts/remove-console-logs.js",
+    "remove-source-maps": "node scripts/remove-source-maps.js",
+    "minify": "node scripts/minify.js",
     "dev": "concurrently --names \"TSC,SRV\" --prefix-colors \"blue,green\" --kill-others-on-fail \"node scripts/dev-tsc.js\" \"node server.js\"",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
@@ -60,6 +63,7 @@
     "concurrently": "^9.2.1",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
+    "terser": "^5.44.0",
     "ts-jest": "^29.4.1",
     "typescript": "^5.0.0"
   }

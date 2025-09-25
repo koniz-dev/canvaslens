@@ -15,13 +15,28 @@ function removeConsoleLogs(filePath) {
     return;
   }
 
-  // Remove console.log statements but keep console.error and console.warn
-  // This regex matches but not console.error(...) or console.warn(...)
-  const consoleLogRegex = /console\.log\s*\([^)]*\);?\s*/g;
+  // Improved regex to handle more complex console.log patterns
+  // Handles: , , multi-line, template literals
+  const consoleLogRegex = /console\.log\s*\([^)]*(?:\([^)]*\))*[^)]*\);?\s*/g;
   
-  const newContent = content.replace(consoleLogRegex, (match) => {
+  // Also handle console.log with template literals and complex expressions
+  const complexConsoleLogRegex = /console\.log\s*\([^;]*\);?\s*/g;
+  
+  let newContent = content;
+  
+  // Remove simple console.log statements
+  newContent = newContent.replace(consoleLogRegex, (match) => {
     modified = true;
     return ''; // Remove the console.log statement
+  });
+  
+  // Remove complex console.log statements (fallback)
+  newContent = newContent.replace(complexConsoleLogRegex, (match) => {
+    if (match.includes('console.log')) {
+      modified = true;
+      return ''; // Remove the console.log statement
+    }
+    return match;
   });
 
   if (modified) {

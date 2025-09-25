@@ -1,5 +1,6 @@
 import { Annotation, Point, AnnotationStyle } from '../../types';
 import { Renderer } from '../../core/Renderer';
+import { performanceMonitor } from '../../utils/performance';
 
 export class AnnotationRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -36,10 +37,112 @@ export class AnnotationRenderer {
   }
 
   /**
-   * Render multiple annotations
+   * Render multiple annotations with viewport culling
    */
   renderAll(annotations: Annotation[]): void {
-    annotations.forEach(annotation => this.render(annotation));
+    const startTime = performanceMonitor.startRender();
+    
+    const viewport = this.getViewportBounds();
+    const visibleAnnotations = annotations.filter(annotation => 
+      this.isAnnotationInViewport(annotation, viewport)
+    );
+    
+    visibleAnnotations.forEach(annotation => this.render(annotation));
+    
+    // Record performance metrics
+    performanceMonitor.endRender(
+      startTime,
+      annotations.length,
+      visibleAnnotations.length
+    );
+  }
+
+  /**
+   * Get current viewport bounds in world coordinates
+   */
+  private getViewportBounds(): { x: number; y: number; width: number; height: number } {
+    const viewState = this.canvas.getViewState();
+    const canvasSize = this.canvas.getSize();
+    
+    // Convert screen coordinates to world coordinates
+    const worldX = -viewState.offsetX / viewState.scale;
+    const worldY = -viewState.offsetY / viewState.scale;
+    const worldWidth = canvasSize.width / viewState.scale;
+    const worldHeight = canvasSize.height / viewState.scale;
+    
+    return {
+      x: worldX,
+      y: worldY,
+      width: worldWidth,
+      height: worldHeight
+    };
+  }
+
+  /**
+   * Check if annotation is visible in viewport
+   */
+  private isAnnotationInViewport(annotation: Annotation, viewport: { x: number; y: number; width: number; height: number }): boolean {
+    const bounds = this.getAnnotationBounds(annotation);
+    
+    // Check if annotation bounds intersect with viewport
+    return !(
+      bounds.x > viewport.x + viewport.width ||
+      bounds.x + bounds.width < viewport.x ||
+      bounds.y > viewport.y + viewport.height ||
+      bounds.y + bounds.height < viewport.y
+    );
+  }
+
+  /**
+   * Get annotation bounds for culling
+   */
+  private getAnnotationBounds(annotation: Annotation): { x: number; y: number; width: number; height: number } {
+    if (annotation.points.length < 2) {
+      return { x: 0, y: 0, width: 0, height: 0 };
+    }
+
+    const start = annotation.points[0]!;
+    const end = annotation.points[annotation.points.length - 1]!;
+
+    switch (annotation.type) {
+      case 'rect':
+        return {
+          x: Math.min(start.x, end.x),
+          y: Math.min(start.y, end.y),
+          width: Math.abs(end.x - start.x),
+          height: Math.abs(end.y - start.y)
+        };
+      case 'circle':
+        const radius = Math.sqrt(
+          Math.pow(end.x - start.x, 2) + 
+          Math.pow(end.y - start.y, 2)
+        );
+        return {
+          x: start.x - radius,
+          y: start.y - radius,
+          width: radius * 2,
+          height: radius * 2
+        };
+      case 'arrow':
+      case 'line':
+        return {
+          x: Math.min(start.x, end.x),
+          y: Math.min(start.y, end.y),
+          width: Math.abs(end.x - start.x),
+          height: Math.abs(end.y - start.y)
+        };
+      case 'text':
+        // Estimate text bounds (approximate)
+        const textWidth = annotation.data?.text?.length || 0;
+        return {
+          x: start.x,
+          y: start.y - (annotation.style?.fontSize || 16),
+          width: textWidth * 8, // Rough estimate
+          height: annotation.style?.fontSize || 16
+        };
+      default:
+        return { x: 0, y: 0, width: 0, height: 0 };
+    }
   }
 
   /**

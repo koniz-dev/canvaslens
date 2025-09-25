@@ -91,6 +91,5 @@ server.listen(PORT, () => {
         minute: '2-digit',
         second: '2-digit'
     });
-    console.log(`[${timestamp}] [SRV] 🚀 CanvasLens development server running on http://localhost:${PORT}`);
-    console.log(`[${timestamp}] [SRV] 📁 Serving files from: ${process.cwd()}`);
+    }`);
 });

@@ -13,6 +13,7 @@ export class ImageViewer {
   private zoomPanHandler: ZoomPanHandler | null = null;
   private annotationManager: AnnotationManager | null = null;
   private comparisonManager: ImageComparisonManager | null = null;
+  private previousImage: HTMLImageElement | null = null;
 
   constructor(
     container: HTMLElement,
@@ -73,9 +74,15 @@ export class ImageViewer {
    */
   async loadImage(url: string, type?: string, fileName?: string): Promise<void> {
     try {
+      // Dispose previous image to free memory
+      this.disposePreviousImage();
+      
       const image = await loadImage(url);
       const canvasSize = this.canvas.getSize();
       this.imageData = getImageData(image, canvasSize, type, fileName);
+      
+      // Store reference to previous image for disposal
+      this.previousImage = this.imageData.element;
       
       this.render();
       
@@ -97,6 +104,17 @@ export class ImageViewer {
         this.eventHandlers.onImageLoadError(err as Error);
       }
       throw err;
+    }
+  }
+
+  /**
+   * Dispose previous image to free memory
+   */
+  private disposePreviousImage(): void {
+    if (this.previousImage && this.previousImage !== this.imageData?.element) {
+      // Clear image source to free memory
+      this.previousImage.src = '';
+      this.previousImage = null;
     }
   }
 

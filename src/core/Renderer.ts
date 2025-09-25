@@ -39,6 +39,8 @@ export class Renderer {
   public imageViewer: ImageViewer | null = null;
   private resizeTimeout: number | null = null;
   private renderRequestId: number | null = null;
+  private dirtyRegions: Array<{ x: number; y: number; width: number; height: number }> = [];
+  private lastViewState: ViewState | null = null;
 
   constructor(container: HTMLElement, size: Size) {
     this.canvas = document.createElement('canvas');
@@ -154,8 +156,60 @@ export class Renderer {
    * Set view state
    */
   setViewState(viewState: Partial<ViewState>): void {
+    const oldViewState = { ...this.viewState };
     this.viewState = { ...this.viewState, ...viewState };
+    
+    // Track dirty regions for view state changes
+    this.trackViewStateChange(oldViewState, this.viewState);
     this.requestRender();
+  }
+
+  /**
+   * Track dirty regions when view state changes
+   */
+  private trackViewStateChange(oldState: ViewState, newState: ViewState): void {
+    // If view state changed significantly, mark entire canvas as dirty
+    const scaleChanged = Math.abs(oldState.scale - newState.scale) > 0.01;
+    const offsetChanged = Math.abs(oldState.offsetX - newState.offsetX) > 1 || 
+                         Math.abs(oldState.offsetY - newState.offsetY) > 1;
+    
+    if (scaleChanged || offsetChanged) {
+      this.markEntireCanvasDirty();
+    }
+  }
+
+  /**
+   * Mark entire canvas as dirty
+   */
+  markEntireCanvasDirty(): void {
+    const size = this.getSize();
+    this.dirtyRegions = [{
+      x: 0,
+      y: 0,
+      width: size.width,
+      height: size.height
+    }];
+  }
+
+  /**
+   * Mark specific region as dirty
+   */
+  markDirtyRegion(x: number, y: number, width: number, height: number): void {
+    this.dirtyRegions.push({ x, y, width, height });
+  }
+
+  /**
+   * Clear dirty regions
+   */
+  clearDirtyRegions(): void {
+    this.dirtyRegions = [];
+  }
+
+  /**
+   * Get current dirty regions
+   */
+  getDirtyRegions(): Array<{ x: number; y: number; width: number; height: number }> {
+    return [...this.dirtyRegions];
   }
 
   /**

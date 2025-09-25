@@ -3,5 +3,16 @@
 // Export main CanvasLens Web Component
 export { CanvasLens } from './CanvasLens';
 
-// Export types for TypeScript support
-export type { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, AnnotationStyle, Point, Rectangle, ViewState, ImageData, Tool } from './types';
+// Export only essential types for TypeScript support
+export type { 
+  CanvasLensOptions, 
+  EventHandlers, 
+  Size, 
+  ToolConfig, 
+  Annotation, 
+  AnnotationStyle, 
+  Point, 
+  ViewState, 
+  ImageData, 
+  Tool 
+} from './types';
