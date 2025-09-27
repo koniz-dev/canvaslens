@@ -1,4 +1,4 @@
-import { CanvasLens } from '../../src/index';
+import { CanvasLens } from '../../../src/index';
 
 // Define interface for CanvasLens Web Component
 interface CanvasLensElement extends HTMLElement {

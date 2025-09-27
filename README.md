@@ -24,12 +24,7 @@ A powerful HTML5 Canvas-based image viewing and annotation library built with Ty
 npm install @koniz-dev/canvaslens
 ```
 
-**Note**: This package is published to GitHub Packages. If you encounter any issues, you may need to configure npm to use the GitHub Packages registry:
-
-```bash
-# Add to your .npmrc file
-@koniz-dev:registry=https://npm.pkg.github.com
-```
+**Note**: This package is published to the npm registry. You can install it directly without any additional configuration.
 
 ## 📖 Quick Start
 
@@ -544,4 +539,4 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 - **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
 - **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
 - **Discussions**: [GitHub Discussions](https://github.com/koniz-dev/canvaslens/discussions)
-- **Demo**: Check `index.html` for interactive demo with all features
+- **Demo**: Check `dev/demo/index.html` for interactive demo with all features

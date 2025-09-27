@@ -4,8 +4,8 @@ import {
   distance,
   centerPoint,
   clamp
-} from '../../src/utils/coordinate';
-import { Point, ViewState } from '../../src/types';
+} from '../../../src/utils/coordinate';
+import { Point, ViewState } from '../../../src/types';
 
 describe('Coordinate Utilities', () => {
   describe('screenToWorld', () => {

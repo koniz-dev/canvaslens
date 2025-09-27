@@ -54,7 +54,7 @@ npm run build:prod
 
 ## Available Scripts
 
-### `remove-console-logs.js`
+### `clean-logs.js`
 Script that automatically removes console.log statements from files:
 - `src/` directory
 - `scripts/` directory  

@@ -5,9 +5,6 @@
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -15,24 +12,20 @@
     }
   },
   "scripts": {
-    "build": "tsc && npm run fix-imports",
-    "build:prod": "NODE_ENV=production tsc && npm run fix-imports && npm run remove-console-logs && npm run remove-source-maps && npm run minify",
-    "build:dev": "NODE_ENV=development tsc && npm run fix-imports",
-    "fix-imports": "node scripts/fix-imports.js",
-    "remove-console-logs": "node scripts/remove-console-logs.js",
-    "remove-source-maps": "node scripts/remove-source-maps.js",
-    "minify": "node scripts/minify.js",
-    "dev": "concurrently --names \"TSC,SRV\" --prefix-colors \"blue,green\" --kill-others-on-fail \"node scripts/dev-tsc.js\" \"node server.js\"",
-    "clean": "rm -rf dist",
-    "prebuild": "npm run clean",
+    "dev": "node dev/scripts/dev/start.js",
+    "build": "npm run clean && tsc && npm run fix-imports",
+    "build:prod": "NODE_ENV=production npm run build && npm run clean-logs && npm run clean-maps && npm run minify",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:silent": "jest --silent",
+    "release": "./dev/scripts/release/release.sh patch",
+    "release:minor": "./dev/scripts/release/release.sh minor",
+    "release:major": "./dev/scripts/release/release.sh major",
     "prepublishOnly": "npm run build:prod && npm test",
-    "release": "./scripts/release.sh patch",
-    "release:minor": "./scripts/release.sh minor",
-    "release:major": "./scripts/release.sh major"
+    "fix-imports": "node dev/scripts/build/fix-imports.js",
+    "clean-logs": "node dev/scripts/build/clean-logs.js",
+    "clean-maps": "node dev/scripts/build/clean-maps.js",
+    "minify": "node dev/scripts/build/minify.js",
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "canvas",

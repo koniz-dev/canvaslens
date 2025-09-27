@@ -51,7 +51,7 @@ When creating an issue, please include:
 ## Getting Help
 
 - 📖 **Documentation**: Check the [README.md](README.md) for usage examples
-- 🎮 **Demo**: Try the interactive demo in `index.html`
+- 🎮 **Demo**: Try the interactive demo in `dev/demo/index.html`
 - 💬 **Issues**: Search existing issues or create a new one
 - 📧 **Contact**: Reach out through GitHub issues
 
@@ -71,7 +71,7 @@ npm install
 npm run build
 
 # Open demo
-open index.html
+open dev/demo/index.html
 ```
 
 ## License

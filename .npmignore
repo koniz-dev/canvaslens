@@ -1,0 +1,64 @@
+# Development files
+dev/
+src/
+coverage/
+node_modules/
+
+# Documentation (can be viewed on GitHub)
+CHANGELOG.md
+CONTRIBUTING.md
+
+# IDE specific files
+.cursor/
+.vscode/
+.idea/
+
+# Build artifacts
+*.tsbuildinfo
+build/
+
+# Test files
+jest.config.js
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
+
+# Development configs
+tsconfig.json
+.eslintrc*
+.prettierrc*
+.vscode/
+.idea/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env*
+!.env.example
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# Package files
+*.tgz
+*.tar.gz

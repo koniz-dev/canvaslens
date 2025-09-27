@@ -6,7 +6,7 @@ const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
     
     if (filePath === './') {
-        filePath = './index.html';
+        filePath = './dev/demo/index.html';
     }
     
     // Handle directory requests for ES6 modules
@@ -91,5 +91,5 @@ server.listen(PORT, () => {
         minute: '2-digit',
         second: '2-digit'
     });
-    }`);
+    console.log(`🚀 Server running at http://localhost:${PORT} [${timestamp}]`);
 });

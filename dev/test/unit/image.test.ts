@@ -3,8 +3,8 @@ import {
   loadImage,
   getImageData,
   isPointInRect
-} from '../../src/utils/image';
-import { Size, Point, ImageData } from '../../src/types';
+} from '../../../src/utils/image';
+import { Size, Point, ImageData } from '../../../src/types';
 
 describe('Image Utilities', () => {
   describe('calculateFitDimensions', () => {
