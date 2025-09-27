@@ -1,6 +1,6 @@
 {
   "name": "@koniz-dev/canvaslens",
-  "version": "0.0.8",
+  "version": "0.0.1",
   "description": "A powerful HTML5 Canvas-based image viewing and annotation library",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -46,7 +46,7 @@
     "before-after",
     "image-annotation"
   ],
-  "author": "CanvasLens Team",
+  "author": "koniz-dev",
   "license": "MIT",
   "repository": {
     "type": "git",
