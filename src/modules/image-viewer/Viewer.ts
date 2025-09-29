@@ -2,9 +2,9 @@ import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image';
 import { error } from '../../utils/logger';
-import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
-import { AnnotationManager, AnnotationManagerOptions } from '../annotation/AnnotationManager';
-import { ImageComparisonManager, ComparisonOptions } from '../comparison/ImageComparisonManager';
+import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/Handler';
+import { AnnotationManager, AnnotationManagerOptions } from '../annotation/Manager';
+import { ComparisonManager, ComparisonOptions } from '../comparison/Manager';
 
 export class ImageViewer {
   private canvas: Renderer;
@@ -12,7 +12,7 @@ export class ImageViewer {
   private eventHandlers: EventHandlers;
   private zoomPanHandler: ZoomPanHandler | null = null;
   private annotationManager: AnnotationManager | null = null;
-  private comparisonManager: ImageComparisonManager | null = null;
+  private comparisonManager: ComparisonManager | null = null;
   private previousImage: HTMLImageElement | null = null;
 
   constructor(
@@ -59,7 +59,7 @@ export class ImageViewer {
 
     // Initialize comparison manager if options are provided
     if (comparisonOptions) {
-      this.comparisonManager = new ImageComparisonManager(
+      this.comparisonManager = new ComparisonManager(
         this.canvas,
         {
           ...comparisonOptions,
@@ -413,7 +413,7 @@ export class ImageViewer {
   /**
    * Get comparison manager
    */
-  getComparisonManager(): ImageComparisonManager | null {
+  getComparisonManager(): ComparisonManager | null {
     return this.comparisonManager;
   }
 

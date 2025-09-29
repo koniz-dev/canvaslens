@@ -1,14 +1,14 @@
 import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
-import { ImageComparisonManager, ComparisonOptions } from './ImageComparisonManager';
-import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/ZoomPanHandler';
+import { ComparisonManager, ComparisonOptions } from './Manager';
+import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/Handler';
 
 // Re-export ComparisonOptions for external use
-export { ComparisonOptions } from './ImageComparisonManager';
+export { ComparisonOptions } from './Manager';
 
 export class ComparisonViewer {
   private canvas: Renderer;
-  private comparisonManager: ImageComparisonManager;
+  private comparisonManager: ComparisonManager;
   private zoomPanHandler: ZoomPanHandler | null = null;
   private eventHandlers: EventHandlers;
 
@@ -23,7 +23,7 @@ export class ComparisonViewer {
     this.eventHandlers = eventHandlers;
 
     // Initialize comparison manager
-    this.comparisonManager = new ImageComparisonManager(
+    this.comparisonManager = new ComparisonManager(
       this.canvas,
       {
         ...comparisonOptions,
@@ -119,7 +119,7 @@ export class ComparisonViewer {
   /**
    * Get comparison manager
    */
-  getComparisonManager(): ImageComparisonManager {
+  getComparisonManager(): ComparisonManager {
     return this.comparisonManager;
   }
 

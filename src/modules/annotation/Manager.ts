@@ -1,6 +1,6 @@
 import { Renderer } from '../../core/Renderer';
 import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '../../types';
-import { AnnotationRenderer } from './AnnotationRenderer';
+import { AnnotationRenderer } from './Renderer';
 import { ToolManager, ToolManagerOptions } from './ToolManager';
 import { error } from '../../utils/logger';
 

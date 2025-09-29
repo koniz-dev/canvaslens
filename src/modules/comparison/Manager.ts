@@ -21,7 +21,7 @@ export interface ComparisonState {
   comparisonMode: boolean;
 }
 
-export class ImageComparisonManager {
+export class ComparisonManager {
   private canvas: Renderer;
   private options: Required<ComparisonOptions>;
   private state: ComparisonState;

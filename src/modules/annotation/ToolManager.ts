@@ -1,6 +1,6 @@
 import { Renderer } from '../../core/Renderer';
 import { Annotation, AnnotationStyle, Tool, Point } from '../../types';
-import { AnnotationRenderer } from './AnnotationRenderer';
+import { AnnotationRenderer } from './Renderer';
 import { BaseTool, RectangleTool, ArrowTool, TextTool, CircleTool, LineTool, ToolOptions } from './tools';
 
 export interface ToolManagerOptions {

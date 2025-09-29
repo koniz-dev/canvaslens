@@ -1,10 +1,10 @@
 // Core CanvasLens class - separated to avoid circular imports
 
 import { CanvasLensOptions, EventHandlers, Size, ToolConfig } from '../types';
-import { ImageViewer } from '../modules/image-viewer/ImageViewer';
-import { ZoomPanOptions } from '../modules/zoom-pan/ZoomPanHandler';
-import { AnnotationManagerOptions } from '../modules/annotation/AnnotationManager';
-import { ComparisonOptions } from '../modules/comparison/ComparisonViewer';
+import { ImageViewer } from '../modules/image-viewer/Viewer';
+import { ZoomPanOptions } from '../modules/zoom-pan/Handler';
+import { AnnotationManagerOptions } from '../modules/annotation/Manager';
+import { ComparisonOptions } from '../modules/comparison/Viewer';
 import { warn } from '../utils/logger';
 
 export class Engine {
