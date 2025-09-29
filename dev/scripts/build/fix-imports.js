@@ -5,8 +5,12 @@
  * This script ensures that import statements use the correct file extensions
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const distDir = path.join(__dirname, '../../../dist');
 
@@ -80,7 +84,7 @@ function processDirectory(dirPath) {
 }
 
 // Main execution
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Fixing import paths in built files...');
   
   if (!fs.existsSync(distDir)) {

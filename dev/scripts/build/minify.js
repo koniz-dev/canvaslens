@@ -5,9 +5,13 @@
  * This script uses terser to minify JavaScript files for production
  */
 
-const fs = require('fs');
-const path = require('path');
-const { minify } = require('terser');
+import fs from 'fs';
+import path from 'path';
+import { minify } from 'terser';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const distDir = path.join(__dirname, '../../../dist');
 
@@ -62,7 +66,7 @@ async function processDirectory(dirPath) {
 }
 
 // Main execution
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Minifying JavaScript files...');
   
   if (!fs.existsSync(distDir)) {

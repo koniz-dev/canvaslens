@@ -5,8 +5,12 @@
  * This script removes .map files and source map references from production builds
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const distDir = path.join(__dirname, '../../../dist');
 
@@ -78,7 +82,7 @@ function processDirectory(dirPath) {
 }
 
 // Main execution
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   console.log('Cleaning source maps from built files...');
   
   if (!fs.existsSync(distDir)) {
