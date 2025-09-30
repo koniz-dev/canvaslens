@@ -14,6 +14,7 @@ ul {
     padding: 40px 20px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 16px;
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
     backdrop-filter: blur(10px);
 }
 
@@ -154,4 +155,13 @@ ul {
 .feature-card p {
     color: #7f8c8d;
     margin: 0;
+}
+
+/* Annotation controls visibility */
+#annotationTools {
+    display: none;
+}
+
+#annotationSettings {
+    display: none;
 }

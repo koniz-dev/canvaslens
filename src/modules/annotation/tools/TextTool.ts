@@ -38,6 +38,7 @@ export class TextTool extends BaseTool {
     this.textInput = document.createElement('input');
     this.textInput.type = 'text';
     this.textInput.placeholder = 'Enter text...';
+    this.textInput.setAttribute('aria-label', 'Enter annotation text');
     this.textInput.style.position = 'absolute';
     this.textInput.style.left = `${point.x}px`;
     this.textInput.style.top = `${point.y}px`;

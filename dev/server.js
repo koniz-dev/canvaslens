@@ -6,21 +6,72 @@ const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
     
     if (filePath === './') {
-        filePath = './dev/demo/index.html';
+        // Auto-discover index.html in subdirectories
+        const subdirs = fs.readdirSync('.', { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
+        
+        for (const subdir of subdirs) {
+            const possibleIndex = './' + subdir + '/index.html';
+            if (fs.existsSync(possibleIndex)) {
+                filePath = possibleIndex;
+                break;
+            }
+        }
     }
     
-    // Handle directory requests for ES6 modules
-    // If the request ends with a path that looks like a module directory, try index.js
-    if (!path.extname(filePath) && !filePath.endsWith('/')) {
-        // Check if this might be a module directory request
-        const possibleIndexPath = filePath + '/index.js';
-        if (fs.existsSync(possibleIndexPath)) {
-            filePath = possibleIndexPath;
+    // Handle asset requests - auto-discover asset directories
+    if (filePath.startsWith('./assets/') && !fs.existsSync(filePath)) {
+        const assetPath = filePath.substring(1); // Remove leading ./
+        
+        // Scan current directory for subdirectories that might contain assets
+        const currentDir = '.';
+        const subdirs = fs.readdirSync(currentDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
+        
+        for (const subdir of subdirs) {
+            const possiblePath = './' + subdir + assetPath;
+            if (fs.existsSync(possiblePath)) {
+                filePath = possiblePath;
+                break;
+            }
+        }
+    }
+    
+    // Handle ES6 module imports and directory requests
+    if (!path.extname(filePath)) {
+        // Handle trailing slash case - remove it and add index.js
+        if (filePath.endsWith('/')) {
+            const possibleIndexPath = filePath + 'index.js';
+            if (fs.existsSync(possibleIndexPath)) {
+                filePath = possibleIndexPath;
+            }
         } else {
-            // Also try adding .js extension for ES6 module imports
-            const possibleJsPath = filePath + '.js';
-            if (fs.existsSync(possibleJsPath)) {
-                filePath = possibleJsPath;
+            // No extension and no trailing slash
+            // First check if the file exists as-is
+            if (!fs.existsSync(filePath)) {
+                // Check if it's a directory and has an index.js file
+                const possibleIndexPath = filePath + '/index.js';
+                if (fs.existsSync(possibleIndexPath)) {
+                    filePath = possibleIndexPath;
+                } else {
+                    // Try adding .js extension for ES6 module imports
+                    const possibleJsPath = filePath + '.js';
+                    if (fs.existsSync(possibleJsPath)) {
+                        filePath = possibleJsPath;
+                    }
+                }
+            } else {
+                // File exists, check if it's actually a directory
+                const stats = fs.statSync(filePath);
+                if (stats.isDirectory()) {
+                    // It's a directory, try to serve index.js
+                    const possibleIndexPath = filePath + '/index.js';
+                    if (fs.existsSync(possibleIndexPath)) {
+                        filePath = possibleIndexPath;
+                    }
+                }
             }
         }
     }

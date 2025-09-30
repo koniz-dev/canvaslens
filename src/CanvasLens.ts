@@ -849,6 +849,7 @@ export class CanvasLensElement extends HTMLElement {
     
     const colorLabel = document.createElement('label');
     colorLabel.textContent = 'Color';
+    colorLabel.setAttribute('for', 'overlayColorPicker');
     colorLabel.style.cssText = `
       color: white;
       font-size: 12px;
@@ -864,7 +865,10 @@ export class CanvasLensElement extends HTMLElement {
     
     const colorPicker = document.createElement('input');
     colorPicker.type = 'color';
+    colorPicker.id = 'overlayColorPicker';
     colorPicker.value = '#ff0000';
+    colorPicker.title = 'Select annotation color';
+    colorPicker.setAttribute('aria-label', 'Select annotation color');
     colorPicker.style.cssText = `
       width: 30px;
       height: 30px;
@@ -875,8 +879,10 @@ export class CanvasLensElement extends HTMLElement {
     
     const colorHex = document.createElement('input');
     colorHex.type = 'text';
+    colorHex.id = 'overlayColorHex';
     colorHex.value = '#ff0000';
     colorHex.placeholder = '#ff0000';
+    colorHex.setAttribute('aria-label', 'Enter hex color code');
     colorHex.style.cssText = `
       width: 70px;
       height: 30px;
@@ -903,6 +909,7 @@ export class CanvasLensElement extends HTMLElement {
     
     const widthLabel = document.createElement('label');
     widthLabel.textContent = 'Width';
+    widthLabel.setAttribute('for', 'overlayStrokeWidth');
     widthLabel.style.cssText = `
       color: white;
       font-size: 12px;
@@ -931,9 +938,11 @@ export class CanvasLensElement extends HTMLElement {
     
     const strokeWidth = document.createElement('input');
     strokeWidth.type = 'number';
+    strokeWidth.id = 'overlayStrokeWidth';
     strokeWidth.min = '1';
     strokeWidth.max = '20';
     strokeWidth.value = '2';
+    strokeWidth.title = 'Set stroke width (1-20px)';
     strokeWidth.style.cssText = `
       width: 50px;
       height: 30px;
@@ -982,6 +991,7 @@ export class CanvasLensElement extends HTMLElement {
     `;
     
     const lineStyle = document.createElement('select');
+    lineStyle.title = 'Select line style';
     lineStyle.style.cssText = `
       height: 30px;
       padding: 0 8px;
