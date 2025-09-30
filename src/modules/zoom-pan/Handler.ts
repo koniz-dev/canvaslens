@@ -78,7 +78,7 @@ export class ZoomPanHandler {
     
     // Add event listeners based on current options
     if (this.options.enableZoom) {
-      this.canvas.addEventListener('wheel', this.boundHandleWheel);
+      this.canvas.addEventListener('wheel', this.boundHandleWheel, { passive: false });
     }
 
     if (this.options.enablePan) {

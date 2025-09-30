@@ -18,15 +18,17 @@
     "build:prod": "NODE_ENV=production npm run build && npm run clean-logs && npm run clean-maps && npm run minify",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false",
     "release": "./dev/scripts/release/release.sh patch",
     "release:minor": "./dev/scripts/release/release.sh minor",
     "release:major": "./dev/scripts/release/release.sh major",
-    "prepublishOnly": "npm run build:prod && npm test",
+    "prepublishOnly": "npm run build:prod && npm run test:ci",
     "fix-imports": "node dev/scripts/build/fix-imports.js",
     "clean-logs": "node dev/scripts/build/clean-logs.js",
     "clean-maps": "node dev/scripts/build/clean-maps.js",
     "minify": "node dev/scripts/build/minify.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist coverage"
   },
   "keywords": [
     "canvas",

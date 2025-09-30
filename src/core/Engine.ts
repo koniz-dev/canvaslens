@@ -445,6 +445,40 @@ export class Engine {
     }
   }
 
+  /**
+   * Activate a specific tool
+   */
+  activateTool(toolType: string): boolean {
+    const annotationManager = this.getAnnotationManager();
+    if (annotationManager) {
+      return annotationManager.activateTool(toolType);
+    }
+    return false;
+  }
+
+  /**
+   * Deactivate current tool
+   */
+  deactivateTool(): boolean {
+    const annotationManager = this.getAnnotationManager();
+    if (annotationManager) {
+      annotationManager.deactivateTool();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get currently active tool
+   */
+  getActiveTool(): string | null {
+    const annotationManager = this.getAnnotationManager();
+    if (annotationManager) {
+      return annotationManager.getActiveToolType();
+    }
+    return null;
+  }
+
   // Comparison methods
   /**
    * Toggle comparison mode

@@ -1,0 +1,316 @@
+/**
+ * Error handling utilities for CanvasLens
+ */
+import { error, warn } from './logger';
+
+export enum ErrorType {
+  INITIALIZATION = 'INITIALIZATION',
+  IMAGE_LOAD = 'IMAGE_LOAD',
+  RENDERING = 'RENDERING',
+  ANNOTATION = 'ANNOTATION',
+  TOOL_ACTIVATION = 'TOOL_ACTIVATION',
+  OVERLAY = 'OVERLAY',
+  ATTRIBUTE_PARSING = 'ATTRIBUTE_PARSING',
+  UNKNOWN = 'UNKNOWN'
+}
+
+export interface CanvasLensError extends Error {
+  type: ErrorType;
+  context?: Record<string, any>;
+  recoverable?: boolean;
+}
+
+export class ErrorHandler {
+  private static errorCallbacks: Array<(error: CanvasLensError) => void> = [];
+
+  /**
+   * Create a typed error
+   */
+  static createError(
+    type: ErrorType,
+    message: string,
+    context?: Record<string, any>,
+    recoverable: boolean = false
+  ): CanvasLensError {
+    const err = new Error(message) as CanvasLensError;
+    err.type = type;
+    err.context = context || {};
+    err.recoverable = recoverable;
+    return err;
+  }
+
+  /**
+   * Handle an error with proper logging and recovery
+   */
+  static handleError(
+    err: Error | CanvasLensError,
+    context?: Record<string, any>,
+    fallback?: () => any
+  ): void {
+    let canvasLensError: CanvasLensError;
+
+    if (this.isCanvasLensError(err)) {
+      canvasLensError = err;
+    } else {
+      canvasLensError = this.createError(
+        ErrorType.UNKNOWN,
+        err.message,
+        { ...context, originalError: err }
+      );
+    }
+
+    // Log the error
+    this.logError(canvasLensError);
+
+    // Notify error callbacks
+    this.notifyErrorCallbacks(canvasLensError);
+
+    // Attempt recovery if possible
+    if (canvasLensError.recoverable && fallback) {
+      try {
+        const result = fallback();
+        warn('Error recovery successful:', canvasLensError.message);
+      } catch (recoveryError) {
+        error('Error recovery failed:', recoveryError instanceof Error ? recoveryError : new Error(String(recoveryError)));
+      }
+    }
+  }
+
+  /**
+   * Handle initialization errors
+   */
+  static handleInitializationError(
+    err: Error,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.INITIALIZATION,
+      `Failed to initialize CanvasLens: ${err.message}`,
+      context,
+      false
+    );
+    this.handleError(canvasLensError);
+  }
+
+  /**
+   * Handle image loading errors
+   */
+  static handleImageLoadError(
+    err: Error,
+    src?: string,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.IMAGE_LOAD,
+      `Failed to load image: ${err.message}`,
+      { src, ...context },
+      true
+    );
+    this.handleError(canvasLensError, context, () => {
+      // Fallback: show error placeholder
+      this.showErrorPlaceholder('Failed to load image');
+    });
+  }
+
+  /**
+   * Handle rendering errors
+   */
+  static handleRenderingError(
+    err: Error,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.RENDERING,
+      `Rendering error: ${err.message}`,
+      context,
+      true
+    );
+    this.handleError(canvasLensError, context, () => {
+      // Fallback: clear canvas and retry
+      this.clearCanvasAndRetry();
+    });
+  }
+
+  /**
+   * Handle annotation errors
+   */
+  static handleAnnotationError(
+    err: Error,
+    annotationId?: string,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.ANNOTATION,
+      `Annotation error: ${err.message}`,
+      { annotationId, ...context },
+      true
+    );
+    this.handleError(canvasLensError, context);
+  }
+
+  /**
+   * Handle tool activation errors
+   */
+  static handleToolActivationError(
+    err: Error,
+    toolType?: string,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.TOOL_ACTIVATION,
+      `Tool activation error: ${err.message}`,
+      { toolType, ...context },
+      true
+    );
+    this.handleError(canvasLensError, context);
+  }
+
+  /**
+   * Handle overlay errors
+   */
+  static handleOverlayError(
+    err: Error,
+    operation?: string,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.OVERLAY,
+      `Overlay error: ${err.message}`,
+      { operation, ...context },
+      true
+    );
+    this.handleError(canvasLensError, context, () => {
+      // Fallback: close overlay
+      this.closeOverlayFallback();
+    });
+  }
+
+  /**
+   * Handle attribute parsing errors
+   */
+  static handleAttributeParsingError(
+    err: Error,
+    attribute?: string,
+    value?: string,
+    context?: Record<string, any>
+  ): void {
+    const canvasLensError = this.createError(
+      ErrorType.ATTRIBUTE_PARSING,
+      `Attribute parsing error: ${err.message}`,
+      { attribute, value, ...context },
+      true
+    );
+    this.handleError(canvasLensError, context);
+  }
+
+  /**
+   * Register error callback
+   */
+  static onError(callback: (error: CanvasLensError) => void): () => void {
+    this.errorCallbacks.push(callback);
+    return () => {
+      const index = this.errorCallbacks.indexOf(callback);
+      if (index > -1) {
+        this.errorCallbacks.splice(index, 1);
+      }
+    };
+  }
+
+  /**
+   * Check if error is a CanvasLens error
+   */
+  private static isCanvasLensError(error: any): error is CanvasLensError {
+    return error && typeof error.type === 'string' && error.type in ErrorType;
+  }
+
+  /**
+   * Log error with appropriate level
+   */
+  private static logError(canvasLensError: CanvasLensError): void {
+    const logMessage = `[${canvasLensError.type}] ${canvasLensError.message}`;
+    
+    if (canvasLensError.recoverable) {
+      warn(logMessage, canvasLensError.context);
+    } else {
+      error(logMessage, canvasLensError.context);
+    }
+  }
+
+  /**
+   * Notify all error callbacks
+   */
+  private static notifyErrorCallbacks(canvasLensError: CanvasLensError): void {
+    this.errorCallbacks.forEach(callback => {
+      try {
+        callback(canvasLensError);
+      } catch (callbackError) {
+        error('Error callback failed:', callbackError);
+      }
+    });
+  }
+
+  /**
+   * Show error placeholder
+   */
+  private static showErrorPlaceholder(message: string): void {
+    // This would be implemented to show a visual error placeholder
+    warn('Showing error placeholder:', message);
+  }
+
+  /**
+   * Clear canvas and retry rendering
+   */
+  private static clearCanvasAndRetry(): void {
+    // This would be implemented to clear the canvas and retry rendering
+    warn('Clearing canvas and retrying render');
+  }
+
+  /**
+   * Close overlay fallback
+   */
+  private static closeOverlayFallback(): void {
+    // This would be implemented to close overlay in case of error
+    warn('Closing overlay due to error');
+  }
+}
+
+/**
+ * Error boundary decorator for methods
+ */
+export function withErrorHandling(
+  errorType: ErrorType,
+  context?: Record<string, any>,
+  fallback?: () => void
+) {
+  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+    const method = descriptor.value;
+
+    descriptor.value = function (...args: any[]) {
+      try {
+        return method.apply(this, args);
+      } catch (error) {
+        ErrorHandler.handleError(error as Error, context, fallback);
+        throw error;
+      }
+    };
+
+    return descriptor;
+  };
+}
+
+/**
+ * Safe async wrapper
+ */
+export async function safeAsync<T>(
+  asyncFn: () => Promise<T>,
+  errorType: ErrorType,
+  context?: Record<string, any>,
+  fallback?: () => T
+): Promise<T | undefined> {
+  try {
+    return await asyncFn();
+  } catch (error) {
+    ErrorHandler.handleError(error as Error, context, fallback);
+    return fallback ? fallback() : undefined;
+  }
+}

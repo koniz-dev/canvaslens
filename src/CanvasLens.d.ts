@@ -101,6 +101,7 @@ interface HTMLElement {
   activateTool(toolType: string): boolean;
   deactivateTool(): boolean;
   getActiveTool(): string | null;
+  updateTools(toolConfig: ToolConfig): void;
   
   // Annotation controls
   addAnnotation(annotation: Annotation): void;
