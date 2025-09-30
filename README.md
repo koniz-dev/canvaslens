@@ -57,7 +57,10 @@ npm install @koniz-dev/canvaslens
         const viewer = document.querySelector('canvas-lens');
         
         viewer.addEventListener('imageload', (e) => {
-            console.log('Image loaded:', e.detail);
+            // Use logger utility for production-safe logging
+            import('./utils/logger.js').then(({ log }) => {
+                log('Image loaded:', e.detail);
+            });
         });
         
         viewer.addEventListener('click', () => {
@@ -93,41 +96,44 @@ npm install @koniz-dev/canvaslens
     oncomparisonchange="handleComparisonChange(event)">
 </canvas-lens>
 
-<script>
+<script type="module">
+// Import logger utility for production-safe logging
+import { log } from './utils/logger.js';
+
 // Event handler functions
 function handleImageLoad(event) {
     const { naturalSize, fileName, type } = event.detail;
-    console.log('Image loaded:', { fileName, type, width: naturalSize.width, height: naturalSize.height });
+    log('Image loaded:', { fileName, type, width: naturalSize.width, height: naturalSize.height });
 }
 
 function handleZoomChange(event) {
-    console.log('Zoom level:', event.detail);
+    log('Zoom level:', event.detail);
 }
 
 function handlePanChange(event) {
-    console.log('Pan offset:', event.detail);
+    log('Pan offset:', event.detail);
 }
 
 function handleAnnotationAdd(event) {
-    console.log('Annotation added:', event.detail);
+    log('Annotation added:', event.detail);
 }
 
 function handleAnnotationRemove(event) {
-    console.log('Annotation removed:', event.detail);
+    log('Annotation removed:', event.detail);
 }
 
 function handleToolChange(event) {
-    console.log('Active tool:', event.detail);
+    log('Active tool:', event.detail);
 }
 
 function handleComparisonChange(event) {
-    console.log('Comparison position:', event.detail);
+    log('Comparison position:', event.detail);
 }
 
 // Alternative: Using addEventListener
 const viewer = document.querySelector('canvas-lens');
 viewer.addEventListener('imageload', (event) => {
-    console.log('Image loaded via addEventListener:', event.detail);
+    log('Image loaded via addEventListener:', event.detail);
 });
 </script>
 ```
@@ -159,7 +165,10 @@ const toolConfig = ref({
 });
 
 const onImageLoad = (e) => {
-  console.log('Image loaded:', e.detail);
+  // Use logger utility for production-safe logging
+  import('./utils/logger.js').then(({ log }) => {
+    log('Image loaded:', e.detail);
+  });
 };
 </script>
 ```
@@ -203,32 +212,35 @@ const CanvasLensViewer = ({ src }) => {
     min-zoom="0.1">
 </canvas-lens>
 
-<script>
+<script type="module">
 const viewer = document.querySelector('canvas-lens');
+
+// Import logger utility for production-safe logging
+import { log } from './utils/logger.js';
 
 // Set event handlers
 viewer.addEventListener('imageload', (e) => {
-    console.log('Image loaded:', e.detail);
+    log('Image loaded:', e.detail);
 });
 
 viewer.addEventListener('zoomchange', (e) => {
-    console.log('Zoom level:', e.detail);
+    log('Zoom level:', e.detail);
 });
 
 viewer.addEventListener('panchange', (e) => {
-    console.log('Pan offset:', e.detail);
+    log('Pan offset:', e.detail);
 });
 
 viewer.addEventListener('annotationadd', (e) => {
-    console.log('Annotation added:', e.detail);
+    log('Annotation added:', e.detail);
 });
 
 viewer.addEventListener('annotationremove', (e) => {
-    console.log('Annotation removed:', e.detail);
+    log('Annotation removed:', e.detail);
 });
 
 viewer.addEventListener('comparisonchange', (e) => {
-    console.log('Comparison position:', e.detail);
+    log('Comparison position:', e.detail);
 });
 
 // Load image from URL
@@ -389,7 +401,10 @@ viewer.isOverlayOpen();
 // Event handling
 viewer.addEventListener('imageload', (event) => {
     const { naturalSize, fileName, type } = event.detail;
-    console.log(`Loaded ${fileName}: ${naturalSize.width}x${naturalSize.height}`);
+    // Use logger utility for production-safe logging
+    import('./utils/logger.js').then(({ log }) => {
+        log(`Loaded ${fileName}: ${naturalSize.width}x${naturalSize.height}`);
+    });
 });
 
 // HTML attribute binding

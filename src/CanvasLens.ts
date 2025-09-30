@@ -1,6 +1,6 @@
 import { CanvasLensOptions, EventHandlers, ImageData, Annotation, Point, ToolConfig } from './types';
 import { Engine } from './core/Engine';
-import { warn } from './utils/logger';
+import { warn, error } from './utils/logger';
 
 // Web Component for CanvasLens
 export class CanvasLensElement extends HTMLElement {
@@ -268,9 +268,9 @@ export class CanvasLensElement extends HTMLElement {
         await this.canvasLens.loadImage(src, type, fileName);
         // Reset changes when new image is loaded
         this.resetChanges();
-      } catch (error) {
-        console.error('Failed to load image:', error);
-        throw error;
+      } catch (err) {
+        error('Failed to load image:', err);
+        throw err;
       }
     } else {
       throw new Error('CanvasLens is not initialized or has been destroyed');
@@ -279,19 +279,19 @@ export class CanvasLensElement extends HTMLElement {
 
   loadImageFromFile(file: File): void {
     if (!this.canvasLens || this.isDestroyed) {
-      console.error('CanvasLens is not initialized or has been destroyed');
+      error('CanvasLens is not initialized or has been destroyed');
       return;
     }
 
     if (!file || !file.type.startsWith('image/')) {
-      console.error('Invalid file: not an image');
+      error('Invalid file: not an image');
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
       if (!e.target?.result) {
-        console.error('Failed to read file');
+        error('Failed to read file');
         return;
       }
       
@@ -303,18 +303,18 @@ export class CanvasLensElement extends HTMLElement {
             this.canvasLens.loadImageElement(img, file.type, file.name);
             // Reset changes when new image is loaded
             this.resetChanges();
-          } catch (error) {
-            console.error('Failed to load image element:', error);
+          } catch (err) {
+            error('Failed to load image element:', err);
           }
         }
       };
       img.onerror = () => {
-        console.error('Failed to load image from file');
+        error('Failed to load image from file');
       };
       img.src = e.target.result as string;
     };
     reader.onerror = () => {
-      console.error('Failed to read file');
+      error('Failed to read file');
     };
     reader.readAsDataURL(file);
   }
@@ -353,7 +353,7 @@ export class CanvasLensElement extends HTMLElement {
       if (annotationManager) {
         annotationManager.addAnnotation(annotation);
       } else {
-        console.warn('Annotation manager not available');
+        warn('Annotation manager not available');
       }
     }
   }
@@ -364,7 +364,7 @@ export class CanvasLensElement extends HTMLElement {
       if (annotationManager) {
         annotationManager.removeAnnotation(annotationId);
       } else {
-        console.warn('Annotation manager not available');
+        warn('Annotation manager not available');
       }
     }
   }
@@ -375,7 +375,7 @@ export class CanvasLensElement extends HTMLElement {
       if (annotationManager) {
         annotationManager.clearAll();
       } else {
-        console.warn('Annotation manager not available');
+        warn('Annotation manager not available');
       }
     }
   }
@@ -1196,10 +1196,10 @@ export class CanvasLensElement extends HTMLElement {
         if (imageData) {
           this.overlayCanvasLens.loadImageElementOverlay(imageData.element, imageData.type, imageData.fileName);
         } else {
-          console.warn('No image data available for overlay');
+          warn('No image data available for overlay');
         }
       } else {
-        console.warn('Main canvas lens not loaded or no image loaded');
+        warn('Main canvas lens not loaded or no image loaded');
       }
     });
   }
