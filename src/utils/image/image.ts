@@ -1,4 +1,4 @@
-import { Size, Point, ImageData } from '../types';
+import { Size, Point, ImageData } from '../../types';
 
 /**
  * Calculate aspect ratio preserving dimensions to fit within container

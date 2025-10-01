@@ -1,7 +1,7 @@
 /**
  * Unit tests for logger utility
  */
-import { log, warn, error, info } from '../../utils/logger';
+import { log, warn, error, info } from '../../utils/core/logger';
 
 // Mock console methods
 const mockConsole = {
@@ -108,19 +108,39 @@ describe('Logger', () => {
   describe('with __DEV__ flag', () => {
     beforeEach(() => {
       process.env.NODE_ENV = 'production';
-      global.window = { __DEV__: true } as any;
+      // Set __DEV__ flag properly
+      (global as any).window = { __DEV__: true };
+      jest.clearAllMocks();
     });
 
     it('should log messages when __DEV__ is true', () => {
-      jest.clearAllMocks();
+      // Force development mode by mocking the environment
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      
       log('Test message');
-      expect(mockConsole.log).toHaveBeenCalled();
+      expect(mockConsole.log).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{2}:\d{2}:\d{2}\.\d{3}\] \[DEBUG\]/),
+        'Test message'
+      );
+      
+      // Restore
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should warn messages when __DEV__ is true', () => {
-      jest.clearAllMocks();
+      // Force development mode by mocking the environment
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      
       warn('Warning message');
-      expect(mockConsole.warn).toHaveBeenCalled();
+      expect(mockConsole.warn).toHaveBeenCalledWith(
+        expect.stringMatching(/\[\d{2}:\d{2}:\d{2}\.\d{3}\] \[WARN\]/),
+        'Warning message'
+      );
+      
+      // Restore
+      process.env.NODE_ENV = originalEnv;
     });
   });
 

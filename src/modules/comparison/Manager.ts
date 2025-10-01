@@ -1,7 +1,7 @@
 import { Renderer } from '../../core/Renderer';
 import { ImageData, Point, Size, EventHandlers } from '../../types';
-import { loadImage, getImageData, calculateFitDimensions } from '../../utils/image';
-import { error } from '../../utils/logger';
+import { loadImage, getImageData, calculateFitDimensions } from '../../utils/image/image';
+import { error } from '../../utils/core/logger';
 
 export interface ComparisonOptions {
   sliderPosition?: number; // 0-100 percentage

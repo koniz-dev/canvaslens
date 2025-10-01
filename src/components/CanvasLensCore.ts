@@ -1,13 +1,10 @@
-/**
- * Core CanvasLens Web Component functionality
- */
 import { CanvasLensOptions, ImageData, Annotation, Point, ToolConfig } from '../types';
 import { Engine } from '../core/Engine';
 import { AttributeParser } from './AttributeParser';
 import { EventManager } from './EventManager';
 import { OverlayManager } from './OverlayManager';
-import { ErrorHandler, ErrorType, withErrorHandling, safeAsync } from '../utils/ErrorHandler';
-import { error, warn } from '../utils/logger';
+import { ErrorHandler, ErrorType, withErrorHandling, safeAsync } from '../utils/core/error-handler';
+import { error, warn } from '../utils/core/logger';
 
 export class CanvasLensCore {
   private element: HTMLElement;
@@ -34,7 +31,11 @@ export class CanvasLensCore {
       this.ensureCanvasSize();
       this.loadInitialImage();
     } else {
-      throw new Error('Shadow root not available');
+      throw ErrorHandler.createError(
+        ErrorType.INITIALIZATION,
+        'Shadow root not available',
+        { element: this.element }
+      );
     }
   }
 
@@ -96,7 +97,11 @@ export class CanvasLensCore {
    */
   async loadImage(src: string, type?: string, fileName?: string): Promise<void> {
     if (!this.canvasLens || this.isDestroyed) {
-      throw new Error('CanvasLens is not initialized or has been destroyed');
+      throw ErrorHandler.createError(
+        ErrorType.INITIALIZATION,
+        'CanvasLens is not initialized or has been destroyed',
+        { isDestroyed: this.isDestroyed }
+      );
     }
 
     return safeAsync(
@@ -118,11 +123,19 @@ export class CanvasLensCore {
    */
   loadImageFromFile(file: File): void {
     if (!this.canvasLens || this.isDestroyed) {
-      throw new Error('CanvasLens is not initialized or has been destroyed');
+      throw ErrorHandler.createError(
+        ErrorType.INITIALIZATION,
+        'CanvasLens is not initialized or has been destroyed',
+        { isDestroyed: this.isDestroyed }
+      );
     }
 
     if (!file || !file.type.startsWith('image/')) {
-      throw new Error('Invalid file: not an image');
+      throw ErrorHandler.createError(
+        ErrorType.IMAGE_LOAD,
+        'Invalid file: not an image',
+        { fileType: file.type, fileName: file.name }
+      );
     }
 
     const reader = new FileReader();
@@ -439,7 +452,6 @@ export class CanvasLensCore {
   private showImageLoadError(src: string): void {
     if (!this.shadowRoot) return;
 
-    // Create error placeholder
     const errorDiv = document.createElement('div');
     errorDiv.style.cssText = `
       display: flex;
@@ -459,7 +471,6 @@ export class CanvasLensCore {
       <div style="font-size: 12px; color: #999;">${src}</div>
     `;
 
-    // Replace container content
     const container = this.shadowRoot.firstElementChild;
     if (container) {
       container.innerHTML = '';

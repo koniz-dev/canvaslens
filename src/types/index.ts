@@ -1,4 +1,3 @@
-// Core types for CanvasLens library
 
 /**
  * Represents a 2D point with x and y coordinates
@@ -180,3 +179,5 @@ export interface EventHandlers {
   /** Called when comparison mode is enabled/disabled */
   onComparisonModeChange?: (enabled: boolean) => void;
 }
+
+export type { AnnotationManager, ImageViewer } from './interfaces';

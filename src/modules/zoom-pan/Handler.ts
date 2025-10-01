@@ -1,7 +1,7 @@
 import { Renderer } from '../../core/Renderer';
 import { ViewState, Point, EventHandlers } from '../../types';
-import { screenToWorld, worldToScreen, clamp } from '../../utils/coordinate';
-import { log } from '../../utils/logger';
+import { screenToWorld, worldToScreen, clamp } from '../../utils/geometry/coordinate';
+import { log } from '../../utils/core/logger';
 
 export interface ZoomPanOptions {
   enableZoom?: boolean;

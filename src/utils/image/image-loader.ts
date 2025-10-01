@@ -1,9 +1,9 @@
 /**
  * Advanced image loading utilities with lazy loading and optimization
  */
-import { ImageData, Size } from '../types';
-import { ErrorHandler, ErrorType } from './ErrorHandler';
-import { warn, log } from './logger';
+import { ImageData, Size } from '../../types';
+import { ErrorHandler, ErrorType } from '../core/error-handler';
+import { warn, log } from '../core/logger';
 
 export interface ImageLoadOptions {
   /** Maximum image size before lazy loading (in bytes) */

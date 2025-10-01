@@ -1,6 +1,6 @@
 import { Annotation, Point, AnnotationStyle } from '../../types';
 import { Renderer } from '../../core/Renderer';
-import { performanceMonitor } from '../../utils/performance';
+import { performanceMonitor } from '../../utils/performance/performance';
 
 export class AnnotationRenderer {
   private ctx: CanvasRenderingContext2D;

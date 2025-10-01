@@ -1,7 +1,7 @@
 import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
-import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image';
-import { error } from '../../utils/logger';
+import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image/image';
+import { error } from '../../utils/core/logger';
 import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/Handler';
 import { AnnotationManager, AnnotationManagerOptions } from '../annotation/Manager';
 import { ComparisonManager, ComparisonOptions } from '../comparison/Manager';

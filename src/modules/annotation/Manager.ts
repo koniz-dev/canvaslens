@@ -2,7 +2,9 @@ import { Renderer } from '../../core/Renderer';
 import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '../../types';
 import { AnnotationRenderer } from './Renderer';
 import { ToolManager, ToolManagerOptions } from './ToolManager';
-import { error } from '../../utils/logger';
+import { error } from '../../utils/core/logger';
+import { ValidationHelper } from '../../utils/core/validation-helper';
+import { MemoryManager } from '../../utils/core/memory-manager';
 
 export interface AnnotationManagerOptions {
   enabled?: boolean;
@@ -23,6 +25,8 @@ export class AnnotationManager {
   private dragStartPoint: Point | null = null;
   private dragOffset: Point | null = null;
   private _hasChanges = false;
+  private throttledMouseMove: (event: MouseEvent) => void;
+  private cleanupCallback: () => void;
 
   constructor(canvas: Renderer, options: AnnotationManagerOptions = {}) {
     this.canvas = canvas;
@@ -72,6 +76,11 @@ export class AnnotationManager {
       }
     });
 
+    // Initialize performance optimizations
+    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16); // ~60fps
+    this.cleanupCallback = this.cleanup.bind(this);
+    MemoryManager.registerCleanup(this.cleanupCallback);
+
     this.setupEventListeners();
   }
 
@@ -84,7 +93,7 @@ export class AnnotationManager {
     
     // Mouse events for selection and dragging
     this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener);
-    this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
+    this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
     this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
     
     // Note: Keyboard shortcuts are handled by ToolManager to avoid conflicts
@@ -115,42 +124,54 @@ export class AnnotationManager {
    * Handle mouse down for selection and dragging
    */
   private handleMouseDown(event: MouseEvent): void {
-    if (!this.enabled || this.toolManager.isDrawing() || event.button !== 0) return;
+    if (!this.canHandleMouseDown(event)) return;
     
-    // Don't allow selection if no annotation tools are enabled
-    if (!this.hasEnabledAnnotationTools()) return;
-    
-    // Don't allow selection if comparison mode is active
-    if (this.isComparisonModeActive()) return;
-    
-    const point = this.canvas.getMousePosition(event);
-    const worldPoint = this.screenToWorld(point);
-    
-    // Find annotation under cursor
+    const worldPoint = this.getWorldPointFromEvent(event);
     const annotation = this.getAnnotationAt(worldPoint);
     
     if (annotation) {
-      this.selectAnnotation(annotation);
-      
-      // Start dragging if this is the selected annotation
-      if (this.selectedAnnotation === annotation) {
-        this.isDragging = true;
-        this.dragStartPoint = worldPoint;
-        
-        // Calculate offset from annotation center
-        const annotationCenter = this.getAnnotationCenter(annotation);
-        this.dragOffset = {
-          x: worldPoint.x - annotationCenter.x,
-          y: worldPoint.y - annotationCenter.y
-        };
-        
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      this.handleAnnotationClick(annotation, worldPoint, event);
     } else {
-      // Click on empty space - clear selection
-      this.selectAnnotation(null);
+      this.handleEmptySpaceClick();
     }
+  }
+
+  private canHandleMouseDown(event: MouseEvent): boolean {
+    return this.enabled && 
+           !this.toolManager.isDrawing() && 
+           event.button === 0 &&
+           this.hasEnabledAnnotationTools() &&
+           !this.isComparisonModeActive();
+  }
+
+  private getWorldPointFromEvent(event: MouseEvent): Point {
+    const point = this.canvas.getMousePosition(event);
+    return this.screenToWorld(point);
+  }
+
+  private handleAnnotationClick(annotation: Annotation, worldPoint: Point, event: MouseEvent): void {
+    this.selectAnnotation(annotation);
+    
+    if (this.selectedAnnotation === annotation) {
+      this.startDragging(annotation, worldPoint);
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  private startDragging(annotation: Annotation, worldPoint: Point): void {
+    this.isDragging = true;
+    this.dragStartPoint = worldPoint;
+    
+    const annotationCenter = this.getAnnotationCenter(annotation);
+    this.dragOffset = {
+      x: worldPoint.x - annotationCenter.x,
+      y: worldPoint.y - annotationCenter.y
+    };
+  }
+
+  private handleEmptySpaceClick(): void {
+    this.selectAnnotation(null);
   }
 
   /**
@@ -159,39 +180,46 @@ export class AnnotationManager {
   private handleMouseMove(event: MouseEvent): void {
     if (!this.enabled) return;
     
-    const point = this.canvas.getMousePosition(event);
-    const worldPoint = this.screenToWorld(point);
+    const worldPoint = this.getWorldPointFromEvent(event);
     
-    // Handle dragging if currently dragging
     if (this.isDragging && this.selectedAnnotation && this.dragOffset) {
-      // Calculate new position
-      const newCenter = {
-        x: worldPoint.x - this.dragOffset.x,
-        y: worldPoint.y - this.dragOffset.y
-      };
-      
-      // Move annotation
-      this.moveAnnotation(this.selectedAnnotation, newCenter);
-      
-      // Trigger re-render
-      this.canvas.getElement().dispatchEvent(new CustomEvent('viewStateChange'));
-      
-      event.preventDefault();
-      event.stopPropagation();
+      this.handleDragging(worldPoint, event);
       return;
     }
     
-    // Handle hover detection (only if not dragging and no tool is active)
-    if (!this.isDragging && !this.toolManager.isDrawing()) {
-      const hoveredAnnotation = this.getAnnotationAt(worldPoint);
-      
-      // Update cursor style based on hover
-      if (hoveredAnnotation) {
-        this.canvas.getElement().style.cursor = 'move';
-      } else {
-        this.canvas.getElement().style.cursor = 'default';
-      }
-    }
+    this.handleHoverDetection(worldPoint);
+  }
+
+  private handleDragging(worldPoint: Point, event: MouseEvent): void {
+    const newCenter = this.calculateNewCenter(worldPoint);
+    this.moveAnnotation(this.selectedAnnotation!, newCenter);
+    this.triggerViewStateChange();
+    
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  private calculateNewCenter(worldPoint: Point): Point {
+    return {
+      x: worldPoint.x - this.dragOffset!.x,
+      y: worldPoint.y - this.dragOffset!.y
+    };
+  }
+
+  private triggerViewStateChange(): void {
+    this.canvas.getElement().dispatchEvent(new CustomEvent('viewStateChange'));
+  }
+
+  private handleHoverDetection(worldPoint: Point): void {
+    if (this.isDragging || this.toolManager.isDrawing()) return;
+    
+    const hoveredAnnotation = this.getAnnotationAt(worldPoint);
+    this.updateCursorStyle(hoveredAnnotation);
+  }
+
+  private updateCursorStyle(hoveredAnnotation: Annotation | null): void {
+    const cursor = hoveredAnnotation ? 'move' : 'default';
+    this.canvas.getElement().style.cursor = cursor;
   }
 
   /**
@@ -255,11 +283,15 @@ export class AnnotationManager {
    * Add annotation
    */
   addAnnotation(annotation: Annotation): void {
+    if (!ValidationHelper.isValidAnnotation(annotation)) {
+      error('Invalid annotation data:', annotation);
+      return;
+    }
+
     this.annotations.set(annotation.id, annotation);
     this._hasChanges = true;
     
-    // Trigger re-render
-    this.canvas.getElement().dispatchEvent(new CustomEvent('viewStateChange'));
+    this.triggerViewStateChange();
     
     if (this.eventHandlers.onAnnotationAdd) {
       this.eventHandlers.onAnnotationAdd(annotation);
@@ -430,12 +462,19 @@ export class AnnotationManager {
   private renderSelectionHighlight(annotation: Annotation): void {
     const ctx = this.canvas.getContext();
     
+    this.setupSelectionContext(ctx);
+    this.renderSelectionByType(annotation, ctx);
+    ctx.restore();
+  }
+
+  private setupSelectionContext(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.strokeStyle = '#00ff00';
     ctx.lineWidth = 1;
     ctx.setLineDash([5, 5]);
-    
-    // Render selection highlight based on annotation type
+  }
+
+  private renderSelectionByType(annotation: Annotation, ctx: CanvasRenderingContext2D): void {
     switch (annotation.type) {
       case 'rect':
         this.renderRectangleSelection(annotation);
@@ -451,20 +490,21 @@ export class AnnotationManager {
         this.renderTextSelection(annotation);
         break;
       default:
-        // Fallback to bounding box
-        const bounds = this.getAnnotationBounds(annotation);
-        if (bounds) {
-          const padding = 5;
-          ctx.strokeRect(
-            bounds.x - padding,
-            bounds.y - padding,
-            bounds.width + padding * 2,
-            bounds.height + padding * 2
-          );
-        }
+        this.renderDefaultSelection(annotation, ctx);
     }
-    
-    ctx.restore();
+  }
+
+  private renderDefaultSelection(annotation: Annotation, ctx: CanvasRenderingContext2D): void {
+    const bounds = this.getAnnotationBounds(annotation);
+    if (bounds) {
+      const padding = 5;
+      ctx.strokeRect(
+        bounds.x - padding,
+        bounds.y - padding,
+        bounds.width + padding * 2,
+        bounds.height + padding * 2
+      );
+    }
   }
 
   /**
@@ -856,6 +896,18 @@ export class AnnotationManager {
 
     // Clear annotations and state
     this.clearAll();
+    this.isDragging = false;
+    this.dragStartPoint = null;
+    this.dragOffset = null;
+  }
+
+  /**
+   * Cleanup resources and unregister from memory manager
+   */
+  private cleanup(): void {
+    MemoryManager.unregisterCleanup(this.cleanupCallback);
+    this.annotations.clear();
+    this.selectedAnnotation = null;
     this.isDragging = false;
     this.dragStartPoint = null;
     this.dragOffset = null;

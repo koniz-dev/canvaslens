@@ -8,12 +8,22 @@ export interface PerformanceMetrics {
   visibleAnnotations: number;
   viewportCullingRatio: number;
   memoryUsage?: number;
+  fps?: number;
+  frameDrops?: number;
+  userInteractions?: number;
+  timestamp: number;
 }
 
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
   private maxMetrics = 100; // Keep last 100 measurements
   private isEnabled = false;
+  private frameCount = 0;
+  private lastFrameTime = 0;
+  private fps = 0;
+  private frameDrops = 0;
+  private userInteractions = 0;
+  private lastInteractionTime = 0;
 
   constructor(enabled: boolean = false) {
     this.isEnabled = enabled;
@@ -49,12 +59,18 @@ export class PerformanceMonitor {
       (annotationCount - visibleAnnotations) / annotationCount : 0;
 
     const memoryUsage = this.getMemoryUsage();
+    this.updateFPS();
+    
     const metric: PerformanceMetrics = {
       renderTime,
       annotationCount,
       visibleAnnotations,
       viewportCullingRatio,
-      ...(memoryUsage !== undefined && { memoryUsage })
+      ...(memoryUsage !== undefined && { memoryUsage }),
+      fps: this.fps,
+      frameDrops: this.frameDrops,
+      userInteractions: this.userInteractions,
+      timestamp: Date.now()
     };
 
     this.metrics.push(metric);
@@ -115,10 +131,73 @@ export class PerformanceMonitor {
   }
 
   /**
+   * Update FPS calculation
+   */
+  private updateFPS(): void {
+    const now = performance.now();
+    this.frameCount++;
+    
+    if (this.lastFrameTime === 0) {
+      this.lastFrameTime = now;
+      return;
+    }
+    
+    const deltaTime = now - this.lastFrameTime;
+    if (deltaTime >= 1000) { // Update FPS every second
+      this.fps = Math.round((this.frameCount * 1000) / deltaTime);
+      
+      // Detect frame drops (FPS < 30)
+      if (this.fps < 30) {
+        this.frameDrops++;
+      }
+      
+      this.frameCount = 0;
+      this.lastFrameTime = now;
+    }
+  }
+
+  /**
+   * Record user interaction
+   */
+  recordUserInteraction(): void {
+    if (!this.isEnabled) return;
+    
+    this.userInteractions++;
+    this.lastInteractionTime = Date.now();
+  }
+
+  /**
+   * Get current FPS
+   */
+  getCurrentFPS(): number {
+    return this.fps;
+  }
+
+  /**
+   * Get frame drop count
+   */
+  getFrameDrops(): number {
+    return this.frameDrops;
+  }
+
+  /**
+   * Get user interaction count
+   */
+  getUserInteractions(): number {
+    return this.userInteractions;
+  }
+
+  /**
    * Clear all metrics
    */
   clear(): void {
     this.metrics = [];
+    this.frameCount = 0;
+    this.lastFrameTime = 0;
+    this.fps = 0;
+    this.frameDrops = 0;
+    this.userInteractions = 0;
+    this.lastInteractionTime = 0;
   }
 
   /**

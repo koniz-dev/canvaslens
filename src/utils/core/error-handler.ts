@@ -1,6 +1,3 @@
-/**
- * Error handling utilities for CanvasLens
- */
 import { error, warn } from './logger';
 
 export enum ErrorType {
@@ -83,9 +80,10 @@ export class ErrorHandler {
     err: Error,
     context?: Record<string, any>
   ): void {
+    const userMessage = this.getUserFriendlyMessage(ErrorType.INITIALIZATION, err.message);
     const canvasLensError = this.createError(
       ErrorType.INITIALIZATION,
-      `Failed to initialize CanvasLens: ${err.message}`,
+      userMessage,
       context,
       false
     );
@@ -100,9 +98,10 @@ export class ErrorHandler {
     src?: string,
     context?: Record<string, any>
   ): void {
+    const userMessage = this.getUserFriendlyMessage(ErrorType.IMAGE_LOAD, err.message, src);
     const canvasLensError = this.createError(
       ErrorType.IMAGE_LOAD,
-      `Failed to load image: ${err.message}`,
+      userMessage,
       { src, ...context },
       true
     );
@@ -247,6 +246,44 @@ export class ErrorHandler {
         error('Error callback failed:', callbackError);
       }
     });
+  }
+
+  /**
+   * Get user-friendly error message
+   */
+  private static getUserFriendlyMessage(
+    errorType: ErrorType,
+    technicalMessage: string,
+    context?: string
+  ): string {
+    switch (errorType) {
+      case ErrorType.INITIALIZATION:
+        return 'CanvasLens failed to initialize. Please refresh the page and try again.';
+      
+      case ErrorType.IMAGE_LOAD:
+        if (context) {
+          return `Unable to load image from "${context}". Please check the URL or try a different image.`;
+        }
+        return 'Failed to load image. Please check the image source and try again.';
+      
+      case ErrorType.RENDERING:
+        return 'Canvas rendering error. The image may be too large or corrupted.';
+      
+      case ErrorType.ANNOTATION:
+        return 'Annotation error. Please try again or refresh the page.';
+      
+      case ErrorType.TOOL_ACTIVATION:
+        return 'Tool activation failed. Please try selecting the tool again.';
+      
+      case ErrorType.OVERLAY:
+        return 'Overlay mode error. Please close and reopen the overlay.';
+      
+      case ErrorType.ATTRIBUTE_PARSING:
+        return 'Configuration error. Please check your settings and try again.';
+      
+      default:
+        return 'An unexpected error occurred. Please refresh the page and try again.';
+    }
   }
 
   /**

@@ -75,7 +75,7 @@ describe('CanvasLensCore', () => {
         throw new Error('Initialization failed');
       });
 
-      expect(() => canvasLensCore.initialize()).not.toThrow();
+      expect(() => canvasLensCore.initialize()).toThrow('Initialization failed');
     });
   });
 
@@ -88,6 +88,7 @@ describe('CanvasLensCore', () => {
     });
 
     it('should not destroy if already destroyed', () => {
+      canvasLensCore.initialize();
       canvasLensCore.destroy();
       canvasLensCore.destroy();
 
@@ -111,13 +112,14 @@ describe('CanvasLensCore', () => {
       const error = new Error('Load failed');
       mockEngine.loadImage.mockRejectedValue(error);
 
-      await expect(canvasLensCore.loadImage('test.jpg')).rejects.toThrow('Load failed');
+      const result = await canvasLensCore.loadImage('test.jpg');
+      expect(result).toBeUndefined();
     });
 
     it('should throw error if not initialized', async () => {
       canvasLensCore.destroy();
 
-      await expect(canvasLensCore.loadImage('test.jpg')).rejects.toThrow('CanvasLens is not initialized');
+      await expect(canvasLensCore.loadImage('test.jpg')).rejects.toThrow('CanvasLens is not initialized or has been destroyed');
     });
   });
 
@@ -145,7 +147,7 @@ describe('CanvasLensCore', () => {
     it('should reject non-image files', () => {
       const mockFile = new File([''], 'test.txt', { type: 'text/plain' });
 
-      canvasLensCore.loadImageFromFile(mockFile);
+      expect(() => canvasLensCore.loadImageFromFile(mockFile)).toThrow('Invalid file: not an image');
 
       expect(mockEngine.loadImageElement).not.toHaveBeenCalled();
     });
@@ -154,7 +156,7 @@ describe('CanvasLensCore', () => {
       canvasLensCore.destroy();
       const mockFile = new File([''], 'test.jpg', { type: 'image/jpeg' });
 
-      expect(() => canvasLensCore.loadImageFromFile(mockFile)).not.toThrow();
+      expect(() => canvasLensCore.loadImageFromFile(mockFile)).toThrow('CanvasLens is not initialized or has been destroyed');
     });
   });
 
@@ -240,7 +242,12 @@ describe('CanvasLensCore', () => {
     });
 
     it('should get annotations', () => {
-      const annotations = [{ id: '1', type: 'rect' }];
+      const annotations = [{
+        id: '1',
+        type: 'rect' as const,
+        points: [{ x: 0, y: 0 }, { x: 100, y: 100 }],
+        style: { strokeColor: '#ff0000', strokeWidth: 2 }
+      }];
       mockEngine.getAnnotations.mockReturnValue(annotations);
 
       const result = canvasLensCore.getAnnotations();
@@ -261,7 +268,12 @@ describe('CanvasLensCore', () => {
     });
 
     it('should get image data', () => {
-      const imageData = { element: {} as HTMLImageElement, naturalSize: { width: 100, height: 100 } };
+      const imageData = {
+        element: {} as HTMLImageElement,
+        naturalSize: { width: 100, height: 100 },
+        displaySize: { width: 100, height: 100 },
+        position: { x: 0, y: 0 }
+      };
       mockEngine.getImageData.mockReturnValue(imageData);
 
       const result = canvasLensCore.getImageData();

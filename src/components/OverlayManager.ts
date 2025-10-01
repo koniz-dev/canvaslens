@@ -3,7 +3,7 @@
  */
 import { Engine } from '../core/Engine';
 import { CanvasLensOptions } from '../types';
-import { error, warn } from '../utils/logger';
+import { error, warn } from '../utils/core/logger';
 
 export class OverlayManager {
   private element: HTMLElement;

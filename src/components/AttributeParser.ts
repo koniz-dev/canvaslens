@@ -2,7 +2,7 @@
  * Utility class for parsing CanvasLens Web Component attributes
  */
 import { CanvasLensOptions, ToolConfig } from '../types';
-import { warn } from '../utils/logger';
+import { warn } from '../utils/core/logger';
 
 export class AttributeParser {
   /**

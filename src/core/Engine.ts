@@ -1,11 +1,11 @@
-// Core CanvasLens class - separated to avoid circular imports
 
-import { CanvasLensOptions, EventHandlers, Size, ToolConfig } from '../types';
+import { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, ImageData } from '../types';
 import { ImageViewer } from '../modules/image-viewer/Viewer';
 import { ZoomPanOptions } from '../modules/zoom-pan/Handler';
 import { AnnotationManagerOptions } from '../modules/annotation/Manager';
 import { ComparisonOptions } from '../modules/comparison/Viewer';
-import { warn } from '../utils/logger';
+import { warn } from '../utils/core/logger';
+import { DEFAULT_CONFIG } from '../constants';
 
 export class Engine {
   private container: HTMLElement;
@@ -16,9 +16,9 @@ export class Engine {
   constructor(options: CanvasLensOptions) {
     this.container = options.container;
     this.options = {
-      width: 800,
-      height: 600,
-      backgroundColor: '#f0f0f0',
+      width: DEFAULT_CONFIG.WIDTH,
+      height: DEFAULT_CONFIG.HEIGHT,
+      backgroundColor: DEFAULT_CONFIG.BACKGROUND_COLOR,
       tools: {
         zoom: true,
         pan: true,
@@ -31,8 +31,8 @@ export class Engine {
         },
         comparison: true
       },
-      maxZoom: 10,
-      minZoom: 0.1,
+      maxZoom: DEFAULT_CONFIG.MAX_ZOOM,
+      minZoom: DEFAULT_CONFIG.MIN_ZOOM,
       ...options
     };
 
@@ -170,7 +170,7 @@ export class Engine {
     this.imageViewer.resetView();
   }
 
-  addAnnotation(annotation: any): void {
+  addAnnotation(annotation: Annotation): void {
     const manager = this.imageViewer.getAnnotationManager();
     if (manager) {
       manager.addAnnotation(annotation);
@@ -184,7 +184,7 @@ export class Engine {
     }
   }
 
-  updateAnnotation(id: string, annotation: any): void {
+  updateAnnotation(id: string, annotation: Annotation): void {
     const manager = this.imageViewer.getAnnotationManager();
     if (manager) {
       // Remove old annotation and add new one
@@ -193,7 +193,7 @@ export class Engine {
     }
   }
 
-  getAnnotations(): any[] {
+  getAnnotations(): Annotation[] {
     const manager = this.imageViewer.getAnnotationManager();
     return manager ? manager.getAllAnnotations() : [];
   }
@@ -232,7 +232,7 @@ export class Engine {
     return false;
   }
 
-  getImageData(): any {
+  getImageData(): ImageData | null {
     return this.imageViewer.getImageData();
   }
 
@@ -334,7 +334,7 @@ export class Engine {
     try {
       const annotations = JSON.parse(annotationsJson);
       this.clearAnnotations();
-      annotations.forEach((annotation: any) => {
+      annotations.forEach((annotation: Annotation) => {
         this.addAnnotation(annotation);
       });
     } catch (error) {

@@ -1,7 +1,7 @@
 /**
  * Viewport culling utilities for performance optimization
  */
-import { Point, Size, Rectangle } from '../types';
+import { Point, Size, Rectangle } from '../../types';
 
 export interface ViewportInfo {
   /** Current viewport position */

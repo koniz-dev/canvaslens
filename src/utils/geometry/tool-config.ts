@@ -1,4 +1,4 @@
-import { ToolConfig } from '../types';
+import { ToolConfig } from '../../types';
 
 /**
  * Predefined tool configurations for common use cases

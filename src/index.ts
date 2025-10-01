@@ -1,9 +1,7 @@
-// Main entry point for CanvasLens library
-
-// Export main CanvasLens Web Component
+// Main CanvasLens Web Component
 export { CanvasLens } from './CanvasLens';
 
-// Export only essential types for TypeScript support
+// Core types for TypeScript support
 export type { 
   CanvasLensOptions, 
   EventHandlers, 
@@ -14,5 +12,10 @@ export type {
   Point, 
   ViewState, 
   ImageData, 
-  Tool 
+  Tool,
+  AnnotationManager,
+  ImageViewer
 } from './types';
+
+// Utilities (optional imports for advanced usage)
+export * from './utils';

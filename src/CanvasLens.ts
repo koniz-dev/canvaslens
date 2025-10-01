@@ -12,11 +12,12 @@
  * ```
  */
 import { CanvasLensCore } from './components/CanvasLensCore';
+import { ToolConfig, Annotation } from './types';
+import { ErrorHandler, ErrorType } from './utils/core/error-handler';
 
-export class CanvasLensElement extends HTMLElement {
+export class CanvasLens extends HTMLElement {
   private core: CanvasLensCore | null = null;
 
-  // Define observed attributes for reactivity
   static get observedAttributes() {
     return [
       'src', 'width', 'height', 'background-color', 
@@ -51,7 +52,7 @@ export class CanvasLensElement extends HTMLElement {
       this.core = new CanvasLensCore(this);
       this.core.initialize();
     } catch (error) {
-      console.error('Failed to initialize CanvasLens:', error);
+      // Error handling is managed by CanvasLensCore
     }
   }
 
@@ -65,8 +66,6 @@ export class CanvasLensElement extends HTMLElement {
     }
   }
 
-  // Public API methods - delegate to core
-
   /**
    * Load image from URL
    * @param src - Image URL
@@ -77,7 +76,10 @@ export class CanvasLensElement extends HTMLElement {
     if (this.core) {
       return this.core.loadImage(src, type, fileName);
     }
-    throw new Error('CanvasLens is not initialized');
+    throw ErrorHandler.createError(
+      ErrorType.INITIALIZATION,
+      'CanvasLens is not initialized'
+    );
   }
 
   /**
@@ -100,8 +102,6 @@ export class CanvasLensElement extends HTMLElement {
       this.core.resize(width, height);
     }
   }
-
-  // Zoom controls
 
   /**
    * Zoom in by the specified factor
@@ -151,12 +151,10 @@ export class CanvasLensElement extends HTMLElement {
     }
   }
 
-  // Tool controls
-
   /**
-   * Activate a specific tool
-   * @param toolType - Tool type to activate
-   * @returns true if tool was activated successfully
+   * Activate a specific annotation or interaction tool
+   * @param toolType - Tool type to activate ('rect', 'arrow', 'text', 'circle', 'line')
+   * @returns true if tool was activated successfully, false if tool type is invalid or unavailable
    */
   activateTool(toolType: string): boolean {
     if (this.core) {
@@ -177,10 +175,18 @@ export class CanvasLensElement extends HTMLElement {
   }
 
   /**
-   * Update tools configuration
-   * @param toolConfig - Tool configuration object
+   * Update tools configuration dynamically
+   * @param toolConfig - Tool configuration object with enabled/disabled tools
+   * @example
+   * ```javascript
+   * viewer.updateTools({
+   *   zoom: true,
+   *   pan: true,
+   *   annotation: { rect: true, arrow: false, text: true }
+   * });
+   * ```
    */
-  updateTools(toolConfig: any): void {
+  updateTools(toolConfig: ToolConfig): void {
     if (this.core) {
       this.core.updateTools(toolConfig);
     }
@@ -197,13 +203,19 @@ export class CanvasLensElement extends HTMLElement {
     return null;
   }
 
-  // Annotation controls
-
   /**
-   * Add an annotation
-   * @param annotation - Annotation object
+   * Add a new annotation to the canvas
+   * @param annotation - Annotation object with type, coordinates, and style properties
+   * @example
+   * ```javascript
+   * viewer.addAnnotation({
+   *   type: 'rect',
+   *   x: 100, y: 100, width: 200, height: 150,
+   *   style: { stroke: '#ff0000', fill: 'rgba(255,0,0,0.2)' }
+   * });
+   * ```
    */
-  addAnnotation(annotation: any): void {
+  addAnnotation(annotation: Annotation): void {
     if (this.core) {
       this.core.addAnnotation(annotation);
     }
@@ -232,17 +244,16 @@ export class CanvasLensElement extends HTMLElement {
    * Get all annotations
    * @returns Array of annotations
    */
-  getAnnotations(): any[] {
+  getAnnotations(): Annotation[] {
     if (this.core) {
       return this.core.getAnnotations();
     }
     return [];
   }
 
-  // Overlay controls
-
   /**
-   * Open overlay mode (full-screen editor)
+   * Open overlay mode for full-screen editing experience
+   * Provides a professional editing interface with toolbar and enhanced controls
    */
   openOverlay(): void {
     if (this.core) {
@@ -269,8 +280,6 @@ export class CanvasLensElement extends HTMLElement {
     }
     return false;
   }
-
-  // State queries
 
   /**
    * Check if an image is loaded
@@ -328,10 +337,6 @@ export class CanvasLensElement extends HTMLElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('canvas-lens')) {
-  customElements.define('canvas-lens', CanvasLensElement);
+  customElements.define('canvas-lens', CanvasLens);
 }
-
-// Export for module usage
-export { CanvasLensElement as CanvasLens };
