@@ -6,36 +6,71 @@ const server = http.createServer((req, res) => {
     let filePath = '.' + req.url;
     
     if (filePath === './') {
-        // Auto-discover index.html in subdirectories
-        const subdirs = fs.readdirSync('.', { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => dirent.name);
-        
-        for (const subdir of subdirs) {
-            const possibleIndex = './' + subdir + '/index.html';
-            if (fs.existsSync(possibleIndex)) {
-                filePath = possibleIndex;
-                break;
+        // Auto-discover index.html in subdirectories (recursively)
+        function findIndexHtml(dir) {
+            const items = fs.readdirSync(dir, { withFileTypes: true });
+            
+            // First check current directory for index.html
+            const currentIndex = path.join(dir, 'index.html');
+            if (fs.existsSync(currentIndex)) {
+                return currentIndex;
             }
+            
+            // Then check subdirectories (skip hidden directories)
+            for (const item of items) {
+                if (item.isDirectory() && !item.name.startsWith('.')) {
+                    const subdirPath = path.join(dir, item.name);
+                    const found = findIndexHtml(subdirPath);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        const foundIndex = findIndexHtml('.');
+        if (foundIndex) {
+            filePath = foundIndex;
+        } else {
+            res.writeHead(404);
+            res.end('No index.html found in any subdirectory');
+            return;
         }
     }
     
-    // Handle asset requests - auto-discover asset directories
+    // Handle asset requests - auto-discover asset directories (recursively)
     if (filePath.startsWith('./assets/') && !fs.existsSync(filePath)) {
         const assetPath = filePath.substring(1); // Remove leading ./
         
-        // Scan current directory for subdirectories that might contain assets
-        const currentDir = '.';
-        const subdirs = fs.readdirSync(currentDir, { withFileTypes: true })
-            .filter(dirent => dirent.isDirectory())
-            .map(dirent => dirent.name);
-        
-        for (const subdir of subdirs) {
-            const possiblePath = './' + subdir + assetPath;
-            if (fs.existsSync(possiblePath)) {
-                filePath = possiblePath;
-                break;
+        // Recursively search for assets in subdirectories
+        function findAsset(dir, targetPath) {
+            const items = fs.readdirSync(dir, { withFileTypes: true });
+            
+            // Check if current directory contains the asset
+            const currentAsset = path.join(dir, targetPath);
+            if (fs.existsSync(currentAsset)) {
+                return currentAsset;
             }
+            
+            // Search in subdirectories (skip hidden directories)
+            for (const item of items) {
+                if (item.isDirectory() && !item.name.startsWith('.')) {
+                    const subdirPath = path.join(dir, item.name);
+                    const found = findAsset(subdirPath, targetPath);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        const foundAsset = findAsset('.', assetPath);
+        if (foundAsset) {
+            filePath = foundAsset;
         }
     }
     
