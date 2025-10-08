@@ -1,4 +1,4 @@
-import { Renderer } from '../../core/Renderer';
+import { Renderer } from '../../core';
 import { ImageData, Point, Size, EventHandlers } from '../../types';
 import { loadImage, getImageData, calculateFitDimensions } from '../../utils/image/image';
 import { error } from '../../utils/core/logger';

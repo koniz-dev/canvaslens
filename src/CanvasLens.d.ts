@@ -122,21 +122,6 @@ interface HTMLElement {
 }
 
 // Global type helpers for better IntelliSense
-declare global {
-  interface Window {
-    CanvasLensToolConfig: {
-      // Predefined configurations
-      all: ToolConfig;
-      zoomOnly: ToolConfig;
-      annotationOnly: ToolConfig;
-      viewerOnly: ToolConfig;
-      
-      // Helper functions
-      create(config: Partial<ToolConfig>): ToolConfig;
-      validate(config: any): boolean;
-    };
-  }
-}
 
 // Export types for use in other files
 export {

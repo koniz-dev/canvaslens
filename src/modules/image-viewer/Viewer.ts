@@ -2,9 +2,9 @@ import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image/image';
 import { error } from '../../utils/core/logger';
-import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/Handler';
-import { AnnotationManager, AnnotationManagerOptions } from '../annotation/Manager';
-import { ComparisonManager, ComparisonOptions } from '../comparison/Manager';
+import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan';
+import { AnnotationManager, AnnotationManagerOptions } from '../annotation';
+import { ComparisonManager, ComparisonOptions } from '../comparison';
 
 export class ImageViewer {
   private canvas: Renderer;
@@ -14,6 +14,7 @@ export class ImageViewer {
   private annotationManager: AnnotationManager | null = null;
   private comparisonManager: ComparisonManager | null = null;
   private previousImage: HTMLImageElement | null = null;
+  private backgroundColor: string;
 
   constructor(
     container: HTMLElement,
@@ -21,10 +22,12 @@ export class ImageViewer {
     eventHandlers: EventHandlers = {},
     zoomPanOptions?: ZoomPanOptions,
     annotationOptions?: AnnotationManagerOptions,
-    comparisonOptions?: ComparisonOptions
+    comparisonOptions?: ComparisonOptions,
+    backgroundColor?: string
   ) {
     this.canvas = new Renderer(container, size);
     this.eventHandlers = eventHandlers;
+    this.backgroundColor = backgroundColor || '#f0f0f0';
     
     // Set reference to this viewer in canvas for annotation manager access
     this.canvas.imageViewer = this;
@@ -67,6 +70,9 @@ export class ImageViewer {
         }
       );
     }
+
+    // Render initial background
+    this.render();
   }
 
   /**
@@ -195,10 +201,19 @@ export class ImageViewer {
   }
 
   /**
+   * Render background only
+   */
+  private renderBackground(): void {
+    this.canvas.clearWithBackground(this.backgroundColor);
+  }
+
+  /**
    * Render the image on canvas
    */
   render(): void {
     if (!this.imageData) {
+      // Render background even when no image is loaded
+      this.renderBackground();
       return;
     }
 
@@ -211,8 +226,8 @@ export class ImageViewer {
     const ctx = this.canvas.getContext();
     const canvasSize = this.canvas.getSize();
 
-    // Clear canvas without background (transparent)
-    this.canvas.clear();
+    // Clear canvas with background color
+    this.canvas.clearWithBackground(this.backgroundColor);
 
     // Apply view transformations
     this.canvas.applyViewTransform();
@@ -252,8 +267,8 @@ export class ImageViewer {
     const ctx = this.canvas.getContext();
     const canvasSize = this.canvas.getSize();
 
-    // Clear canvas without background (transparent)
-    this.canvas.clear();
+    // Clear canvas with background color
+    this.canvas.clearWithBackground(this.backgroundColor);
 
     // Apply view transformations
     this.canvas.applyViewTransform();

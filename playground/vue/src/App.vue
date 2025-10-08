@@ -10,7 +10,7 @@
     
     <div class="canvas-container">
       <canvas-lens 
-        id="testCanvas" 
+        id="test-canvas" 
         width="889" 
         height="500"
         :tools="toolsJson"
@@ -21,52 +21,40 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted, computed } from 'vue';
 import { CanvasLens } from '../../../dist/index.js';
 
-export default {
-  name: 'App',
-  setup() {
-    const canvasRef = ref(null);
-    
-    const tools = {
-      zoom: true,
-      pan: true,
-      annotation: {
-        rect: true,
-        arrow: true,
-        text: true,
-        circle: true,
-        line: true
-      }
-    };
+const canvasRef = ref(null);
 
-    // Convert tools object to JSON string for the custom element
-    const toolsJson = computed(() => JSON.stringify(tools));
+const tools = {
+  zoom: true,
+  pan: true,
+  annotation: {
+    rect: true,
+    arrow: true,
+    text: true,
+    circle: true,
+    line: true
+  }
+};
 
-    onMounted(() => {
-      // Test CanvasLens with Vue
-      console.log('CanvasLens loaded in Vue:', CanvasLens);
-      
-      // You can add more Vue-specific tests here
-    });
+// Convert tools object to JSON string for the custom element
+const toolsJson = computed(() => JSON.stringify(tools));
 
-    const loadSampleImage = () => {
-      // Use Picsum random image
-      const imageUrl = 'https://picsum.photos/800/600?random=' + Math.random();
-      const canvasLens = document.getElementById('testCanvas');
-      if (canvasLens) {
-        canvasLens.setAttribute('src', imageUrl);
-      }
-    };
+onMounted(() => {
+  // Test CanvasLens with Vue
+  console.log('CanvasLens loaded in Vue:', CanvasLens);
+  
+  // You can add more Vue-specific tests here
+});
 
-    return {
-      canvasRef,
-      tools,
-      toolsJson,
-      loadSampleImage
-    };
+const loadSampleImage = () => {
+  // Use Picsum random image
+  const imageUrl = 'https://picsum.photos/800/600?random=' + Math.random();
+  const canvasLens = document.getElementById('test-canvas');
+  if (canvasLens) {
+    canvasLens.setAttribute('src', imageUrl);
   }
 };
 </script>

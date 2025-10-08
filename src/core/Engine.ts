@@ -1,9 +1,6 @@
 
 import { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, ImageData } from '../types';
-import { ImageViewer } from '../modules/image-viewer/Viewer';
-import { ZoomPanOptions } from '../modules/zoom-pan/Handler';
-import { AnnotationManagerOptions } from '../modules/annotation/Manager';
-import { ComparisonOptions } from '../modules/comparison/Viewer';
+import { ImageViewer, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, AnnotationToolsManager, AnnotationToolsConfig } from '../modules';
 import { warn } from '../utils/core/logger';
 import { DEFAULT_CONFIG } from '../constants';
 
@@ -19,18 +16,7 @@ export class Engine {
       width: DEFAULT_CONFIG.WIDTH,
       height: DEFAULT_CONFIG.HEIGHT,
       backgroundColor: DEFAULT_CONFIG.BACKGROUND_COLOR,
-      tools: {
-        zoom: true,
-        pan: true,
-        annotation: {
-          rect: true,
-          arrow: true,
-          text: true,
-          circle: true,
-          line: true
-        },
-        comparison: true
-      },
+      tools: AnnotationToolsConfig.DEFAULT_CONFIG,
       maxZoom: DEFAULT_CONFIG.MAX_ZOOM,
       minZoom: DEFAULT_CONFIG.MIN_ZOOM,
       ...options
@@ -44,25 +30,30 @@ export class Engine {
       height: this.options.height!
     };
 
-    const tools = this.options.tools || {};
+    const tools = this.options.tools || AnnotationToolsConfig.DEFAULT_CONFIG;
 
-    // Configure zoom/pan options
-    const zoomPanOptions: ZoomPanOptions = {
-      enableZoom: tools.zoom ?? true,
-      enablePan: tools.pan ?? true,
-      maxZoom: this.options.maxZoom ?? 10,
-      minZoom: this.options.minZoom ?? 0.1
-    };
+    // Configure zoom/pan options - only create if zoom or pan is enabled
+    const zoomPanOptions: ZoomPanOptions | undefined = 
+      AnnotationToolsConfig.hasZoomOrPan(tools) ? {
+        enableZoom: !!tools.zoom,
+        enablePan: !!tools.pan,
+        maxZoom: this.options.maxZoom ?? 10,
+        minZoom: this.options.minZoom ?? 0.1
+      } : undefined;
+    
+    
 
     // Configure annotation options
-    const annotationOptions: AnnotationManagerOptions | undefined = tools.annotation ? {
-      enabled: true
-    } : undefined;
+    const annotationOptions: AnnotationManagerOptions | undefined = 
+      AnnotationToolsConfig.hasAnnotations(tools) ? {
+        enabled: true
+      } : undefined;
 
     // Configure comparison options
-    const comparisonOptions: ComparisonOptions | undefined = tools.comparison ? {
-      comparisonMode: false
-    } : undefined;
+    const comparisonOptions: ComparisonOptions | undefined = 
+      AnnotationToolsConfig.hasComparison(tools) ? {
+        comparisonMode: false
+      } : undefined;
 
     // Initialize image viewer
     this.imageViewer = new ImageViewer(
@@ -71,7 +62,8 @@ export class Engine {
       this.eventHandlers,
       zoomPanOptions,
       annotationOptions,
-      comparisonOptions
+      comparisonOptions,
+      this.options.backgroundColor
     );
 
     // Set up event forwarding
@@ -399,10 +391,10 @@ export class Engine {
     
     // Update zoom/pan handler configuration
     const zoomPanHandler = this.getZoomPanHandler();
-    if (zoomPanHandler) {
+    if (zoomPanHandler && AnnotationToolsConfig.hasZoomOrPan(this.options.tools)) {
       zoomPanHandler.updateOptions({
-        enableZoom: toolConfig.zoom ?? this.options.tools.zoom ?? true,
-        enablePan: toolConfig.pan ?? this.options.tools.pan ?? true,
+        enableZoom: !!this.options.tools.zoom,
+        enablePan: !!this.options.tools.pan,
         maxZoom: this.options.maxZoom ?? 10,
         minZoom: this.options.minZoom ?? 0.1
       });

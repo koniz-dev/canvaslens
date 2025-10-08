@@ -1,4 +1,4 @@
-import { Point, Annotation } from '../../../types';
+import { Point, Annotation } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
 export class ArrowTool extends BaseTool {

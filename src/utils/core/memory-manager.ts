@@ -1,3 +1,5 @@
+import { warn } from './logger';
+
 export class MemoryManager {
   private static cleanupCallbacks: Array<() => void> = [];
   private static isCleaningUp = false;
@@ -23,7 +25,7 @@ export class MemoryManager {
         try {
           callback();
         } catch (error) {
-          console.warn('Cleanup callback failed:', error);
+          warn('Cleanup callback failed:', error);
         }
       });
       

@@ -16,7 +16,7 @@ function App() {
   const loadSampleImage = () => {
     // Use Picsum random image
     const imageUrl = 'https://picsum.photos/800/600?random=' + Math.random();
-    const canvasLens = document.getElementById('testCanvas');
+    const canvasLens = document.getElementById('test-canvas');
     if (canvasLens) {
       canvasLens.setAttribute('src', imageUrl);
     }
@@ -45,9 +45,10 @@ function App() {
       
       <div style={{ textAlign: 'center' }}>
         <canvas-lens 
-          id="testCanvas" 
+          id="test-canvas" 
           width="889" 
           height="500"
+          tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
           background-color="#f8f9fa"
           ref={canvasRef}
         />

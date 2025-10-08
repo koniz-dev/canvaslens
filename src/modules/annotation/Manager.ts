@@ -1,7 +1,7 @@
-import { Renderer } from '../../core/Renderer';
+import { Renderer } from '../../core';
 import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '../../types';
 import { AnnotationRenderer } from './Renderer';
-import { ToolManager, ToolManagerOptions } from './ToolManager';
+import { AnnotationToolsManager, ToolManagerOptions } from './tools';
 import { error } from '../../utils/core/logger';
 import { ValidationHelper } from '../../utils/core/validation-helper';
 import { MemoryManager } from '../../utils/core/memory-manager';
@@ -16,7 +16,7 @@ export interface AnnotationManagerOptions {
 export class AnnotationManager {
   private canvas: Renderer;
   private renderer: AnnotationRenderer;
-  private toolManager: ToolManager;
+  private toolManager: AnnotationToolsManager;
   private annotations: Map<string, Annotation> = new Map();
   private selectedAnnotation: Annotation | null = null;
   private eventHandlers: EventHandlers;
@@ -62,7 +62,7 @@ export class AnnotationManager {
       annotationManager: this // Pass reference to this AnnotationManager
     };
 
-    this.toolManager = new ToolManager(canvas, this.renderer, toolManagerOptions);
+    this.toolManager = new AnnotationToolsManager(canvas, this.renderer, toolManagerOptions);
     
     // Set up annotation creation callback
     this.toolManager.setOnAnnotationCreate((annotation) => {
@@ -648,7 +648,7 @@ export class AnnotationManager {
   /**
    * Get tool manager
    */
-  getToolManager(): ToolManager {
+  getToolManager(): AnnotationToolsManager {
     return this.toolManager;
   }
 

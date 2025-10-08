@@ -1,7 +1,7 @@
 import { Renderer } from '../../core/Renderer';
 import { ImageData, Size, Point, EventHandlers } from '../../types';
 import { ComparisonManager, ComparisonOptions } from './Manager';
-import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan/Handler';
+import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan';
 
 // Re-export ComparisonOptions for external use
 export { ComparisonOptions } from './Manager';

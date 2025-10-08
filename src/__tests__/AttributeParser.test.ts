@@ -1,7 +1,8 @@
 /**
  * Unit tests for AttributeParser
  */
-import { AttributeParser } from '../components/AttributeParser';
+import { AttributeParser } from '../components';
+import { AnnotationToolsConfig } from '../modules';
 
 describe('AttributeParser', () => {
   let mockElement: HTMLElement;
@@ -44,7 +45,7 @@ describe('AttributeParser', () => {
       const toolsJson = '{"zoom": true, "pan": false, "annotation": {"rect": true}}';
       mockElement.setAttribute('tools', toolsJson);
       
-      const result = AttributeParser.parseToolsConfig(mockElement);
+      const result = AnnotationToolsConfig.parseFromAttribute(mockElement);
       
       expect(result).toEqual({
         zoom: true,
@@ -56,7 +57,7 @@ describe('AttributeParser', () => {
     it('should return default config for invalid JSON', () => {
       mockElement.setAttribute('tools', 'invalid json');
       
-      const result = AttributeParser.parseToolsConfig(mockElement);
+      const result = AnnotationToolsConfig.parseFromAttribute(mockElement);
       
       expect(result).toEqual({
         zoom: true,
@@ -73,7 +74,7 @@ describe('AttributeParser', () => {
     });
 
     it('should return default config when no tools attribute', () => {
-      const result = AttributeParser.parseToolsConfig(mockElement);
+      const result = AnnotationToolsConfig.parseFromAttribute(mockElement);
       
       expect(result).toEqual({
         zoom: true,

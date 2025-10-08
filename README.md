@@ -283,7 +283,7 @@ viewer.closeOverlay();
 | `width` | string/number | "800" | Width in px, %, or number |
 | `height` | string/number | "600" | Height in px, %, or number |
 | `background-color` | string | "#f0f0f0" | Background color |
-| `tools` | JSON string | All enabled | Tool configuration |
+| `tools` | JSON string | Minimal (no tools) | Tool configuration |
 | `max-zoom` | number | "10" | Maximum zoom level |
 | `min-zoom` | number | "0.1" | Minimum zoom level |
 | `image-type` | string | - | Image MIME type |
@@ -308,31 +308,14 @@ The `tools` attribute accepts a JSON string:
 }
 ```
 
-#### Predefined Configurations
-
-```javascript
-// Available globally in browser
-viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.all));
-viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.viewer));
-viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.editor));
-viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.basic));
-viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.advanced));
-viewer.setAttribute('tools', JSON.stringify(window.CanvasLensToolConfig.minimal));
-```
-
-#### Available Predefined Configurations:
-
-- `window.CanvasLensToolConfig.all` - All tools enabled (default)
-- `window.CanvasLensToolConfig.viewer` - Zoom and pan only
-- `window.CanvasLensToolConfig.editor` - Annotation tools only
-- `window.CanvasLensToolConfig.basic` - Basic annotation tools
-- `window.CanvasLensToolConfig.advanced` - Advanced annotation tools
-- `window.CanvasLensToolConfig.minimal` - Minimal configuration
 
 #### HTML Examples:
 
 ```html
-<!-- All tools enabled (default) -->
+<!-- Minimal configuration (default) - no tools -->
+<canvas-lens src="image.jpg"></canvas-lens>
+
+<!-- All tools enabled -->
 <canvas-lens tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'></canvas-lens>
 
 <!-- Zoom and pan only -->

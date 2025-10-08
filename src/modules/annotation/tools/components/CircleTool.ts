@@ -1,11 +1,11 @@
-import { Point, Annotation } from '../../../types';
+import { Point, Annotation } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
-export class LineTool extends BaseTool {
+export class CircleTool extends BaseTool {
   private currentAnnotation: Annotation | null = null;
 
   /**
-   * Start drawing line
+   * Start drawing circle
    */
   startDrawing(point: Point): Annotation | null {
     this.isDrawing = true;
@@ -18,12 +18,12 @@ export class LineTool extends BaseTool {
   }
 
   /**
-   * Continue drawing line (update end point)
+   * Continue drawing circle (update radius)
    */
   continueDrawing(point: Point): void {
     if (!this.isDrawing || !this.startPoint || !this.currentAnnotation) return;
 
-    // Update current points with start and current mouse position
+    // Update current points with center and edge point
     this.currentPoints = [this.startPoint, { ...point }];
     
     // Update the existing annotation
@@ -31,27 +31,27 @@ export class LineTool extends BaseTool {
   }
 
   /**
-   * Finish drawing line
+   * Finish drawing circle
    */
   finishDrawing(point: Point): Annotation | null {
     if (!this.isDrawing || !this.startPoint || !this.currentAnnotation) return null;
 
-    const endPoint = { ...point };
-    const startPoint = { ...this.startPoint };
+    const edgePoint = { ...point };
+    const centerPoint = { ...this.startPoint };
     
-    // Calculate line length
-    const length = Math.sqrt(
-      Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2)
+    // Calculate radius
+    const radius = Math.sqrt(
+      Math.pow(edgePoint.x - centerPoint.x, 2) + Math.pow(edgePoint.y - centerPoint.y, 2)
     );
     
-    // Only keep annotation if it has meaningful length
-    if (length < 5) {
+    // Only keep annotation if it has meaningful radius
+    if (radius < 5) {
       this.cancelDrawing();
-      return null; // Too short to be meaningful
+      return null; // Too small to be meaningful
     }
 
     // Finalize the annotation
-    this.currentAnnotation.points = [startPoint, endPoint];
+    this.currentAnnotation.points = [centerPoint, edgePoint];
     const finalAnnotation = this.currentAnnotation;
     
     // Reset state
@@ -81,6 +81,6 @@ export class LineTool extends BaseTool {
    * Get tool type
    */
   getType(): Annotation['type'] {
-    return 'line';
+    return 'circle';
   }
 }

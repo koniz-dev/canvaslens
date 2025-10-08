@@ -1,4 +1,4 @@
-import { Renderer } from '../../core/Renderer';
+import { Renderer } from '../../core';
 import { ViewState, Point, EventHandlers } from '../../types';
 import { screenToWorld, worldToScreen, clamp } from '../../utils/geometry/coordinate';
 import { log } from '../../utils/core/logger';

@@ -1,6 +1,6 @@
-import { Point, Annotation, AnnotationStyle } from '../../../types';
-import { Renderer } from '../../../core/Renderer';
-import { AnnotationRenderer } from '../Renderer';
+import { Point, Annotation, AnnotationStyle } from '../../../../types';
+import { Renderer } from '../../../../core/Renderer';
+import { AnnotationRenderer } from '../../Renderer';
 
 export interface ToolOptions {
   style: AnnotationStyle;

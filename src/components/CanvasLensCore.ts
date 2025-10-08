@@ -1,9 +1,9 @@
-import { CanvasLensOptions, ImageData, Annotation, Point, ToolConfig } from '../types';
-import { Engine } from '../core/Engine';
+import { ImageData, Annotation, Point } from '../types';
+import { Engine } from '../core';
 import { AttributeParser } from './AttributeParser';
 import { EventManager } from './EventManager';
 import { OverlayManager } from './OverlayManager';
-import { ErrorHandler, ErrorType, withErrorHandling, safeAsync } from '../utils/core/error-handler';
+import { ErrorHandler, ErrorType, safeAsync } from '../utils/core/error-handler';
 import { error, warn } from '../utils/core/logger';
 
 export class CanvasLensCore {

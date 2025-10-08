@@ -1,14 +1,12 @@
 /**
  * Unit tests for CanvasLensCore
  */
-import { CanvasLensCore } from '../components/CanvasLensCore';
-import { Engine } from '../core/Engine';
+import { CanvasLensCore } from '../components';
+import { Engine } from '../core';
 
 // Mock dependencies
-jest.mock('../core/Engine');
-jest.mock('../components/AttributeParser');
-jest.mock('../components/EventManager');
-jest.mock('../components/OverlayManager');
+jest.mock('../core');
+jest.mock('../components');
 
 describe('CanvasLensCore', () => {
   let mockElement: HTMLElement;

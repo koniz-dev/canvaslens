@@ -1,7 +1,7 @@
 /**
  * Unit tests for EventManager
  */
-import { EventManager } from '../components/EventManager';
+import { EventManager } from '../components';
 
 describe('EventManager', () => {
   let mockElement: HTMLElement;

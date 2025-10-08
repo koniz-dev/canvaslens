@@ -1,7 +1,7 @@
 /**
  * Manages overlay mode for CanvasLens Web Component
  */
-import { Engine } from '../core/Engine';
+import { Engine } from '../core';
 import { CanvasLensOptions } from '../types';
 import { error, warn } from '../utils/core/logger';
 

@@ -1,8 +1,8 @@
 /**
  * Utility class for parsing CanvasLens Web Component attributes
  */
-import { CanvasLensOptions, ToolConfig } from '../types';
-import { warn } from '../utils/core/logger';
+import { CanvasLensOptions } from '../types';
+import { AnnotationToolsConfig } from '../modules';
 
 export class AttributeParser {
   /**
@@ -12,48 +12,25 @@ export class AttributeParser {
     const width = this.parseSize(element.getAttribute('width'), 800);
     const height = this.parseSize(element.getAttribute('height'), 600);
 
-    // Parse tools configuration
-    const toolsConfig = this.parseToolsConfig(element);
+    // Parse tools configuration using centralized manager
+    const toolsConfig = AnnotationToolsConfig.parseFromAttribute(element);
 
-    return {
+    const result: CanvasLensOptions = {
       container,
       width,
       height,
       backgroundColor: element.getAttribute('background-color') || '#f0f0f0',
-      tools: toolsConfig,
       maxZoom: parseFloat(element.getAttribute('max-zoom') || '10'),
       minZoom: parseFloat(element.getAttribute('min-zoom') || '0.1')
     };
-  }
-
-  /**
-   * Parse tools configuration from attribute
-   */
-  static parseToolsConfig(element: HTMLElement): ToolConfig {
-    const toolsAttr = element.getAttribute('tools');
     
-    if (toolsAttr) {
-      try {
-        return JSON.parse(toolsAttr);
-      } catch (e) {
-        warn('Invalid tools configuration:', toolsAttr);
-      }
+    if (toolsConfig) {
+      result.tools = toolsConfig;
     }
-
-    // Default configuration - all tools enabled
-    return {
-      zoom: true,
-      pan: true,
-      annotation: {
-        rect: true,
-        arrow: true,
-        text: true,
-        circle: true,
-        line: true
-      },
-      comparison: true
-    };
+    
+    return result;
   }
+
 
   /**
    * Parse size attribute (supports px, %, or raw numbers)
