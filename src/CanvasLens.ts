@@ -252,6 +252,37 @@ export class CanvasLens extends HTMLElement {
   }
 
   /**
+   * Toggle comparison mode
+   * Switches between normal view and comparison view with slider
+   */
+  toggleComparisonMode(): void {
+    if (this.core) {
+      this.core.toggleComparisonMode();
+    }
+  }
+
+  /**
+   * Set comparison mode
+   * @param enabled - true to enable comparison mode, false to disable
+   */
+  setComparisonMode(enabled: boolean): void {
+    if (this.core) {
+      this.core.setComparisonMode(enabled);
+    }
+  }
+
+  /**
+   * Check if comparison mode is enabled
+   * @returns true if comparison mode is enabled
+   */
+  isComparisonMode(): boolean {
+    if (this.core) {
+      return this.core.isComparisonMode();
+    }
+    return false;
+  }
+
+  /**
    * Open overlay mode for full-screen editing experience
    * Provides a professional editing interface with toolbar and enhanced controls
    */

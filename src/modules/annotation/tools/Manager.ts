@@ -52,10 +52,6 @@ export class AnnotationToolsManager {
       toolActivatedByKeyboard: this.controller.getToolActivatedByKeyboard(),
       toolManagerDrawing: this.toolManagerDrawing,
       annotationManager: options.annotationManager,
-      onToolChange: (toolType) => {
-        // Update event handler when tool changes
-        this.updateEventHandlerOptions();
-      },
       onActivateTool: (toolType) => {
         const result = this.controller.activateTool(toolType);
         this.controller.setToolActivatedByKeyboard(true);
@@ -102,7 +98,7 @@ export class AnnotationToolsManager {
   }
 
   /**
-   * Activate a tool (click on tool button)
+   * Activate a tool
    */
   activateTool(toolType: string): boolean {
     return this.controller.activateTool(toolType);
@@ -143,12 +139,6 @@ export class AnnotationToolsManager {
     return this.controller.getActiveToolType();
   }
 
-  /**
-   * Set callback for tool change events
-   */
-  setOnToolChange(callback: (toolType: string | null) => void): void {
-    this.controller.setOnToolChange(callback);
-  }
 
   /**
    * Update tool style

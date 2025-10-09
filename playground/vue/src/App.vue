@@ -6,6 +6,9 @@
       <button @click="loadSampleImage" class="btn">
         🖼️ Load Sample Image
       </button>
+      <button @click="toggleComparison" class="btn">
+        🔄 Toggle Comparison
+      </button>
     </div>
     
     <div class="canvas-container">
@@ -36,7 +39,8 @@ const tools = {
     text: true,
     circle: true,
     line: true
-  }
+  },
+  comparison: true
 };
 
 // Convert tools object to JSON string for the custom element
@@ -55,6 +59,20 @@ const loadSampleImage = () => {
   const canvasLens = document.getElementById('test-canvas');
   if (canvasLens) {
     canvasLens.setAttribute('src', imageUrl);
+  }
+};
+
+const toggleComparison = () => {
+  const canvasLens = document.getElementById('test-canvas');
+  if (canvasLens) {
+    // Check if method exists
+    if (typeof canvasLens.toggleComparisonMode === 'function') {
+      // Toggle comparison mode
+      canvasLens.toggleComparisonMode();
+    } else {
+      console.error('toggleComparisonMode method not found on canvas-lens element');
+      console.log('Available methods:', Object.getOwnPropertyNames(canvasLens).filter(name => typeof canvasLens[name] === 'function'));
+    }
   }
 };
 </script>

@@ -109,6 +109,11 @@ interface HTMLElement {
   clearAnnotations(): void;
   getAnnotations(): Annotation[];
   
+  // Comparison mode controls
+  toggleComparisonMode(): void;
+  setComparisonMode(enabled: boolean): void;
+  isComparisonMode(): boolean;
+  
   // Overlay editor
   openOverlay(): void;
   closeOverlay(): void;

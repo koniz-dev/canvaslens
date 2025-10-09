@@ -195,31 +195,24 @@ export class ZoomPanHandler {
    * Handle mouse down for panning
    */
   private handleMouseDown(event: MouseEvent): void {
-    // Don't handle panning if no image is loaded
-    if (!this.isImageLoaded()) {
+    // Early returns for performance - check most common conditions first
+    if (event.button !== 0 || !this.options.enablePan || !this.isImageLoaded()) {
       return;
     }
     
-    // Don't handle panning if pan is disabled
-    if (!this.options.enablePan) {
-      return;
+    // Check annotation states - most likely to be true when user is interacting with annotations
+    if (this.canvas.annotationManager) {
+      if (this.canvas.annotationManager.isToolActive() || 
+          this.canvas.annotationManager.isDrawing() ||
+          (this.canvas.annotationManager as any).hasSelectedAnnotation()) {
+        return;
+      }
     }
     
-    // Don't handle panning if annotation system is drawing
-    if (this.isAnnotationDrawing()) {
-      return;
-    }
-    
-    // Don't handle panning if annotation tool is active
-    if (this.canvas.annotationManager && this.canvas.annotationManager.isToolActive()) {
-      return;
-    }
-    
-    if (event.button === 0) { // Left mouse button only
-      this.isPanning = true;
-      this.lastPanPoint = this.canvas.getMousePosition(event);
-      this.updateCursor();
-    }
+    // Start panning
+    this.isPanning = true;
+    this.lastPanPoint = this.canvas.getMousePosition(event);
+    this.updateCursor();
   }
 
   /**

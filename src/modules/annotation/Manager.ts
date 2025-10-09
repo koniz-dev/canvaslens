@@ -69,12 +69,6 @@ export class AnnotationManager {
       this.addAnnotation(annotation);
     });
 
-    // Set up tool change callback for UI updates
-    this.toolManager.setOnToolChange((toolType) => {
-      if (this.eventHandlers.onToolChange) {
-        this.eventHandlers.onToolChange(toolType);
-      }
-    });
 
     // Initialize performance optimizations
     this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16); // ~60fps
@@ -91,8 +85,8 @@ export class AnnotationManager {
     // Right-click for context menu or selection
     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
     
-    // Mouse events for selection and dragging
-    this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener);
+    // Mouse events for selection and dragging - use capture phase to handle before zoom/pan
+    this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
     this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
     this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
     
@@ -137,9 +131,13 @@ export class AnnotationManager {
   }
 
   private canHandleMouseDown(event: MouseEvent): boolean {
-    return this.enabled && 
-           !this.toolManager.isDrawing() && 
-           event.button === 0 &&
+    // Early returns for performance - check most common conditions first
+    if (!this.enabled || event.button !== 0) {
+      return false;
+    }
+    
+    // Check if we should handle this event
+    return !this.toolManager.isDrawing() && 
            this.hasEnabledAnnotationTools() &&
            !this.isComparisonModeActive();
   }
@@ -150,12 +148,15 @@ export class AnnotationManager {
   }
 
   private handleAnnotationClick(annotation: Annotation, worldPoint: Point, event: MouseEvent): void {
+    // Always prevent default and stop propagation when clicking on annotation
+    // to prevent zoom/pan from interfering
+    event.preventDefault();
+    event.stopPropagation();
+    
     this.selectAnnotation(annotation);
     
     if (this.selectedAnnotation === annotation) {
       this.startDragging(annotation, worldPoint);
-      event.preventDefault();
-      event.stopPropagation();
     }
   }
 
@@ -273,10 +274,6 @@ export class AnnotationManager {
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
     
-    // Setup tool change callback if provided
-    if (handlers.onToolChange) {
-      this.toolManager.setOnToolChange(handlers.onToolChange);
-    }
   }
 
   /**
@@ -416,6 +413,13 @@ export class AnnotationManager {
    */
   getSelectedAnnotation(): Annotation | null {
     return this.selectedAnnotation;
+  }
+
+  /**
+   * Check if any annotation is selected
+   */
+  hasSelectedAnnotation(): boolean {
+    return this.selectedAnnotation !== null;
   }
 
   /**
@@ -710,12 +714,6 @@ export class AnnotationManager {
     this.toolManager.deactivateTool();
   }
 
-  /**
-   * Set callback for tool change events
-   */
-  setOnToolChange(callback: (toolType: string | null) => void): void {
-    this.toolManager.setOnToolChange(callback);
-  }
 
   /**
    * Update annotation style
@@ -887,9 +885,9 @@ export class AnnotationManager {
     // Clean up tool manager
     this.toolManager.destroy();
 
-    // Remove event listeners
+    // Remove event listeners - match capture phase
     this.canvas.removeEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
-    this.canvas.removeEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener);
+    this.canvas.removeEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
     this.canvas.removeEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
     this.canvas.removeEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
     document.removeEventListener('keydown', this.handleKeyDown.bind(this));

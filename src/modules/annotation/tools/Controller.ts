@@ -17,7 +17,6 @@ export class AnnotationToolsController {
   private currentTool: BaseTool | null = null;
   private activeToolType: string | null = null;
   private toolActivatedByKeyboard = false;
-  private onToolChange?: (toolType: string | null) => void;
 
   constructor(options: ControllerOptions) {
     this.options = options;
@@ -62,12 +61,6 @@ export class AnnotationToolsController {
 
     this.currentTool = tool;
     this.activeToolType = toolType;
-    this.toolActivatedByKeyboard = false; // Reset flag when activated by UI
-    
-    // Notify UI about tool change
-    if (this.onToolChange) {
-      this.onToolChange(toolType);
-    }
     
     return true;
   }
@@ -84,11 +77,6 @@ export class AnnotationToolsController {
     this.currentTool = null;
     this.activeToolType = null;
     this.toolActivatedByKeyboard = false; // Reset flag
-    
-    // Notify UI about tool change
-    if (this.onToolChange) {
-      this.onToolChange(null);
-    }
   }
 
   /**
@@ -119,12 +107,6 @@ export class AnnotationToolsController {
     return this.activeToolType;
   }
 
-  /**
-   * Set callback for tool change events
-   */
-  setOnToolChange(callback: (toolType: string | null) => void): void {
-    this.onToolChange = callback;
-  }
 
   /**
    * Update tool style

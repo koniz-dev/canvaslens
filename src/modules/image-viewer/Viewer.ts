@@ -9,6 +9,7 @@ import { ComparisonManager, ComparisonOptions } from '../comparison';
 export class ImageViewer {
   private canvas: Renderer;
   private imageData: ImageData | null = null;
+  private originalImageData: ImageData | null = null; // Store original image for comparison
   private eventHandlers: EventHandlers;
   private zoomPanHandler: ZoomPanHandler | null = null;
   private annotationManager: AnnotationManager | null = null;
@@ -83,9 +84,22 @@ export class ImageViewer {
       // Dispose previous image to free memory
       this.disposePreviousImage();
       
+      // Clear previous original image data
+      this.originalImageData = null;
+      
       const image = await loadImage(url);
       const canvasSize = this.canvas.getSize();
       this.imageData = getImageData(image, canvasSize, type, fileName);
+      
+      // Store original image data for comparison mode (shallow copy to avoid memory issues)
+      this.originalImageData = {
+        element: this.imageData.element,
+        position: { ...this.imageData.position },
+        displaySize: { ...this.imageData.displaySize },
+        naturalSize: { ...this.imageData.naturalSize },
+        type: this.imageData.type || '',
+        fileName: this.imageData.fileName || ''
+      };
       
       // Store reference to previous image for disposal
       this.previousImage = this.imageData.element;
@@ -260,7 +274,8 @@ export class ImageViewer {
    * Render comparison mode
    */
   private renderComparison(): void {
-    if (!this.comparisonManager || !this.imageData) {
+    // Early returns for performance
+    if (!this.comparisonManager || !this.imageData || !this.originalImageData) {
       return;
     }
 
@@ -290,11 +305,11 @@ export class ImageViewer {
 
     // Draw original image (right side - before)
     ctx.drawImage(
-      this.imageData.element,
-      this.imageData.position.x,
-      this.imageData.position.y,
-      this.imageData.displaySize.width,
-      this.imageData.displaySize.height
+      this.originalImageData.element,
+      this.originalImageData.position.x,
+      this.originalImageData.position.y,
+      this.originalImageData.displaySize.width,
+      this.originalImageData.displaySize.height
     );
 
     // Create clipping region for current image with annotations (left side - after)

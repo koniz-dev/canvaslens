@@ -12,7 +12,6 @@ export interface EventHandlerOptions {
   toolManagerDrawing: boolean;
   onAnnotationCreate?: (annotation: Annotation) => void | undefined;
   annotationManager?: any;
-  onToolChange?: (toolType: string | null) => void;
   onActivateTool: (toolType: string) => boolean;
   onDeactivateTool: () => void;
   onScreenToWorld: (screenPoint: Point) => Point;
@@ -23,8 +22,6 @@ export interface EventHandlerOptions {
 
 export class AnnotationToolsEventHandler {
   private options: EventHandlerOptions;
-  private isCtrlPressed = false;
-  private isAltPressed = false;
   
   // Store bound event handlers for proper cleanup
   private boundMouseDown: (event: MouseEvent) => void;
@@ -32,7 +29,6 @@ export class AnnotationToolsEventHandler {
   private boundMouseUp: (event: MouseEvent) => void;
   private boundMouseLeave: (event: MouseEvent) => void;
   private boundKeyDown: (event: KeyboardEvent) => void;
-  private boundKeyUp: (event: KeyboardEvent) => void;
 
   constructor(options: EventHandlerOptions) {
     this.options = options;
@@ -43,14 +39,14 @@ export class AnnotationToolsEventHandler {
     this.boundMouseUp = this.handleMouseUp.bind(this);
     this.boundMouseLeave = this.handleMouseLeave.bind(this);
     this.boundKeyDown = this.handleKeyDown.bind(this);
-    this.boundKeyUp = this.handleKeyUp.bind(this);
   }
 
   /**
    * Setup event listeners for drawing interactions
    */
   setupEventListeners(): void {
-    this.options.canvas.addEventListener('mousedown', this.boundMouseDown as EventListener);
+    // Use capture phase to handle drawing events before other handlers
+    this.options.canvas.addEventListener('mousedown', this.boundMouseDown as EventListener, true);
     this.options.canvas.addEventListener('mousemove', this.boundMouseMove as EventListener);
     this.options.canvas.addEventListener('mouseup', this.boundMouseUp as EventListener);
     this.options.canvas.addEventListener('mouseleave', this.boundMouseLeave as EventListener);
@@ -64,7 +60,6 @@ export class AnnotationToolsEventHandler {
 
     // Keyboard shortcuts - use document with capture to ensure we get events first
     document.addEventListener('keydown', this.boundKeyDown, true);
-    document.addEventListener('keyup', this.boundKeyUp, true);
   }
 
   /**
@@ -80,11 +75,10 @@ export class AnnotationToolsEventHandler {
       return; // No active tool
     }
 
-    // Check if tool was activated by keyboard shortcut
-    // If activated by Alt+shortcut, allow direct drawing (no Ctrl required)
-    // If activated by button click, require Ctrl+Click
-    if (!this.options.toolActivatedByKeyboard && !event.ctrlKey) {
-      return; // Need Ctrl+Click to draw when tool was activated by button
+    // Only allow drawing when tool was activated by keyboard shortcut (Alt+key)
+    // Prevent drawing when tool was activated by button click
+    if (!this.options.toolActivatedByKeyboard) {
+      return; // Only allow drawing with Alt+keyboard shortcuts
     }
 
     // Stop all event propagation immediately to prevent zoom/pan from interfering
@@ -209,13 +203,6 @@ export class AnnotationToolsEventHandler {
    * Handle keyboard shortcuts
    */
   private handleKeyDown(event: KeyboardEvent): void {
-    // Track modifier keys
-    if (event.key === 'Control') {
-      this.isCtrlPressed = true;
-    }
-    if (event.key === 'Alt') {
-      this.isAltPressed = true;
-    }
 
     // Delete selected annotation
     if (event.key === 'Delete' || event.key === 'Backspace') {
@@ -241,63 +228,26 @@ export class AnnotationToolsEventHandler {
 
     // Tool shortcuts (Alt + key) - toggle tool on/off
     if (event.altKey) {
-      switch (event.key.toLowerCase()) {
-        case 'r':
-          event.preventDefault();
-          if (this.options.activeToolType === 'rect') {
-            this.options.onDeactivateTool();
-          } else {
-            this.options.onActivateTool('rect');
-          }
-          break;
-        case 'a':
-          event.preventDefault();
-          if (this.options.activeToolType === 'arrow') {
-            this.options.onDeactivateTool();
-          } else {
-            this.options.onActivateTool('arrow');
-          }
-          break;
-        case 't':
-          event.preventDefault();
-          if (this.options.activeToolType === 'text') {
-            this.options.onDeactivateTool();
-          } else {
-            this.options.onActivateTool('text');
-          }
-          break;
-        case 'c':
-          event.preventDefault();
-          if (this.options.activeToolType === 'circle') {
-            this.options.onDeactivateTool();
-          } else {
-            this.options.onActivateTool('circle');
-          }
-          break;
-        case 'l':
-          event.preventDefault();
-          if (this.options.activeToolType === 'line') {
-            this.options.onDeactivateTool();
-          } else {
-            this.options.onActivateTool('line');
-          }
-          break;
+      const keyToToolMap: Record<string, string> = {
+        'r': 'rect',
+        'a': 'arrow', 
+        't': 'text',
+        'c': 'circle',
+        'l': 'line'
+      };
+      
+      const toolType = keyToToolMap[event.key.toLowerCase()];
+      if (toolType) {
+        event.preventDefault();
+        if (this.options.activeToolType === toolType) {
+          this.options.onDeactivateTool();
+        } else {
+          this.options.onActivateTool(toolType);
+        }
       }
     }
   }
 
-  /**
-   * Handle keyboard up events
-   */
-  private handleKeyUp(event: KeyboardEvent): void {
-    // Track modifier keys
-    if (event.key === 'Control') {
-      this.isCtrlPressed = false;
-    }
-    if (event.key === 'Alt') {
-      this.isAltPressed = false;
-    }
-  }
 
   /**
    * Update options (for dynamic updates)
@@ -310,8 +260,8 @@ export class AnnotationToolsEventHandler {
    * Destroy event handler and clean up
    */
   destroy(): void {
-    // Remove event listeners using bound handlers
-    this.options.canvas.removeEventListener('mousedown', this.boundMouseDown as EventListener);
+    // Remove event listeners using bound handlers - match capture phase
+    this.options.canvas.removeEventListener('mousedown', this.boundMouseDown as EventListener, true);
     this.options.canvas.removeEventListener('mousemove', this.boundMouseMove as EventListener);
     this.options.canvas.removeEventListener('mouseup', this.boundMouseUp as EventListener);
     this.options.canvas.removeEventListener('mouseleave', this.boundMouseLeave as EventListener);
@@ -322,7 +272,6 @@ export class AnnotationToolsEventHandler {
     
     // Remove document event listeners
     document.removeEventListener('keydown', this.boundKeyDown, true);
-    document.removeEventListener('keyup', this.boundKeyUp, true);
 
     // Remove custom event listener
     this.options.canvas.getElement().removeEventListener('annotationCreated', this.handleAnnotationCreated.bind(this) as EventListener);

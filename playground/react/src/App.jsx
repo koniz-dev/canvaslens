@@ -48,7 +48,6 @@ function App() {
           id="test-canvas" 
           width="889" 
           height="500"
-          tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'
           background-color="#f8f9fa"
           ref={canvasRef}
         />

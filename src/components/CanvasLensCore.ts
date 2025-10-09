@@ -265,6 +265,28 @@ export class CanvasLensCore {
     }
   }
 
+  /**
+   * Comparison mode controls
+   */
+  toggleComparisonMode(): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.toggleComparisonMode();
+    }
+  }
+
+  setComparisonMode(enabled: boolean): void {
+    if (this.canvasLens && !this.isDestroyed) {
+      this.canvasLens.setComparisonMode(enabled);
+    }
+  }
+
+  isComparisonMode(): boolean {
+    if (this.canvasLens && !this.isDestroyed) {
+      return this.canvasLens.isComparisonMode();
+    }
+    return false;
+  }
+
   getAnnotations(): Annotation[] {
     if (this.canvasLens && !this.isDestroyed) {
       return this.canvasLens.getAnnotations();

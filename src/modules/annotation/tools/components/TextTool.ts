@@ -73,8 +73,17 @@ export class TextTool extends BaseTool {
     });
 
     this.textInput.addEventListener('blur', () => {
-      // Delay to allow for click events
-      setTimeout(() => this.completeTextInput(), 100);
+      // Delay to allow for click events and prevent conflicts
+      setTimeout(() => this.completeTextInput(), 200);
+    });
+
+    // Prevent text input from being removed when clicking on it
+    this.textInput.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+    });
+
+    this.textInput.addEventListener('click', (e) => {
+      e.stopPropagation();
     });
   }
 
@@ -98,7 +107,9 @@ export class TextTool extends BaseTool {
     this.removeTextInput();
     
     // Reset drawing state
-    this.cancelDrawing();
+    this.isDrawing = false;
+    this.currentPoints = [];
+    this.startPoint = null;
     
     // Trigger annotation creation if we have a valid annotation
     if (annotation) {
@@ -117,7 +128,10 @@ export class TextTool extends BaseTool {
    */
   private cancelTextInput(): void {
     this.removeTextInput();
-    this.cancelDrawing();
+    // Don't call cancelDrawing() here to avoid infinite loop
+    this.isDrawing = false;
+    this.currentPoints = [];
+    this.startPoint = null;
   }
 
   /**
