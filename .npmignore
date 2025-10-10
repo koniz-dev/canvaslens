@@ -26,6 +26,9 @@ jest.config.js
 .idea/
 *.swp
 *.swo
+.husky/
+commitlint.config.js
+tsconfig.json
 
 # Git
 .git/
@@ -33,7 +36,7 @@ jest.config.js
 
 # Documentation (optional - uncomment if you want to exclude)
 # docs/
-# playground/
+playground/
 
 # Build artifacts
 *.map
