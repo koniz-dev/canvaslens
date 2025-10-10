@@ -1,3 +1,18 @@
+## 1.0.0 (2025-10-10)
+
+### Features
+
+* add build scripts and fix gitignore ([6496886](https://github.com/koniz-dev/canvaslens/commit/6496886a583cb1a0e2a91450e4d192a5edb20112))
+* add configuration files for semantic release and conventional changelog ([24ec2b4](https://github.com/koniz-dev/canvaslens/commit/24ec2b4b512b99483948b1c203c01ed9d48d792c))
+* add package publishing to release workflow ([3ffcb04](https://github.com/koniz-dev/canvaslens/commit/3ffcb0400aabdb95a2909b191689366f7c4ea293))
+* enhance server file handling and improve demo UI ([1c990a3](https://github.com/koniz-dev/canvaslens/commit/1c990a3dd907591baca6238e0e2927ad686e0738))
+* enhance testing suite with new test categories and setup ([37503c4](https://github.com/koniz-dev/canvaslens/commit/37503c48f31deb590335838fd4705acd99ac8e24))
+* implement comparison mode functionality in CanvasLens ([655b400](https://github.com/koniz-dev/canvaslens/commit/655b40064dc4c3d8519fe2eb561bcfb789bf17ae))
+
+### Bug Fixes
+
+* update release name in workflow to use ref_name instead of ref ([9a26ae8](https://github.com/koniz-dev/canvaslens/commit/9a26ae835a34517eff6fbcf511091e36dd643a6d))
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
@@ -35,4 +50,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **TypeScript Errors**: Resolved all type conflicts and naming issues
 - **Build Process**: Ensured clean build with no errors
 - **Import Structure**: Fixed circular imports and dependency issues
-
