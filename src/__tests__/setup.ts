@@ -1,0 +1,137 @@
+import '@testing-library/jest-dom';
+
+// Mock HTML5 Canvas API
+let mockDataURLCounter = 0;
+HTMLCanvasElement.prototype.toDataURL = jest.fn(() => {
+  mockDataURLCounter++;
+  return `data:image/png;base64,mock-image-data-${mockDataURLCounter}`;
+});
+HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
+  fillRect: jest.fn(),
+  strokeRect: jest.fn(),
+  clearRect: jest.fn(),
+  getImageData: jest.fn(() => ({ data: new Array(4) })),
+  putImageData: jest.fn(),
+  createImageData: jest.fn(() => ({ data: new Array(4) })),
+  createLinearGradient: jest.fn(() => ({
+    addColorStop: jest.fn()
+  })),
+  setTransform: jest.fn(),
+  drawImage: jest.fn(),
+  save: jest.fn(),
+  restore: jest.fn(),
+  beginPath: jest.fn(),
+  moveTo: jest.fn(),
+  lineTo: jest.fn(),
+  closePath: jest.fn(),
+  stroke: jest.fn(),
+  fill: jest.fn(),
+  measureText: jest.fn(() => ({ width: 0 })),
+  fillText: jest.fn(),
+  transform: jest.fn(),
+  translate: jest.fn(),
+  scale: jest.fn(),
+  rotate: jest.fn(),
+  arc: jest.fn(),
+  arcTo: jest.fn(),
+  quadraticCurveTo: jest.fn(),
+  bezierCurveTo: jest.fn(),
+  rect: jest.fn(),
+  clip: jest.fn(),
+  // Add required properties
+  canvas: {} as HTMLCanvasElement,
+  globalAlpha: 1,
+  globalCompositeOperation: 'source-over',
+  isPointInPath: jest.fn(() => false),
+  isPointInStroke: jest.fn(() => false),
+  strokeStyle: '#000000',
+  fillStyle: '#000000',
+  lineWidth: 1,
+  lineCap: 'butt',
+  lineJoin: 'miter',
+  miterLimit: 10,
+  lineDashOffset: 0,
+  shadowBlur: 0,
+  shadowColor: 'rgba(0, 0, 0, 0)',
+  shadowOffsetX: 0,
+  shadowOffsetY: 0,
+  font: '10px sans-serif',
+  textAlign: 'start',
+  textBaseline: 'alphabetic',
+  direction: 'inherit',
+  imageSmoothingEnabled: true,
+  imageSmoothingQuality: 'low',
+} as any));
+
+// Mock Image constructor
+global.Image = class {
+  onload: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  src = '';
+  width = 0;
+  height = 0;
+  
+  constructor() {
+    // Simulate immediate loading for testing
+    Promise.resolve().then(() => {
+      if (this.src) {
+        this.width = 800;
+        this.height = 600;
+        this.onload?.();
+      } else {
+        this.onerror?.();
+      }
+    });
+  }
+} as any;
+
+// Mock ResizeObserver
+global.ResizeObserver = class {
+  observe = jest.fn();
+  unobserve = jest.fn();
+  disconnect = jest.fn();
+} as any;
+
+// Mock IntersectionObserver
+global.IntersectionObserver = class {
+  observe = jest.fn();
+  unobserve = jest.fn();
+  disconnect = jest.fn();
+} as any;
+
+// Mock requestAnimationFrame
+global.requestAnimationFrame = jest.fn((cb) => {
+  const timer = setTimeout(cb, 16);
+  return timer as any;
+});
+global.cancelAnimationFrame = jest.fn((id) => clearTimeout(id));
+
+// Mock performance.now
+global.performance = {
+  now: jest.fn(() => Date.now()),
+} as any;
+
+// Suppress console warnings in tests
+const originalWarn = console.warn;
+const originalError = console.error;
+
+beforeAll(() => {
+  console.warn = jest.fn();
+  console.error = jest.fn();
+});
+
+afterAll(() => {
+  console.warn = originalWarn;
+  console.error = originalError;
+});
+
+// Global cleanup to prevent memory leaks
+afterEach(() => {
+  jest.clearAllTimers();
+  jest.useRealTimers();
+});
+
+// Only use fake timers for specific tests that need them
+// beforeEach(() => {
+//   jest.useFakeTimers();
+// });
