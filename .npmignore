@@ -1,64 +1,40 @@
 # Development files
-dev/
-src/
-coverage/
+backup/
+.cz.json
+.releaserc.json
+rollup.config.js
+
+# Development dependencies
 node_modules/
+coverage/
+*.log
 
-# Documentation (can be viewed on GitHub)
-CHANGELOG.md
-CONTRIBUTING.md
-
-# IDE specific files
-.cursor/
-.vscode/
-.idea/
-
-# Build artifacts
-*.tsbuildinfo
-build/
+# Source files (only keep dist/)
+src/
+*.ts
+*.tsx
+!*.d.ts
 
 # Test files
-jest.config.js
-test/
-tests/
 __tests__/
 *.test.*
 *.spec.*
+jest.config.js
 
 # Development configs
-tsconfig.json
-.eslintrc*
-.prettierrc*
 .vscode/
 .idea/
-
-# CI/CD
-.github/
-.gitlab-ci.yml
-.travis.yml
-.circleci/
-
-# Logs
-*.log
-logs/
-
-# Environment
-.env*
-!.env.example
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# IDE files
 *.swp
 *.swo
-*~
 
-# Temporary files
-*.tmp
-*.temp
+# Git
+.git/
+.gitignore
 
-# Package files
-*.tgz
-*.tar.gz
+# Documentation (optional - uncomment if you want to exclude)
+# docs/
+# playground/
+
+# Build artifacts
+*.map
+!dist/*.d.ts
