@@ -1,9 +1,10 @@
 # CanvasLens
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/koniz-dev/canvaslens)
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
+[![npm](https://img.shields.io/npm/v/@koniz-dev/canvaslens.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
 
 A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a unified Web Component for image viewing, zooming, panning, annotation, and before/after image comparison with optional overlay mode for professional editing.
 
@@ -11,20 +12,42 @@ A powerful HTML5 Canvas-based image viewing and annotation library built with Ty
 
 - 🖼️ **Image Viewer**: Load images from URL or file input with automatic aspect ratio preservation
 - 🔍 **Zoom & Pan**: Mouse wheel zoom with cursor-centered zooming, drag to pan
-- ✏️ **Annotations**: Rectangle, arrow, text, circle, and line annotation tools
+- ✏️ **Annotations**: Rectangle, arrow, text, circle, and line annotation tools with keyboard shortcuts
 - 🔄 **Image Comparison**: Interactive slider-based before/after comparison
 - 🖼️ **Overlay Mode**: Full-screen professional editing interface
 - 🎯 **Web Component**: Standard HTML element that works with any framework
 - ⚙️ **Declarative Configuration**: JSON-based tool configuration
-- 🎨 **TypeScript Support**: Full type safety and IntelliSense
+- 🎨 **TypeScript Support**: Full type safety and IntelliSense with comprehensive type definitions
+- 🛠️ **Production Ready**: Optimized build with production-safe logging
+- 🧪 **Framework Agnostic**: Works seamlessly with React, Vue, Angular, and vanilla JavaScript
+- 📱 **Responsive Design**: Adapts to different screen sizes and container dimensions
+- 🎮 **Keyboard Shortcuts**: Full keyboard navigation support for accessibility
 
 ## 🚀 Installation
 
+### NPM
 ```bash
 npm install @koniz-dev/canvaslens
 ```
 
-**Note**: This package is published to the npm registry. You can install it directly without any additional configuration.
+### Yarn
+```bash
+yarn add @koniz-dev/canvaslens
+```
+
+### PNPM
+```bash
+pnpm add @koniz-dev/canvaslens
+```
+
+### CDN (ES Modules)
+```html
+<script type="module">
+  import { CanvasLens } from 'https://unpkg.com/@koniz-dev/canvaslens@latest/dist/index.js';
+</script>
+```
+
+**Note**: This package is published to the npm registry and supports ES modules. No additional configuration is required for modern bundlers.
 
 ## 📖 Quick Start
 
@@ -40,6 +63,7 @@ npm install @koniz-dev/canvaslens
             border: 1px solid #ccc;
             margin: 20px;
             display: block;
+            border-radius: 8px;
         }
     </style>
 </head>
@@ -48,7 +72,8 @@ npm install @koniz-dev/canvaslens
         src="https://picsum.photos/800/600"
         width="800px" 
         height="600px"
-        tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true}, "comparison": true}'>
+        background-color="#f8f9fa"
+        tools='{"zoom": true, "pan": true, "annotation": {"rect": true, "arrow": true, "text": true, "circle": true, "line": true}, "comparison": true}'>
     </canvas-lens>
     
     <script type="module">
@@ -56,15 +81,22 @@ npm install @koniz-dev/canvaslens
         
         const viewer = document.querySelector('canvas-lens');
         
+        // Event listeners
         viewer.addEventListener('imageload', (e) => {
-            // Use logger utility for production-safe logging
-            import('./utils/logger.js').then(({ log }) => {
-                log('Image loaded:', e.detail);
-            });
+            console.log('Image loaded:', e.detail);
         });
         
-        viewer.addEventListener('click', () => {
-            viewer.openOverlay(); // Open full-screen editor
+        viewer.addEventListener('zoomchange', (e) => {
+            console.log('Zoom level:', e.detail);
+        });
+        
+        viewer.addEventListener('annotationadd', (e) => {
+            console.log('Annotation added:', e.detail);
+        });
+        
+        // Open overlay on double-click
+        viewer.addEventListener('dblclick', () => {
+            viewer.openOverlay();
         });
     </script>
 </body>
@@ -143,60 +175,139 @@ viewer.addEventListener('imageload', (event) => {
 #### Vue 3
 ```vue
 <template>
-  <canvas-lens 
-    :src="imageSrc"
-    width="800px" 
-    height="600px"
-    :tools="toolConfig"
-    @imageload="onImageLoad">
-  </canvas-lens>
+  <div class="canvas-container">
+    <canvas-lens 
+      :src="imageSrc"
+      width="800px" 
+      height="600px"
+      :tools="toolsJson"
+      background-color="#f8f9fa"
+      @imageload="onImageLoad"
+      @zoomchange="onZoomChange"
+      @annotationadd="onAnnotationAdd">
+    </canvas-lens>
+    
+    <div class="controls">
+      <button @click="loadNewImage">Load New Image</button>
+      <button @click="toggleComparison">Toggle Comparison</button>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { CanvasLens } from '@koniz-dev/canvaslens';
 
-const imageSrc = ref('https://example.com/image.jpg');
-const toolConfig = ref({
+const imageSrc = ref('https://picsum.photos/800/600');
+const tools = ref({
   zoom: true,
   pan: true,
-  annotation: { rect: true, arrow: true, text: true },
-  comparison: false
+  annotation: { 
+    rect: true, 
+    arrow: true, 
+    text: true, 
+    circle: true, 
+    line: true 
+  },
+  comparison: true
 });
 
+// Convert tools object to JSON string for the custom element
+const toolsJson = computed(() => JSON.stringify(tools.value));
+
 const onImageLoad = (e) => {
-  // Use logger utility for production-safe logging
-  import('./utils/logger.js').then(({ log }) => {
-    log('Image loaded:', e.detail);
-  });
+  console.log('Image loaded:', e.detail);
+};
+
+const onZoomChange = (e) => {
+  console.log('Zoom level:', e.detail);
+};
+
+const onAnnotationAdd = (e) => {
+  console.log('Annotation added:', e.detail);
+};
+
+const loadNewImage = () => {
+  imageSrc.value = `https://picsum.photos/800/600?random=${Math.random()}`;
+};
+
+const toggleComparison = () => {
+  const canvasLens = document.querySelector('canvas-lens');
+  if (canvasLens && typeof canvasLens.toggleComparisonMode === 'function') {
+    canvasLens.toggleComparisonMode();
+  }
 };
 </script>
 ```
 
 #### React
 ```jsx
-import React, { useRef } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { CanvasLens } from '@koniz-dev/canvaslens';
 
 const CanvasLensViewer = ({ src }) => {
   const viewerRef = useRef(null);
+  const [imageSrc, setImageSrc] = useState(src);
+  
   const toolConfig = {
     zoom: true,
     pan: true,
-    annotation: { rect: true, arrow: true, text: true },
-    comparison: false
+    annotation: { 
+      rect: true, 
+      arrow: true, 
+      text: true, 
+      circle: true, 
+      line: true 
+    },
+    comparison: true
+  };
+
+  const handleImageLoad = useCallback((e) => {
+    console.log('Image loaded:', e.detail);
+  }, []);
+
+  const handleZoomChange = useCallback((e) => {
+    console.log('Zoom level:', e.detail);
+  }, []);
+
+  const loadNewImage = () => {
+    const newSrc = `https://picsum.photos/800/600?random=${Math.random()}`;
+    setImageSrc(newSrc);
+  };
+
+  const toggleComparison = () => {
+    const canvasLens = document.querySelector('canvas-lens');
+    if (canvasLens && typeof canvasLens.toggleComparisonMode === 'function') {
+      canvasLens.toggleComparisonMode();
+    }
   };
 
   return (
-    <canvas-lens 
-      ref={viewerRef}
-      src={src}
-      width="800px" 
-      height="600px"
-      tools={JSON.stringify(toolConfig)}>
-    </canvas-lens>
+    <div style={{ padding: '20px' }}>
+      <canvas-lens 
+        ref={viewerRef}
+        src={imageSrc}
+        width="800px" 
+        height="600px"
+        background-color="#f8f9fa"
+        tools={JSON.stringify(toolConfig)}
+        onimageload={handleImageLoad}
+        onzoomchange={handleZoomChange}>
+      </canvas-lens>
+      
+      <div style={{ marginTop: '10px' }}>
+        <button onClick={loadNewImage} style={{ marginRight: '10px' }}>
+          Load New Image
+        </button>
+        <button onClick={toggleComparison}>
+          Toggle Comparison
+        </button>
+      </div>
+    </div>
   );
 };
+
+export default CanvasLensViewer;
 ```
 
 ### Advanced Usage
@@ -334,21 +445,28 @@ The `tools` attribute accepts a JSON string:
 const viewer = document.querySelector('canvas-lens');
 
 // Image loading
-await viewer.loadImage('https://example.com/image.jpg');
+await viewer.loadImage('https://example.com/image.jpg', 'image/jpeg', 'my-image.jpg');
 viewer.loadImageFromFile(file);
 
+// Resize
+viewer.resize(800, 600);
+
 // Zoom controls
-viewer.zoomIn(1.2);
-viewer.zoomOut(1.2);
-viewer.zoomTo(2.0);
-viewer.fitToView();
-viewer.resetView();
+viewer.zoomIn(1.2);           // Zoom in by 20%
+viewer.zoomOut(1.2);          // Zoom out by 20%
+viewer.zoomTo(2.0);           // Zoom to 200%
+viewer.fitToView();           // Fit image to view
+viewer.resetView();           // Reset zoom and pan
 
 // Tool controls
-viewer.activateTool('rect');
-viewer.activateTool('arrow');
-viewer.activateTool('text');
-viewer.deactivateTool();
+viewer.activateTool('rect');  // Rectangle tool
+viewer.activateTool('arrow'); // Arrow tool
+viewer.activateTool('text');  // Text tool
+viewer.activateTool('circle'); // Circle tool
+viewer.activateTool('line');  // Line tool
+viewer.deactivateTool();      // Deactivate current tool
+viewer.getActiveTool();       // Get current active tool
+viewer.updateTools(toolConfig); // Update tool configuration
 
 // Annotation controls
 viewer.addAnnotation(annotation);
@@ -356,16 +474,21 @@ viewer.removeAnnotation(annotationId);
 viewer.clearAnnotations();
 const annotations = viewer.getAnnotations();
 
+// Comparison mode controls
+viewer.toggleComparisonMode();
+viewer.setComparisonMode(true);
+viewer.isComparisonMode();
+
 // Overlay editor
 viewer.openOverlay();
 viewer.closeOverlay();
+viewer.isOverlayOpen();
 
 // State queries
 viewer.isImageLoaded();
+viewer.getImageData();
 viewer.getZoomLevel();
 viewer.getPanOffset();
-viewer.getActiveTool();
-viewer.isOverlayOpen();
 ```
 
 ### Events
@@ -396,7 +519,7 @@ viewer.addEventListener('imageload', (event) => {
 
 ### Available Exports
 
-The library exports only the main Web Component and supporting types:
+The library exports the main Web Component, supporting types, and utilities:
 
 ```typescript
 // Web Component
@@ -414,7 +537,19 @@ import type {
   Rectangle, 
   ViewState, 
   ImageData, 
-  Tool 
+  Tool,
+  AnnotationManager,
+  ImageViewer
+} from '@koniz-dev/canvaslens';
+
+// Utilities (optional imports for advanced usage)
+import { 
+  ErrorHandler, 
+  ErrorType,
+  safeAsync,
+  log,
+  warn,
+  error
 } from '@koniz-dev/canvaslens';
 ```
 
@@ -505,28 +640,71 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 4. Add tests if applicable
 5. Submit a pull request
 
+## 🧪 Playground & Testing
+
+CanvasLens includes comprehensive playground examples to test framework compatibility and features:
+
+### Available Playgrounds
+
+- **React Playground** (`playground/react/`) - Test CanvasLens with React
+- **Vue Playground** (`playground/vue/`) - Test CanvasLens with Vue 3
+
+### Running Playgrounds
+
+1. **Build the library first:**
+   ```bash
+   npm run build
+   ```
+
+2. **Test with React:**
+   ```bash
+   cd playground/react
+   npm install
+   npm run dev
+   ```
+
+3. **Test with Vue:**
+   ```bash
+   cd playground/vue
+   npm install
+   npm run dev
+   ```
+
+### Playground Features
+
+- Framework integration testing
+- Real-time feature demonstration
+- Interactive controls for testing all functionality
+- Live image loading and comparison mode testing
+- Event handling examples
+
 ## 🗺️ Roadmap
 
 ### ✅ Completed
 - [x] Module 1: Basic Image Viewer
 - [x] Module 2: Zoom & Pan functionality  
-- [x] Module 3: Annotation tools
-- [x] Module 4: Image comparison
+- [x] Module 3: Annotation tools (rectangle, arrow, text, circle, line)
+- [x] Module 4: Image comparison with interactive slider
 - [x] Full TypeScript support with strict mode
-- [x] Modular architecture
+- [x] Modular architecture with clean separation of concerns
 - [x] Comprehensive event system
 - [x] Interactive demos and examples
+- [x] Framework playgrounds (React, Vue)
+- [x] Production-ready build system
+- [x] Keyboard shortcuts and accessibility features
 
 ### 🚧 Planned (Future Versions)
-- [ ] Performance optimizations
+- [ ] Performance optimizations for large images
 - [ ] Touch support for mobile devices
-- [ ] Advanced annotation features (circle, line tools)
 - [ ] Undo/Redo functionality
 - [ ] Collaborative annotations
-- [ ] Plugin system
+- [ ] Plugin system for custom tools
 - [ ] Export comparison as video/GIF
 - [ ] Multiple comparison modes (side-by-side, overlay)
 - [ ] Folder tree organization for image collections
+- [ ] Advanced annotation features (freehand drawing, shapes)
+- [ ] Image filters and effects
+- [ ] Batch processing capabilities
 
 ## 📝 Changelog
 
@@ -537,4 +715,14 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 - **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
 - **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
 - **Discussions**: [GitHub Discussions](https://github.com/koniz-dev/canvaslens/discussions)
-- **Demo**: Check `dev/demo/index.html` for interactive demo with all features
+- **Playground**: Test CanvasLens with React and Vue in the `playground/` directory
+- **NPM Package**: [@koniz-dev/canvaslens](https://www.npmjs.com/package/@koniz-dev/canvaslens)
+
+## 🆕 Latest Updates
+
+- **v0.1.0**: Initial release with comprehensive image viewing and annotation capabilities
+- **Production Ready**: Optimized build system with production-safe logging
+- **Framework Support**: Tested compatibility with React, Vue, and vanilla JavaScript
+- **TypeScript**: Full type safety with comprehensive type definitions
+- **Accessibility**: Keyboard shortcuts and responsive design
+- **Performance**: Optimized rendering and memory management
