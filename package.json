@@ -23,7 +23,7 @@
     "test:performance": "jest src/__tests__/performance",
     "test:visual": "jest src/__tests__/visual",
     "test:api": "jest src/__tests__/api",
-    "release": "semantic-release",
+    "release": "CI=true semantic-release",
     "prepublishOnly": "npm run build:prod && npm run test",
     "clean": "rm -rf dist coverage",
     "prepare": "husky"
