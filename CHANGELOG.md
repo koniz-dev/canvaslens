@@ -1,3 +1,9 @@
+## [1.0.1](https://github.com/koniz-dev/canvaslens/compare/v1.0.0...v1.0.1) (2025-10-10)
+
+### Bug Fixes
+
+* set CI=true in release script to avoid dry-run mode ([0ba8dda](https://github.com/koniz-dev/canvaslens/commit/0ba8ddab4c0ddcc3b2615ce90b29ce432535b8c2))
+
 ## 1.0.0 (2025-10-10)
 
 ### Features
