@@ -306,30 +306,6 @@ import type {
 - Safari 12+
 - Edge 79+
 
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Image not loading:**
-- Ensure the image URL is accessible and CORS-enabled
-- Check browser console for network errors
-- Try using a different image source
-
-**Canvas not rendering:**
-- Verify the container element exists and has dimensions
-- Check if the browser supports HTML5 Canvas
-- Ensure the library is properly built and imported
-
-**Annotations not working:**
-- Make sure annotation tools are enabled in the `tools` configuration
-- Check if annotation tools are properly selected
-- Verify event handlers are correctly set up
-
-**Performance issues:**
-- Reduce image size for better performance
-- Consider using `fitToView()` for large images
-- Check zoom limits if experiencing lag during zoom
-
 ### Browser Compatibility
 
 If you encounter issues in specific browsers:
@@ -384,12 +360,5 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 
 - **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
 - **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
-- **Discussions**: [GitHub Discussions](https://github.com/koniz-dev/canvaslens/discussions)
 - **Playground**: Test CanvasLens with React and Vue in the `playground/` directory
 - **NPM Package**: [@koniz-dev/canvaslens](https://www.npmjs.com/package/@koniz-dev/canvaslens)
-
-## 🆕 Latest Updates
-
-- **v0.1.0**: Initial release with image viewing, annotation, and comparison features
-- **Production Ready**: Optimized build with TypeScript support
-- **Framework Support**: Works with React, Vue, and vanilla JavaScript
