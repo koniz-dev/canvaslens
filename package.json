@@ -35,10 +35,14 @@
     "zoom",
     "pan",
     "image-comparison",
-    "typescript",
-    "html5-canvas",
     "before-after",
-    "image-annotation"
+    "html5-canvas",
+    "web-component",
+    "typescript",
+    "image-editor",
+    "canvas-api",
+    "interactive",
+    "responsive"
   ],
   "author": "koniz-dev",
   "license": "MIT",
@@ -61,7 +65,6 @@
     "@semantic-release/git": "^10.0.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.5.2",
     "conventional-changelog-conventionalcommits": "^9.1.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
@@ -75,8 +78,5 @@
   "overrides": {
     "glob": "^10.0.0",
     "inflight": "npm:lru-cache@^10.0.0"
-  },
-  "dependencies": {
-    "tslib": "^2.8.1"
   }
 }

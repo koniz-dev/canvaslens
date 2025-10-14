@@ -151,31 +151,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## 🧪 Playground
-
-Test CanvasLens with React and Vue in the `playground/` directory:
-
-```bash
-npm run build
-cd playground/react && npm install && npm run dev
-cd playground/vue && npm install && npm run dev
-```
-
-## 🗺️ Roadmap
-
-### ✅ Completed
-- [x] Image viewer with zoom & pan
-- [x] Annotation tools (rectangle, arrow, text, circle, line)
-- [x] Image comparison with interactive slider
-- [x] TypeScript support & framework playgrounds
-- [x] Production-ready build system
-
-### 🚧 Planned
-- [ ] Touch support for mobile
-- [ ] Undo/Redo functionality
-- [ ] Plugin system
-- [ ] Export comparison as video/GIF
-
 ## 📝 Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
@@ -184,5 +159,4 @@ See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
 
 - **Issues**: [GitHub Issues](https://github.com/koniz-dev/canvaslens/issues)
 - **Documentation**: [GitHub Wiki](https://github.com/koniz-dev/canvaslens/wiki)
-- **Playground**: Test CanvasLens with React and Vue in the `playground/` directory
 - **NPM Package**: [@koniz-dev/canvaslens](https://www.npmjs.com/package/@koniz-dev/canvaslens)
