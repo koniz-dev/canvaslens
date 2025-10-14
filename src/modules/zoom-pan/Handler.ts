@@ -28,6 +28,7 @@ export class ZoomPanHandler {
   private boundHandleMouseDown: EventListener;
   private boundHandleMouseMove: EventListener;
   private boundHandleMouseUp: EventListener;
+  private boundHandleDoubleClick: EventListener;
 
   constructor(
     canvas: Renderer,
@@ -52,6 +53,7 @@ export class ZoomPanHandler {
     this.boundHandleMouseDown = this.handleMouseDown.bind(this) as EventListener;
     this.boundHandleMouseMove = this.handleMouseMove.bind(this) as EventListener;
     this.boundHandleMouseUp = this.handleMouseUp.bind(this) as EventListener;
+    this.boundHandleDoubleClick = this.handleDoubleClick.bind(this) as EventListener;
 
     this.setupEventListeners();
     
@@ -87,6 +89,9 @@ export class ZoomPanHandler {
       this.canvas.addEventListener('mouseup', this.boundHandleMouseUp);
       this.canvas.addEventListener('mouseleave', this.boundHandleMouseUp);
     }
+
+    // Always add double-click listener for reset functionality
+    this.canvas.addEventListener('dblclick', this.boundHandleDoubleClick);
   }
 
   /**
@@ -98,6 +103,7 @@ export class ZoomPanHandler {
     this.canvas.removeEventListener('mousemove', this.boundHandleMouseMove);
     this.canvas.removeEventListener('mouseup', this.boundHandleMouseUp);
     this.canvas.removeEventListener('mouseleave', this.boundHandleMouseUp);
+    this.canvas.removeEventListener('dblclick', this.boundHandleDoubleClick);
   }
 
   /**
@@ -251,6 +257,28 @@ export class ZoomPanHandler {
   private handleMouseUp(event: MouseEvent): void {
     this.isPanning = false;
     this.updateCursor();
+  }
+
+  /**
+   * Handle double-click event to reset view
+   */
+  private handleDoubleClick(event: MouseEvent): void {
+    // Only handle left double-click
+    if (event.button !== 0) {
+      return;
+    }
+
+    // Don't reset if no image is loaded
+    if (!this.isImageLoaded()) {
+      return;
+    }
+
+    // Prevent default behavior
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Reset the view
+    this.reset();
   }
 
   /**
