@@ -1,3 +1,9 @@
+## [1.1.0](https://github.com/koniz-dev/canvaslens/compare/v1.0.1...v1.1.0) (2025-10-14)
+
+### Features
+
+* update zoom-pan handler and package dependencies ([b1523e2](https://github.com/koniz-dev/canvaslens/commit/b1523e251d5ad3dd30ec9cd2b84a8b85bb044c8a))
+
 ## [1.0.1](https://github.com/koniz-dev/canvaslens/compare/v1.0.0...v1.0.1) (2025-10-10)
 
 ### Bug Fixes
