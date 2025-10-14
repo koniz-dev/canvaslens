@@ -51,7 +51,7 @@ When creating an issue, please include:
 ## Getting Help
 
 - 📖 **Documentation**: Check the [README.md](README.md) for usage examples
-- 🎮 **Demo**: Try the interactive demo in `dev/demo/index.html`
+- 🎮 **Demo**: Try the interactive demos in the `playground` directory (`playground/react/index.html` or `playground/vue/index.html`)
 - 💬 **Issues**: Search existing issues or create a new one
 - 📧 **Contact**: Reach out through GitHub issues
 
@@ -70,8 +70,10 @@ npm install
 # Build the library
 npm run build
 
-# Open demo
-open dev/demo/index.html
+# Open demo (choose one)
+open playground/react/index.html
+# or
+open playground/vue/index.html
 ```
 
 ## License
