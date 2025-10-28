@@ -75,10 +75,11 @@ export class CanvasLensCore {
           }
           break;
         case 'width':
-        case 'height':
+        case 'height': {
           const { width, height } = AttributeParser.getContainerDimensions(this.element);
           this.canvasLens.resize(width, height);
           break;
+        }
         case 'tools':
           this.updateToolConfig(value);
           break;

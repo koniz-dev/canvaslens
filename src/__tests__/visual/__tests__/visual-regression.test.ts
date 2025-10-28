@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 // Visual regression testing utilities
 const captureCanvasSnapshot = (canvas: HTMLCanvasElement): string => {
   return canvas.toDataURL('image/png');
 };
 
-const compareImages = (image1: string, image2: string, threshold: number = 0.1): boolean => {
+const compareImages = (image1: string, image2: string, _threshold: number = 0.1): boolean => {
   // Simple pixel comparison - in real implementation, you'd use a proper image comparison library
   // This is a mock implementation that always returns true for testing
   return true;

@@ -1,6 +1,6 @@
 
 import { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, ImageData } from '../types';
-import { ImageViewer, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, AnnotationToolsManager, AnnotationToolsConfig } from '../modules';
+import { ImageViewer, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, AnnotationToolsConfig } from '../modules';
 import { warn } from '../utils/core/logger';
 import { DEFAULT_CONFIG } from '../constants';
 
@@ -24,7 +24,6 @@ export class Engine {
 
     this.eventHandlers = {};
 
-    // Initialize image viewer with zoom/pan options
     const size: Size = {
       width: this.options.width!,
       height: this.options.height!
@@ -32,7 +31,6 @@ export class Engine {
 
     const tools = this.options.tools || AnnotationToolsConfig.DEFAULT_CONFIG;
 
-    // Configure zoom/pan options - only create if zoom or pan is enabled
     const zoomPanOptions: ZoomPanOptions | undefined = 
       AnnotationToolsConfig.hasZoomOrPan(tools) ? {
         enableZoom: !!tools.zoom,
@@ -43,19 +41,16 @@ export class Engine {
     
     
 
-    // Configure annotation options
     const annotationOptions: AnnotationManagerOptions | undefined = 
       AnnotationToolsConfig.hasAnnotations(tools) ? {
         enabled: true
       } : undefined;
 
-    // Configure comparison options
     const comparisonOptions: ComparisonOptions | undefined = 
       AnnotationToolsConfig.hasComparison(tools) ? {
         comparisonMode: false
       } : undefined;
 
-    // Initialize image viewer
     this.imageViewer = new ImageViewer(
       this.container,
       size,
@@ -66,16 +61,12 @@ export class Engine {
       this.options.backgroundColor
     );
 
-    // Set up event forwarding
     this.setupEventForwarding();
   }
 
   private setupEventForwarding() {
-    // Event forwarding is handled through the eventHandlers object
-    // The ImageViewer will call the handlers directly
   }
 
-  // Public API methods
   loadImage(src: string, imageType?: string, fileName?: string): Promise<void> {
     return this.imageViewer.loadImage(src, imageType, fileName);
   }
@@ -179,7 +170,6 @@ export class Engine {
   updateAnnotation(id: string, annotation: Annotation): void {
     const manager = this.imageViewer.getAnnotationManager();
     if (manager) {
-      // Remove old annotation and add new one
       manager.removeAnnotation(id);
       manager.addAnnotation(annotation);
     }
@@ -197,32 +187,7 @@ export class Engine {
     }
   }
 
-  setComparisonImage(src: string): Promise<void> {
-    // Comparison functionality would need to be implemented in ImageViewer
-    return Promise.resolve();
-  }
 
-  setComparisonPosition(position: number): void {
-    // Comparison functionality would need to be implemented in ImageViewer
-  }
-
-  getComparisonPosition(): number {
-    // Comparison functionality would need to be implemented in ImageViewer
-    return 0;
-  }
-
-  toggleComparison(): void {
-    // Comparison functionality would need to be implemented in ImageViewer
-  }
-
-  setComparisonEnabled(enabled: boolean): void {
-    // Comparison functionality would need to be implemented in ImageViewer
-  }
-
-  getComparisonEnabled(): boolean {
-    // Comparison functionality would need to be implemented in ImageViewer
-    return false;
-  }
 
   getImageData(): ImageData | null {
     return this.imageViewer.getImageData();
@@ -238,7 +203,6 @@ export class Engine {
   }
 
   destroy(): void {
-    // Clean up resources
     const zoomHandler = this.imageViewer.getZoomPanHandler();
     if (zoomHandler) {
       zoomHandler.destroy();
@@ -249,11 +213,7 @@ export class Engine {
     }
   }
 
-  // Event handling - simplified for current API
   on(event: string, handler: Function): void {
-    // Event handling is managed through the eventHandlers object
-    // This method is kept for compatibility but events are handled differently
-    // Map event names to EventHandlers properties
     const eventMap: { [key: string]: keyof EventHandlers } = {
       'imageLoaded': 'onImageLoad',
       'imageLoadError': 'onImageLoadError',
@@ -272,7 +232,6 @@ export class Engine {
   }
 
   off(event: string, handler: Function): void {
-    // Similar mapping for off method
     const eventMap: { [key: string]: keyof EventHandlers } = {
       'imageLoaded': 'onImageLoad',
       'imageLoadError': 'onImageLoadError',
@@ -290,11 +249,8 @@ export class Engine {
     }
   }
 
-  // Configuration methods
   updateOptions(options: Partial<CanvasLensOptions>): void {
     this.options = { ...this.options, ...options };
-    
-    // Update image viewer with new options
     if (options.width || options.height) {
       this.imageViewer.resize({ 
         width: this.options.width!, 
@@ -302,7 +258,6 @@ export class Engine {
       });
     }
 
-    // Update event handlers if provided
     if ((options as any).eventHandlers) {
       this.setEventHandlers((options as any).eventHandlers);
     }
@@ -317,7 +272,6 @@ export class Engine {
     this.imageViewer.setEventHandlers(this.eventHandlers);
   }
 
-  // Utility methods
   exportAnnotations(): string {
     return JSON.stringify(this.getAnnotations());
   }
@@ -334,16 +288,7 @@ export class Engine {
     }
   }
 
-  exportImage(format: 'png' | 'jpeg' = 'png', quality: number = 0.9): string {
-    // Export functionality would need to be implemented in ImageViewer
-    return '';
-  }
 
-  downloadImage(filename: string = 'canvaslens-export.png'): void {
-    // Download functionality would need to be implemented in ImageViewer
-  }
-
-  // Additional utility methods
   isImageLoaded(): boolean {
     return this.imageViewer.isImageLoaded();
   }
@@ -386,10 +331,8 @@ export class Engine {
    * Update tool configuration without reinitializing the entire engine
    */
   updateToolConfig(toolConfig: ToolConfig): void {
-    // Update options
     this.options.tools = { ...this.options.tools, ...toolConfig };
     
-    // Update zoom/pan handler configuration
     const zoomPanHandler = this.getZoomPanHandler();
     if (zoomPanHandler && AnnotationToolsConfig.hasZoomOrPan(this.options.tools)) {
       zoomPanHandler.updateOptions({
@@ -400,15 +343,13 @@ export class Engine {
       });
     }
     
-    // Update annotation manager configuration
     const annotationManager = this.getAnnotationManager();
     if (annotationManager && toolConfig.annotation) {
       annotationManager.updateToolConfig(toolConfig.annotation);
     }
     
-    // Update comparison configuration if needed
     if (toolConfig.comparison !== undefined) {
-      // Comparison functionality would be updated here when implemented
+      // Comparison tool config handling - to be implemented
     }
   }
 
@@ -471,7 +412,6 @@ export class Engine {
     return null;
   }
 
-  // Comparison methods
   /**
    * Toggle comparison mode
    */

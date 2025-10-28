@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
 
-// Mock HTML5 Canvas API
 let mockDataURLCounter = 0;
 HTMLCanvasElement.prototype.toDataURL = jest.fn(() => {
   mockDataURLCounter++;
@@ -38,7 +37,6 @@ HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
   bezierCurveTo: jest.fn(),
   rect: jest.fn(),
   clip: jest.fn(),
-  // Add required properties
   canvas: {} as HTMLCanvasElement,
   globalAlpha: 1,
   globalCompositeOperation: 'source-over',
@@ -63,7 +61,6 @@ HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
   imageSmoothingQuality: 'low',
 } as any));
 
-// Mock Image constructor
 global.Image = class {
   onload: (() => void) | null = null;
   onerror: (() => void) | null = null;
@@ -72,7 +69,6 @@ global.Image = class {
   height = 0;
   
   constructor() {
-    // Simulate immediate loading for testing
     Promise.resolve().then(() => {
       if (this.src) {
         this.width = 800;
@@ -85,33 +81,28 @@ global.Image = class {
   }
 } as any;
 
-// Mock ResizeObserver
 global.ResizeObserver = class {
   observe = jest.fn();
   unobserve = jest.fn();
   disconnect = jest.fn();
 } as any;
 
-// Mock IntersectionObserver
 global.IntersectionObserver = class {
   observe = jest.fn();
   unobserve = jest.fn();
   disconnect = jest.fn();
 } as any;
 
-// Mock requestAnimationFrame
 global.requestAnimationFrame = jest.fn((cb) => {
   const timer = setTimeout(cb, 16);
   return timer as any;
 });
 global.cancelAnimationFrame = jest.fn((id) => clearTimeout(id));
 
-// Mock performance.now
 global.performance = {
   now: jest.fn(() => Date.now()),
 } as any;
 
-// Suppress console warnings in tests
 const originalWarn = console.warn;
 const originalError = console.error;
 
@@ -125,13 +116,11 @@ afterAll(() => {
   console.error = originalError;
 });
 
-// Global cleanup to prevent memory leaks
 afterEach(() => {
   jest.clearAllTimers();
   jest.useRealTimers();
 });
 
-// Only use fake timers for specific tests that need them
 // beforeEach(() => {
 //   jest.useFakeTimers();
 // });

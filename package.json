@@ -13,8 +13,10 @@
     }
   },
   "scripts": {
-    "build": "npm run clean && rollup -c",
-    "build:prod": "NODE_ENV=production rollup -c",
+    "build": "npm run lint && npm run clean && rollup -c",
+    "build:prod": "npm run lint && NODE_ENV=production rollup -c",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -24,7 +26,7 @@
     "test:visual": "jest src/__tests__/visual",
     "test:api": "jest src/__tests__/api",
     "release": "CI=true semantic-release",
-    "prepublishOnly": "npm run build:prod && npm run test",
+    "prepublishOnly": "npm run build:prod && npm run test && npm run lint",
     "clean": "rm -rf dist coverage",
     "prepare": "husky"
   },
@@ -65,7 +67,11 @@
     "@semantic-release/git": "^10.0.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
     "conventional-changelog-conventionalcommits": "^9.1.0",
+    "eslint": "^9.38.0",
+    "eslint-plugin-unused-imports": "^4.3.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",

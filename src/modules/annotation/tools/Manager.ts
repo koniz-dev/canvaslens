@@ -1,5 +1,5 @@
 import { Renderer } from '../../../core';
-import { Annotation, AnnotationStyle, Tool, Point } from '../../../types';
+import { Annotation, AnnotationStyle, Tool } from '../../../types';
 import { AnnotationRenderer } from '../Renderer';
 import { AnnotationToolsEventHandler, EventHandlerOptions } from './EventHandler';
 import { AnnotationToolsController, ControllerOptions } from './Controller';
@@ -30,10 +30,8 @@ export class AnnotationToolsManager {
     this.renderer = renderer;
     this.options = options;
 
-    // Initialize utils
     this.utils = new AnnotationToolsUtils(canvas);
 
-    // Initialize controller
     const controllerOptions: ControllerOptions = {
       canvas,
       renderer,
@@ -43,7 +41,6 @@ export class AnnotationToolsManager {
     };
     this.controller = new AnnotationToolsController(controllerOptions);
 
-    // Initialize event handler
     const eventHandlerOptions: EventHandlerOptions = {
       canvas,
       renderer,
@@ -68,13 +65,11 @@ export class AnnotationToolsManager {
       onClampPointToImageBounds: (point) => this.utils.clampPointToImageBounds(point)
     };
 
-    // Add optional callback if defined
     if (this.onAnnotationCreate) {
       eventHandlerOptions.onAnnotationCreate = this.onAnnotationCreate;
     }
     this.eventHandler = new AnnotationToolsEventHandler(eventHandlerOptions);
 
-    // Setup event listeners
     this.eventHandler.setupEventListeners();
   }
 
@@ -89,7 +84,6 @@ export class AnnotationToolsManager {
       toolManagerDrawing: this.toolManagerDrawing
     };
 
-    // Add optional callback if defined
     if (this.onAnnotationCreate) {
       updateOptions.onAnnotationCreate = this.onAnnotationCreate;
     }

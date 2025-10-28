@@ -64,15 +64,16 @@ export class AnnotationToolsUtils {
     if (minSize === undefined || minSize === 0) return true; // No size constraint
     
     switch (annotation.type) {
-      case 'rect':
+      case 'rect': {
         if (annotation.points.length < 2) return false;
         const start = annotation.points[0]!;
         const end = annotation.points[1]!;
         const width = Math.abs(end.x - start.x);
         const height = Math.abs(end.y - start.y);
         return width >= minSize || height >= minSize;
+      }
         
-      case 'circle':
+      case 'circle': {
         if (annotation.points.length < 2) return false;
         const center = annotation.points[0]!;
         const edge = annotation.points[1]!;
@@ -80,9 +81,10 @@ export class AnnotationToolsUtils {
           Math.pow(edge.x - center.x, 2) + Math.pow(edge.y - center.y, 2)
         );
         return radius >= minSize;
+      }
         
       case 'line':
-      case 'arrow':
+      case 'arrow': {
         if (annotation.points.length < 2) return false;
         const lineStart = annotation.points[0]!;
         const lineEnd = annotation.points[annotation.points.length - 1]!;
@@ -90,6 +92,7 @@ export class AnnotationToolsUtils {
           Math.pow(lineEnd.x - lineStart.x, 2) + Math.pow(lineEnd.y - lineStart.y, 2)
         );
         return length >= minSize;
+      }
         
       case 'text':
         return true; // Text doesn't have size constraint

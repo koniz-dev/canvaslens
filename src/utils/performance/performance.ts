@@ -208,7 +208,6 @@ export class PerformanceMonitor {
   }
 }
 
-// Global performance monitor instance
 export const performanceMonitor = new PerformanceMonitor();
 
 /**
@@ -218,9 +217,9 @@ export function measurePerformance(target: any, propertyName: string, descriptor
   const method = descriptor.value;
 
   descriptor.value = function (...args: any[]) {
-    const startTime = performance.now();
+    const _startTime = performance.now();
     const result = method.apply(this, args);
-    const endTime = performance.now();
+    const _endTime = performance.now();
     
     return result;
   };

@@ -112,7 +112,7 @@ export class AnnotationRenderer {
           width: Math.abs(end.x - start.x),
           height: Math.abs(end.y - start.y)
         };
-      case 'circle':
+      case 'circle': {
         const radius = Math.sqrt(
           Math.pow(end.x - start.x, 2) + 
           Math.pow(end.y - start.y, 2)
@@ -123,6 +123,7 @@ export class AnnotationRenderer {
           width: radius * 2,
           height: radius * 2
         };
+      }
       case 'arrow':
       case 'line':
         return {
@@ -131,7 +132,7 @@ export class AnnotationRenderer {
           width: Math.abs(end.x - start.x),
           height: Math.abs(end.y - start.y)
         };
-      case 'text':
+      case 'text': {
         // Estimate text bounds (approximate)
         const textWidth = annotation.data?.text?.length || 0;
         return {
@@ -140,6 +141,7 @@ export class AnnotationRenderer {
           width: textWidth * 8, // Rough estimate
           height: annotation.style?.fontSize || 16
         };
+      }
       default:
         return { x: 0, y: 0, width: 0, height: 0 };
     }
@@ -431,7 +433,7 @@ export class AnnotationRenderer {
       case 'line':
       case 'arrow':
         return this.isPointNearLine(point, annotation);
-      case 'text':
+      case 'text': {
         // Accurate bounding box check for text
         if (annotation.points.length < 1 || !annotation.data?.text) return false;
         const textPos = annotation.points[0]!;
@@ -449,6 +451,7 @@ export class AnnotationRenderer {
         const tolerance = 5;
         return point.x >= (textPos.x - tolerance) && point.x <= (textPos.x + textWidth + tolerance) &&
                point.y >= (textPos.y - textHeight - tolerance) && point.y <= (textPos.y + tolerance);
+      }
       default:
         return false;
     }

@@ -65,7 +65,7 @@ export class ErrorHandler {
     // Attempt recovery if possible
     if (canvasLensError.recoverable && fallback) {
       try {
-        const result = fallback();
+        const _result = fallback();
         warn('Error recovery successful:', canvasLensError.message);
       } catch (recoveryError) {
         error('Error recovery failed:', recoveryError instanceof Error ? recoveryError : new Error(String(recoveryError)));

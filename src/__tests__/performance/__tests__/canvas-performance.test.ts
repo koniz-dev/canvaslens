@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 
 // Performance testing utilities
 const measurePerformance = async (fn: () => void | Promise<void>): Promise<number> => {

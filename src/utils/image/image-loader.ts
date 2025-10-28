@@ -2,8 +2,8 @@
  * Advanced image loading utilities with lazy loading and optimization
  */
 import { ImageData, Size } from '../../types';
-import { ErrorHandler, ErrorType } from '../core/error-handler';
-import { warn, log } from '../core/logger';
+import { ErrorHandler } from '../core/error-handler';
+import { warn } from '../core/logger';
 
 export interface ImageLoadOptions {
   /** Maximum image size before lazy loading (in bytes) */
@@ -213,8 +213,8 @@ export class ImageLoader {
   ): Promise<ImageData> {
     const {
       progressiveLoading = true,
-      enableCompression = true,
-      compressionQuality = this.DEFAULT_COMPRESSION_QUALITY,
+      enableCompression: _enableCompression = true,
+      compressionQuality: _compressionQuality = this.DEFAULT_COMPRESSION_QUALITY,
       preferWebP = true,
       preferAVIF = true
     } = options;
@@ -377,7 +377,7 @@ export class ImageLoader {
   /**
    * Get optimized source URL
    */
-  private static getOptimizedSrc(src: string, format: 'webp' | 'avif'): string | null {
+  private static getOptimizedSrc(_src: string, _format: 'webp' | 'avif'): string | null {
     // This would typically involve server-side image optimization
     // For now, we'll return null to use the original source
     return null;

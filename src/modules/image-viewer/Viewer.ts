@@ -183,7 +183,7 @@ export class ImageViewer {
         throw new Error('Invalid image element provided');
       }
 
-      const canvasSize = this.canvas.getSize();
+      const _canvasSize = this.canvas.getSize();
       
       // For overlay mode, use window dimensions as fallback
       const overlaySize = {
@@ -238,7 +238,7 @@ export class ImageViewer {
     }
 
     const ctx = this.canvas.getContext();
-    const canvasSize = this.canvas.getSize();
+    const _canvasSize = this.canvas.getSize();
 
     // Clear canvas with background color
     this.canvas.clearWithBackground(this.backgroundColor);
@@ -352,7 +352,7 @@ export class ImageViewer {
   /**
    * Draw the comparison slider
    */
-  private drawComparisonSlider(ctx: CanvasRenderingContext2D, x: number, canvasSize: Size): void {
+  private drawComparisonSlider(ctx: CanvasRenderingContext2D, x: number, _canvasSize: Size): void {
     const sliderWidth = 4;
     const sliderColor = '#ffffff';
 

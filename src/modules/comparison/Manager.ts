@@ -1,6 +1,6 @@
 import { Renderer } from '../../core';
-import { ImageData, Point, Size, EventHandlers } from '../../types';
-import { loadImage, getImageData, calculateFitDimensions } from '../../utils/image/image';
+import { ImageData, Size, EventHandlers } from '../../types';
+import { loadImage, getImageData } from '../../utils/image/image';
 import { error } from '../../utils/core/logger';
 
 export interface ComparisonOptions {
@@ -86,7 +86,7 @@ export class ComparisonManager {
     if (!this.state.comparisonMode) return;
 
     const mousePos = this.canvas.getMousePosition(event);
-    const canvasSize = this.canvas.getSize();
+    const _canvasSize = this.canvas.getSize();
     
     // Get image bounds to position slider correctly
     const imageBounds = this.getImageBounds();

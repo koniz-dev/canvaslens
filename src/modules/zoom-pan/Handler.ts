@@ -1,7 +1,6 @@
 import { Renderer } from '../../core';
 import { ViewState, Point, EventHandlers } from '../../types';
-import { screenToWorld, worldToScreen, clamp } from '../../utils/geometry/coordinate';
-import { log } from '../../utils/core/logger';
+import { screenToWorld, clamp } from '../../utils/geometry/coordinate';
 
 export interface ZoomPanOptions {
   enableZoom?: boolean;
@@ -23,7 +22,6 @@ export class ZoomPanHandler {
   private wheelTimeout: number | null = null;
   private lastWheelTime = 0;
   
-  // Bound event handlers to maintain references for proper removal
   private boundHandleWheel: EventListener;
   private boundHandleMouseDown: EventListener;
   private boundHandleMouseMove: EventListener;
@@ -48,7 +46,6 @@ export class ZoomPanHandler {
       ...options
     };
 
-    // Bind event handlers to maintain references for proper removal
     this.boundHandleWheel = this.handleWheel.bind(this) as EventListener;
     this.boundHandleMouseDown = this.handleMouseDown.bind(this) as EventListener;
     this.boundHandleMouseMove = this.handleMouseMove.bind(this) as EventListener;
@@ -57,10 +54,8 @@ export class ZoomPanHandler {
 
     this.setupEventListeners();
     
-    // Store initial view state
     this.initialViewState = { ...this.canvas.getViewState() };
     
-    // Set initial cursor based on image loaded state
     this.updateCursor();
   }
 
@@ -75,10 +70,8 @@ export class ZoomPanHandler {
    * Update event listeners based on current options
    */
   private updateEventListeners(): void {
-    // Remove all existing event listeners first
     this.removeEventListeners();
     
-    // Add event listeners based on current options
     if (this.options.enableZoom) {
       this.canvas.addEventListener('wheel', this.boundHandleWheel, { passive: false });
     }
@@ -90,7 +83,6 @@ export class ZoomPanHandler {
       this.canvas.addEventListener('mouseleave', this.boundHandleMouseUp);
     }
 
-    // Always add double-click listener for reset functionality
     this.canvas.addEventListener('dblclick', this.boundHandleDoubleClick);
   }
 
@@ -110,7 +102,7 @@ export class ZoomPanHandler {
    * Check if image is loaded
    */
   private isImageLoaded(): boolean {
-    const hasImageViewer = !!this.canvas.imageViewer;
+    const _hasImageViewer = !!this.canvas.imageViewer;
     const isLoaded = this.canvas.imageViewer ? this.canvas.imageViewer.isImageLoaded() : false;
     return isLoaded;
   }
@@ -120,16 +112,12 @@ export class ZoomPanHandler {
    */
   private updateCursor(): void {
     if (!this.isImageLoaded()) {
-      // No image loaded - use default cursor
       this.canvas.getElement().style.cursor = 'default';
     } else if (this.isPanning && this.options.enablePan) {
-      // Currently panning and pan is enabled - use grabbing cursor
       this.canvas.getElement().style.cursor = 'grabbing';
     } else if (this.options.enablePan) {
-      // Image loaded and can pan - use grab cursor
       this.canvas.getElement().style.cursor = 'grab';
     } else {
-      // Pan is disabled - use default cursor
       this.canvas.getElement().style.cursor = 'default';
     }
   }
@@ -145,21 +133,18 @@ export class ZoomPanHandler {
    * Handle mouse wheel for zooming with throttling
    */
   private handleWheel(event: WheelEvent): void {
-    // Don't handle zoom if no image is loaded
     if (!this.isImageLoaded()) {
       return;
     }
     
-    // Don't handle zoom if zoom is disabled
     if (!this.options.enableZoom) {
       return;
     }
     
     event.preventDefault();
     
-    // Throttle wheel events to improve performance
     const now = Date.now();
-    if (now - this.lastWheelTime < 16) { // ~60fps
+    if (now - this.lastWheelTime < 16) {
       return;
     }
     this.lastWheelTime = now;
@@ -167,7 +152,6 @@ export class ZoomPanHandler {
     const currentViewState = this.canvas.getViewState();
     const mousePos = this.canvas.getMousePosition(event);
     
-    // Calculate zoom factor
     const zoomFactor = event.deltaY > 0 ? 1 - this.options.zoomSpeed : 1 + this.options.zoomSpeed;
     const newScale = clamp(
       currentViewState.scale * zoomFactor,
@@ -175,10 +159,8 @@ export class ZoomPanHandler {
       this.options.maxZoom
     );
 
-    // Calculate zoom center in world coordinates
     const worldPos = screenToWorld(mousePos, currentViewState);
     
-    // Calculate new offset to zoom into mouse position
     const newOffsetX = mousePos.x - worldPos.x * newScale;
     const newOffsetY = mousePos.y - worldPos.y * newScale;
 
@@ -201,12 +183,10 @@ export class ZoomPanHandler {
    * Handle mouse down for panning
    */
   private handleMouseDown(event: MouseEvent): void {
-    // Early returns for performance - check most common conditions first
     if (event.button !== 0 || !this.options.enablePan || !this.isImageLoaded()) {
       return;
     }
     
-    // Check annotation states - most likely to be true when user is interacting with annotations
     if (this.canvas.annotationManager) {
       if (this.canvas.annotationManager.isToolActive() || 
           this.canvas.annotationManager.isDrawing() ||
@@ -215,7 +195,6 @@ export class ZoomPanHandler {
       }
     }
     
-    // Start panning
     this.isPanning = true;
     this.lastPanPoint = this.canvas.getMousePosition(event);
     this.updateCursor();
@@ -225,12 +204,10 @@ export class ZoomPanHandler {
    * Handle mouse move for panning
    */
   private handleMouseMove(event: MouseEvent): void {
-    // Don't handle panning if pan is disabled
     if (!this.options.enablePan) {
       return;
     }
     
-    // Don't handle panning if annotation system is drawing
     if (this.isAnnotationDrawing()) {
       return;
     }
@@ -254,7 +231,7 @@ export class ZoomPanHandler {
   /**
    * Handle mouse up for panning
    */
-  private handleMouseUp(event: MouseEvent): void {
+  private handleMouseUp(_event: MouseEvent): void {
     this.isPanning = false;
     this.updateCursor();
   }
@@ -263,7 +240,6 @@ export class ZoomPanHandler {
    * Handle double-click event to reset view
    */
   private handleDoubleClick(event: MouseEvent): void {
-    // Only handle left double-click
     if (event.button !== 0) {
       return;
     }
@@ -273,11 +249,9 @@ export class ZoomPanHandler {
       return;
     }
 
-    // Prevent default behavior
     event.preventDefault();
     event.stopPropagation();
 
-    // Reset the view
     this.reset();
   }
 
@@ -290,7 +264,6 @@ export class ZoomPanHandler {
     
     const currentState = this.canvas.getViewState();
     
-    // Trigger events if values changed
     if (oldState.scale !== currentState.scale && this.eventHandlers.onZoomChange) {
       this.eventHandlers.onZoomChange(currentState.scale);
     }
@@ -303,8 +276,6 @@ export class ZoomPanHandler {
       });
     }
 
-    // Trigger a custom event to notify that view state has changed
-    // This will be used by ImageViewer to re-render
     const viewStateChangeEvent = new CustomEvent('viewStateChange', {
       detail: { viewState: currentState }
     });
@@ -324,7 +295,6 @@ export class ZoomPanHandler {
     const currentState = this.canvas.getViewState();
     
     if (center) {
-      // Zoom to specific center point
       const worldPos = screenToWorld(center, currentState);
       const newOffsetX = center.x - worldPos.x * clampedScale;
       const newOffsetY = center.y - worldPos.y * clampedScale;
@@ -335,17 +305,14 @@ export class ZoomPanHandler {
         offsetY: newOffsetY
       });
     } else {
-      // Zoom to center of canvas
       const canvasSize = this.canvas.getSize();
       const centerPoint: Point = {
         x: canvasSize.width / 2,
         y: canvasSize.height / 2
       };
       
-      // Calculate world position at current center
       const worldPos = screenToWorld(centerPoint, currentState);
       
-      // Calculate new offset to maintain center
       const newOffsetX = centerPoint.x - worldPos.x * clampedScale;
       const newOffsetY = centerPoint.y - worldPos.y * clampedScale;
       
@@ -409,16 +376,13 @@ export class ZoomPanHandler {
     
     const canvasSize = this.canvas.getSize();
     
-    // Calculate scale to fit image within canvas
     const scaleX = canvasSize.width / imageBounds.width;
     const scaleY = canvasSize.height / imageBounds.height;
-    const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 100%
+    const scale = Math.min(scaleX, scaleY, 1);
     
-    // Calculate center position to center the image
     const scaledWidth = imageBounds.width * scale;
     const scaledHeight = imageBounds.height * scale;
     
-    // Calculate offset to center the image, accounting for its current position
     const offsetX = (canvasSize.width - scaledWidth) / 2 - imageBounds.x * scale;
     const offsetY = (canvasSize.height - scaledHeight) / 2 - imageBounds.y * scale;
     
@@ -440,16 +404,13 @@ export class ZoomPanHandler {
     
     const canvasSize = this.canvas.getSize();
     
-    // Calculate scale to fit image within canvas
     const scaleX = canvasSize.width / imageBounds.width;
     const scaleY = canvasSize.height / imageBounds.height;
-    const scale = Math.min(scaleX, scaleY); // Allow scaling up for overlay
+    const scale = Math.min(scaleX, scaleY);
     
-    // Calculate center position to center the image
     const scaledWidth = imageBounds.width * scale;
     const scaledHeight = imageBounds.height * scale;
     
-    // Calculate offset to center the image, accounting for its current position
     const offsetX = (canvasSize.width - scaledWidth) / 2 - imageBounds.x * scale;
     const offsetY = (canvasSize.height - scaledHeight) / 2 - imageBounds.y * scale;
     
@@ -482,13 +443,11 @@ export class ZoomPanHandler {
     const oldOptions = { ...this.options };
     this.options = { ...this.options, ...newOptions };
     
-    // Update event listeners if zoom/pan settings changed
     if (oldOptions.enableZoom !== this.options.enableZoom || 
         oldOptions.enablePan !== this.options.enablePan) {
       this.updateEventListeners();
     }
     
-    // Update cursor state
     this.updateCursor();
   }
 
@@ -510,16 +469,13 @@ export class ZoomPanHandler {
    * Destroy the handler and remove event listeners
    */
   destroy(): void {
-    // Remove all event listeners
     this.removeEventListeners();
     
-    // Clear pending wheel timeout
     if (this.wheelTimeout) {
       clearTimeout(this.wheelTimeout);
       this.wheelTimeout = null;
     }
     
-    // Reset state
     this.isPanning = false;
     this.lastPanPoint = { x: 0, y: 0 };
     this.initialViewState = null;

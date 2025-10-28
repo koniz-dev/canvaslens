@@ -51,7 +51,7 @@ export class CanvasLens extends HTMLElement {
     try {
       this.core = new CanvasLensCore(this);
       this.core.initialize();
-    } catch (error) {
+    } catch {
       // Error handling is managed by CanvasLensCore
     }
   }

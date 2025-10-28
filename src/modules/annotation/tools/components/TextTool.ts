@@ -18,14 +18,14 @@ export class TextTool extends BaseTool {
   /**
    * Continue drawing - not applicable for text tool
    */
-  continueDrawing(point: Point): void {
+  continueDrawing(_point: Point): void {
     // Text tool doesn't have continuous drawing
   }
 
   /**
    * Finish drawing - handled by text input
    */
-  finishDrawing(point: Point): Annotation | null {
+  finishDrawing(_point: Point): Annotation | null {
     // This is handled by the text input completion
     return null;
   }

@@ -87,7 +87,6 @@ export class OverlayManager {
       justify-content: center;
     `;
 
-    // Add close button
     const closeButton = document.createElement('button');
     closeButton.innerHTML = '✕';
     closeButton.style.cssText = `
@@ -118,7 +117,6 @@ export class OverlayManager {
       throw new Error('Overlay container not created');
     }
 
-    // Create canvas container
     const canvasContainer = document.createElement('div');
     canvasContainer.style.cssText = `
       width: 90vw;
@@ -131,10 +129,8 @@ export class OverlayManager {
     `;
     this.overlayContainer.appendChild(canvasContainer);
 
-    // Store original options
     this.originalOptions = this.getOriginalOptions();
 
-    // Create overlay CanvasLens with full-screen options
     this.overlayCanvasLens = new Engine({
       ...this.originalOptions,
       container: canvasContainer,

@@ -8,11 +8,8 @@ export function calculateFitDimensions(
   naturalSize: Size,
   containerSize: Size
 ): { displaySize: Size; position: Point } {
-  const naturalAspectRatio = naturalSize.width / naturalSize.height;
-  const containerAspectRatio = containerSize.width / containerSize.height;
-
-  let displayWidth: number;
-  let displayHeight: number;
+  const _naturalAspectRatio = naturalSize.width / naturalSize.height;
+  const _containerAspectRatio = containerSize.width / containerSize.height;
 
   // Calculate scale factors for both dimensions
   const scaleX = containerSize.width / naturalSize.width;
@@ -22,8 +19,8 @@ export function calculateFitDimensions(
   // But don't scale up (scale > 1) - only scale down (scale <= 1)
   const scale = Math.min(scaleX, scaleY, 1);
 
-  displayWidth = naturalSize.width * scale;
-  displayHeight = naturalSize.height * scale;
+  const displayWidth = naturalSize.width * scale;
+  const displayHeight = naturalSize.height * scale;
 
   const position: Point = {
     x: (containerSize.width - displayWidth) / 2,
@@ -44,21 +41,18 @@ export function calculateFitDimensionsOverlay(
   naturalSize: Size,
   containerSize: Size
 ): { displaySize: Size; position: Point } {
-  const naturalAspectRatio = naturalSize.width / naturalSize.height;
-  const containerAspectRatio = containerSize.width / containerSize.height;
-
-  let displayWidth: number;
-  let displayHeight: number;
+  const _naturalAspectRatio = naturalSize.width / naturalSize.height;
+  const _containerAspectRatio = containerSize.width / containerSize.height;
 
   // Calculate scale factors for both dimensions
-  const scaleX = containerSize.width / naturalSize.width;
-  const scaleY = containerSize.height / naturalSize.height;
+  const _scaleX = containerSize.width / naturalSize.width;
+  const _scaleY = containerSize.height / naturalSize.height;
   
   // For overlay mode, don't scale - keep original size
   const scale = 1;
 
-  displayWidth = naturalSize.width * scale;
-  displayHeight = naturalSize.height * scale;
+  const displayWidth = naturalSize.width * scale;
+  const displayHeight = naturalSize.height * scale;
 
   const position: Point = {
     x: (containerSize.width - displayWidth) / 2,
@@ -82,14 +76,14 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
     img.crossOrigin = 'anonymous';
     
     img.onload = () => resolve(img);
-    img.onerror = (error) => {
+    img.onerror = (_error) => {
       // If CORS fails, try without CORS
       if (img.crossOrigin === 'anonymous') {
         const fallbackImg = new Image();
         fallbackImg.onload = () => {
           resolve(fallbackImg);
         };
-        fallbackImg.onerror = (fallbackError) => {
+        fallbackImg.onerror = (_fallbackError) => {
           reject(new Error(`Failed to load image: ${url}`));
         };
         fallbackImg.src = url;

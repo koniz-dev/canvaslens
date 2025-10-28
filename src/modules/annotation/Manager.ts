@@ -33,10 +33,8 @@ export class AnnotationManager {
     this.eventHandlers = options.eventHandlers || {};
     this.enabled = options.enabled !== false;
 
-    // Initialize renderer
     this.renderer = new AnnotationRenderer(canvas);
 
-    // Default style
     const defaultStyle: AnnotationStyle = {
       strokeColor: '#ff0000',
       strokeWidth: 2,
@@ -46,7 +44,6 @@ export class AnnotationManager {
       ...options.defaultStyle
     };
 
-    // Default available tools
     const availableTools: Tool[] = options.availableTools || [
       { name: 'Rectangle', type: 'rect', icon: '⬜' },
       { name: 'Arrow', type: 'arrow', icon: '↗' },
@@ -55,23 +52,20 @@ export class AnnotationManager {
       { name: 'Line', type: 'line', icon: '📏' }
     ];
 
-    // Initialize tool manager
     const toolManagerOptions: ToolManagerOptions = {
       defaultStyle,
       availableTools,
-      annotationManager: this // Pass reference to this AnnotationManager
+      annotationManager: this
     };
 
     this.toolManager = new AnnotationToolsManager(canvas, this.renderer, toolManagerOptions);
     
-    // Set up annotation creation callback
     this.toolManager.setOnAnnotationCreate((annotation) => {
       this.addAnnotation(annotation);
     });
 
 
-    // Initialize performance optimizations
-    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16); // ~60fps
+    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16);
     this.cleanupCallback = this.cleanup.bind(this);
     MemoryManager.registerCleanup(this.cleanupCallback);
 
@@ -82,15 +76,12 @@ export class AnnotationManager {
    * Setup event listeners for annotation management
    */
   private setupEventListeners(): void {
-    // Right-click for context menu or selection
     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
     
-    // Mouse events for selection and dragging - use capture phase to handle before zoom/pan
     this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
     this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
     this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
     
-    // Note: Keyboard shortcuts are handled by ToolManager to avoid conflicts
   }
 
   /**
@@ -105,11 +96,9 @@ export class AnnotationManager {
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
     
-    // Find annotation under cursor
     const annotation = this.getAnnotationAt(worldPoint);
     if (annotation) {
       this.selectAnnotation(annotation);
-      // Show context menu for delete/edit
       this.showContextMenu(event, annotation);
     }
   }
@@ -131,12 +120,10 @@ export class AnnotationManager {
   }
 
   private canHandleMouseDown(event: MouseEvent): boolean {
-    // Early returns for performance - check most common conditions first
     if (!this.enabled || event.button !== 0) {
       return false;
     }
     
-    // Check if we should handle this event
     return !this.toolManager.isDrawing() && 
            this.hasEnabledAnnotationTools() &&
            !this.isComparisonModeActive();
@@ -148,8 +135,6 @@ export class AnnotationManager {
   }
 
   private handleAnnotationClick(annotation: Annotation, worldPoint: Point, event: MouseEvent): void {
-    // Always prevent default and stop propagation when clicking on annotation
-    // to prevent zoom/pan from interfering
     event.preventDefault();
     event.stopPropagation();
     
@@ -243,7 +228,6 @@ export class AnnotationManager {
   private handleKeyDown(event: KeyboardEvent): void {
     if (!this.enabled) return;
 
-    // Delete selected annotation
     if (event.key === 'Delete' || event.key === 'Backspace') {
       if (this.selectedAnnotation) {
         this.removeAnnotation(this.selectedAnnotation.id);
@@ -251,7 +235,6 @@ export class AnnotationManager {
       }
     }
 
-    // Clear selection
     if (event.key === 'Escape') {
       this.selectAnnotation(null);
     }
@@ -305,12 +288,10 @@ export class AnnotationManager {
     this.annotations.delete(id);
     this._hasChanges = true;
     
-    // Clear selection if removing selected annotation
     if (this.selectedAnnotation?.id === id) {
       this.selectedAnnotation = null;
     }
 
-    // Trigger re-render
     this.canvas.getElement().dispatchEvent(new CustomEvent('viewStateChange'));
 
     if (this.eventHandlers.onAnnotationRemove) {
@@ -334,7 +315,6 @@ export class AnnotationManager {
     if (annotation.points.length === 0) return { x: 0, y: 0 };
     
     if (annotation.type === 'rect' && annotation.points.length >= 2) {
-      // For rectangle, return center of bounding box
       const point1 = annotation.points[0];
       const point2 = annotation.points[1];
       if (!point1 || !point2) return { x: 0, y: 0 };
@@ -350,7 +330,6 @@ export class AnnotationManager {
       };
     }
     
-    // For other types, return first point
     const firstPoint = annotation.points[0];
     return firstPoint || { x: 0, y: 0 };
   }
@@ -365,7 +344,6 @@ export class AnnotationManager {
       y: newCenter.y - currentCenter.y
     };
     
-    // Update all points
     annotation.points = annotation.points.map(point => ({
       x: point.x + offset.x,
       y: point.y + offset.y
@@ -383,7 +361,6 @@ export class AnnotationManager {
    * Get annotation at specific point
    */
   getAnnotationAt(point: Point): Annotation | null {
-    // Check annotations in reverse order (last drawn first)
     const annotationArray = this.getAllAnnotations().reverse();
     
     for (const annotation of annotationArray) {
@@ -401,7 +378,6 @@ export class AnnotationManager {
   selectAnnotation(annotation: Annotation | null): void {
     this.selectedAnnotation = annotation;
     
-    // Trigger selection event
     const event = new CustomEvent('annotationselect', {
       detail: annotation
     });
@@ -448,15 +424,12 @@ export class AnnotationManager {
     const annotations = this.getAllAnnotations();
     
     
-    // Render all annotations (no need to apply view transform since annotations are in world coordinates)
     this.renderer.renderAll(annotations);
     
-    // Render selection highlight
     if (this.selectedAnnotation) {
       this.renderSelectionHighlight(this.selectedAnnotation);
     }
     
-    // Render current drawing preview
     this.toolManager.renderPreview();
   }
 
@@ -560,14 +533,12 @@ export class AnnotationManager {
     if ((annotation.type !== 'line' && annotation.type !== 'arrow') || annotation.points.length < 2) return;
     
     const ctx = this.canvas.getContext();
-    const padding = 10; // Increased from 5 to 10 for easier selection
+    const padding = 10;
     
-    // Draw parallel lines around the main line
     for (let i = 0; i < annotation.points.length - 1; i++) {
       const start = annotation.points[i]!;
       const end = annotation.points[i + 1]!;
       
-      // Calculate perpendicular offset
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       const length = Math.sqrt(dx * dx + dy * dy);
@@ -576,13 +547,11 @@ export class AnnotationManager {
         const offsetX = (-dy / length) * padding;
         const offsetY = (dx / length) * padding;
         
-        // Draw top parallel line
         ctx.beginPath();
         ctx.moveTo(start.x + offsetX, start.y + offsetY);
         ctx.lineTo(end.x + offsetX, end.y + offsetY);
         ctx.stroke();
         
-        // Draw bottom parallel line
         ctx.beginPath();
         ctx.moveTo(start.x - offsetX, start.y - offsetY);
         ctx.lineTo(end.x - offsetX, end.y - offsetY);
@@ -603,21 +572,17 @@ export class AnnotationManager {
     const fontSize = annotation.style.fontSize || 16;
     const fontFamily = annotation.style.fontFamily || 'Arial, sans-serif';
     
-    // Set font to match the text rendering
     ctx.font = `${fontSize}px ${fontFamily}`;
     
-    // Get accurate text metrics
     const textMetrics = ctx.measureText(text);
     const textWidth = textMetrics.width;
     
-    // More accurate text height calculation
-    // Canvas text is drawn from baseline, so we need to account for ascent
-    const textHeight = fontSize * 0.8; // More accurate height estimation
+    const textHeight = fontSize * 0.8;
     
     const padding = 5;
     ctx.strokeRect(
       textPos.x - padding,
-      textPos.y - textHeight - padding, // Adjust Y position for text baseline
+      textPos.y - textHeight - padding,
       textWidth + padding * 2,
       textHeight + padding * 2
     );
@@ -701,9 +666,7 @@ export class AnnotationManager {
   /**
    * Check if a tool is enabled
    */
-  isToolEnabled(toolType: string): boolean {
-    // For now, assume all tools are enabled if annotation system is enabled
-    // This could be enhanced to check specific tool configuration
+  isToolEnabled(_toolType: string): boolean {
     return this.enabled;
   }
 
@@ -742,10 +705,8 @@ export class AnnotationManager {
         throw new Error('Invalid annotation data format');
       }
 
-      // Clear existing annotations
       this.clearAll();
 
-      // Add imported annotations
       annotations.forEach(annotation => {
         if (this.isValidAnnotation(annotation)) {
           this.addAnnotation(annotation);
@@ -784,8 +745,6 @@ export class AnnotationManager {
    * Get image bounds from the parent viewer (if available)
    */
   getImageBounds(): { x: number; y: number; width: number; height: number } | null {
-    // Try to get image bounds from the parent context
-    // This assumes the AnnotationManager is used within an ImageViewer
     if (this.canvas.imageViewer) {
       return this.canvas.imageViewer.getImageBounds();
     }
@@ -796,7 +755,6 @@ export class AnnotationManager {
    * Show context menu for annotation
    */
   private showContextMenu(event: MouseEvent, annotation: Annotation): void {
-    // Create context menu
     const contextMenu = document.createElement('div');
     contextMenu.className = 'annotation-context-menu';
     contextMenu.style.cssText = `
@@ -812,7 +770,6 @@ export class AnnotationManager {
       min-width: 120px;
     `;
 
-    // Delete option
     const deleteOption = document.createElement('div');
     deleteOption.textContent = 'Delete';
     deleteOption.style.cssText = `
@@ -833,10 +790,8 @@ export class AnnotationManager {
 
     contextMenu.appendChild(deleteOption);
 
-    // Add to document
     document.body.appendChild(contextMenu);
 
-    // Remove menu when clicking outside
     const removeMenu = (e: Event) => {
       if (!contextMenu.contains(e.target as Node)) {
         document.body.removeChild(contextMenu);
@@ -861,7 +816,6 @@ export class AnnotationManager {
    * Check if comparison mode is active
    */
   private isComparisonModeActive(): boolean {
-    // Check if the canvas has an imageViewer with comparison mode
     if (this.canvas.imageViewer && (this.canvas.imageViewer as any).isComparisonMode) {
       return (this.canvas.imageViewer as any).isComparisonMode();
     }
@@ -872,7 +826,6 @@ export class AnnotationManager {
    * Update tool configuration
    */
   updateToolConfig(annotationConfig: any): void {
-    // Update tool manager with new configuration
     if (this.toolManager) {
       this.toolManager.updateToolConfig(annotationConfig);
     }
@@ -882,17 +835,14 @@ export class AnnotationManager {
    * Destroy annotation manager
    */
   destroy(): void {
-    // Clean up tool manager
     this.toolManager.destroy();
 
-    // Remove event listeners - match capture phase
     this.canvas.removeEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
     this.canvas.removeEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
     this.canvas.removeEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
     this.canvas.removeEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
     document.removeEventListener('keydown', this.handleKeyDown.bind(this));
 
-    // Clear annotations and state
     this.clearAll();
     this.isDragging = false;
     this.dragStartPoint = null;

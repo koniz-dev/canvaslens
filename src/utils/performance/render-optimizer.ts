@@ -1,9 +1,8 @@
 /**
  * Render optimization utilities for CanvasLens
  */
-import { Point, Size, Rectangle } from '../../types';
-import { ViewportCulling, ViewportInfo, CullableObject } from './viewport-culling';
-import { performanceMonitor } from './performance';
+import { Rectangle } from '../../types';
+import { ViewportCulling, ViewportInfo } from './viewport-culling';
 
 export interface RenderRegion {
   /** Region bounds */
