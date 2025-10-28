@@ -5,7 +5,7 @@ HTMLCanvasElement.prototype.toDataURL = jest.fn(() => {
   mockDataURLCounter++;
   return `data:image/png;base64,mock-image-data-${mockDataURLCounter}`;
 });
-HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
+HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation(() => ({
   fillRect: jest.fn(),
   strokeRect: jest.fn(),
   clearRect: jest.fn(),
@@ -59,7 +59,7 @@ HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
   direction: 'inherit',
   imageSmoothingEnabled: true,
   imageSmoothingQuality: 'low',
-} as any));
+} as unknown as CanvasRenderingContext2D));
 
 global.Image = class {
   onload: (() => void) | null = null;
@@ -79,29 +79,29 @@ global.Image = class {
       }
     });
   }
-} as any;
+} as unknown as typeof Image;
 
 global.ResizeObserver = class {
   observe = jest.fn();
   unobserve = jest.fn();
   disconnect = jest.fn();
-} as any;
+} as unknown as typeof ResizeObserver;
 
 global.IntersectionObserver = class {
   observe = jest.fn();
   unobserve = jest.fn();
   disconnect = jest.fn();
-} as any;
+} as unknown as typeof IntersectionObserver;
 
 global.requestAnimationFrame = jest.fn((cb) => {
   const timer = setTimeout(cb, 16);
-  return timer as any;
+  return timer as number;
 });
 global.cancelAnimationFrame = jest.fn((id) => clearTimeout(id));
 
 global.performance = {
   now: jest.fn(() => Date.now()),
-} as any;
+} as unknown as Performance;
 
 const originalWarn = console.warn;
 const originalError = console.error;

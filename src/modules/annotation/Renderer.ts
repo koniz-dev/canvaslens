@@ -134,7 +134,7 @@ export class AnnotationRenderer {
         };
       case 'text': {
         // Estimate text bounds (approximate)
-        const textWidth = annotation.data?.text?.length || 0;
+        const textWidth = ((annotation.data as Record<string, unknown>)?.text as string)?.length || 0;
         return {
           x: start.x,
           y: start.y - (annotation.style?.fontSize || 16),
@@ -191,14 +191,14 @@ export class AnnotationRenderer {
   /**
    * Get current view state
    */
-  private getViewState(): any {
+  private getViewState(): { scale: number; offsetX: number; offsetY: number } {
     return this.canvas.getViewState();
   }
 
   /**
    * Convert world coordinates to screen coordinates
    */
-  private worldToScreen(worldPoint: Point, viewState: any): Point {
+  private worldToScreen(worldPoint: Point, viewState: { scale: number; offsetX: number; offsetY: number }): Point {
     return {
       x: worldPoint.x * viewState.scale + viewState.offsetX,
       y: worldPoint.y * viewState.scale + viewState.offsetY
@@ -320,7 +320,7 @@ export class AnnotationRenderer {
   /**
    * Render preview annotation (while drawing)
    */
-  renderPreview(type: Annotation['type'], points: Point[], style: AnnotationStyle, data?: any): void {
+  renderPreview(type: Annotation['type'], points: Point[], style: AnnotationStyle, data?: Record<string, unknown>): void {
     const previewAnnotation: Annotation = {
       id: 'preview',
       type,
@@ -331,7 +331,7 @@ export class AnnotationRenderer {
         strokeColor: style.strokeColor + '80', // Add transparency
         strokeWidth: style.strokeWidth,
       },
-      data
+      data: data || {}
     };
 
     this.render(previewAnnotation);

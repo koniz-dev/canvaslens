@@ -87,7 +87,7 @@ export class AnnotationToolsEventHandler {
     const annotation = this.options.currentTool.startDrawing(worldPoint);
     
     if (this.options.canvas.annotationManager && 'selectAnnotation' in this.options.canvas.annotationManager) {
-      (this.options.canvas.annotationManager as any).selectAnnotation(null);
+      (this.options.canvas.annotationManager as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
     }
     
     if (annotation) {

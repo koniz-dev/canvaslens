@@ -4,7 +4,7 @@
  */
 function isDevelopment(): boolean {
   return process.env.NODE_ENV === 'development' || 
-         typeof window !== 'undefined' && (window as any).__DEV__ === true;
+         typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).__DEV__ === true;
 }
 
 /**

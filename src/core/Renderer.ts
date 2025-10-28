@@ -226,7 +226,7 @@ export class Renderer {
   addEventListener(type: string, listener: EventListener, options?: boolean | AddEventListenerOptions): void {
     // For wheel events, use passive option to improve scroll performance
     if (type === 'wheel' && !options) {
-      this.canvas.addEventListener(type, listener, { passive: true } as any);
+      this.canvas.addEventListener(type, listener, { passive: true } as AddEventListenerOptions);
     } else {
       this.canvas.addEventListener(type, listener, options);
     }
@@ -238,7 +238,7 @@ export class Renderer {
   removeEventListener(type: string, listener: EventListener, options?: boolean | EventListenerOptions): void {
     // For wheel events, use passive option to match addEventListener
     if (type === 'wheel' && !options) {
-      this.canvas.removeEventListener(type, listener, { passive: true } as any);
+      this.canvas.removeEventListener(type, listener, { passive: true } as EventListenerOptions);
     } else {
       this.canvas.removeEventListener(type, listener, options);
     }

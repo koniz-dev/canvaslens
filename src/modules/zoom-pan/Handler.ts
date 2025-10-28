@@ -18,7 +18,7 @@ export class ZoomPanHandler {
   private isPanning = false;
   private lastPanPoint: Point = { x: 0, y: 0 };
   private initialViewState: ViewState | null = null;
-  private annotationManager: any = null; // Reference to annotation manager - will be properly typed when circular dependency is resolved
+  private annotationManager: { isToolActive: () => boolean; isDrawing: () => boolean; hasSelectedAnnotation: () => boolean } | null = null; // Reference to annotation manager - will be properly typed when circular dependency is resolved
   private wheelTimeout: number | null = null;
   private lastWheelTime = 0;
   
@@ -190,7 +190,7 @@ export class ZoomPanHandler {
     if (this.canvas.annotationManager) {
       if (this.canvas.annotationManager.isToolActive() || 
           this.canvas.annotationManager.isDrawing() ||
-          (this.canvas.annotationManager as any).hasSelectedAnnotation()) {
+          (this.canvas.annotationManager as unknown as { hasSelectedAnnotation: () => boolean }).hasSelectedAnnotation()) {
         return;
       }
     }

@@ -86,7 +86,7 @@ export class PerformanceMonitor {
    */
   private getMemoryUsage(): number | undefined {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (performance as { memory: { usedJSHeapSize: number } }).memory;
       return memory.usedJSHeapSize;
     }
     return undefined;
@@ -213,10 +213,10 @@ export const performanceMonitor = new PerformanceMonitor();
 /**
  * Performance decorator for methods
  */
-export function measurePerformance(target: any, propertyName: string, descriptor: PropertyDescriptor) {
+export function measurePerformance(target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
   const method = descriptor.value;
 
-  descriptor.value = function (...args: any[]) {
+  descriptor.value = function (...args: unknown[]) {
     const _startTime = performance.now();
     const result = method.apply(this, args);
     const _endTime = performance.now();

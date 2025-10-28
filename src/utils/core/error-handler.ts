@@ -13,7 +13,7 @@ export enum ErrorType {
 
 export interface CanvasLensError extends Error {
   type: ErrorType;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   recoverable?: boolean;
 }
 
@@ -26,7 +26,7 @@ export class ErrorHandler {
   static createError(
     type: ErrorType,
     message: string,
-    context?: Record<string, any>,
+    context?: Record<string, unknown>,
     recoverable: boolean = false
   ): CanvasLensError {
     const err = new Error(message) as CanvasLensError;
@@ -41,8 +41,8 @@ export class ErrorHandler {
    */
   static handleError(
     err: Error | CanvasLensError,
-    context?: Record<string, any>,
-    fallback?: () => any
+    context?: Record<string, unknown>,
+    fallback?: () => unknown
   ): void {
     let canvasLensError: CanvasLensError;
 
@@ -78,7 +78,7 @@ export class ErrorHandler {
    */
   static handleInitializationError(
     err: Error,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const userMessage = this.getUserFriendlyMessage(ErrorType.INITIALIZATION, err.message);
     const canvasLensError = this.createError(
@@ -96,7 +96,7 @@ export class ErrorHandler {
   static handleImageLoadError(
     err: Error,
     src?: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const userMessage = this.getUserFriendlyMessage(ErrorType.IMAGE_LOAD, err.message, src);
     const canvasLensError = this.createError(
@@ -116,7 +116,7 @@ export class ErrorHandler {
    */
   static handleRenderingError(
     err: Error,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const canvasLensError = this.createError(
       ErrorType.RENDERING,
@@ -136,7 +136,7 @@ export class ErrorHandler {
   static handleAnnotationError(
     err: Error,
     annotationId?: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const canvasLensError = this.createError(
       ErrorType.ANNOTATION,
@@ -153,7 +153,7 @@ export class ErrorHandler {
   static handleToolActivationError(
     err: Error,
     toolType?: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const canvasLensError = this.createError(
       ErrorType.TOOL_ACTIVATION,
@@ -170,7 +170,7 @@ export class ErrorHandler {
   static handleOverlayError(
     err: Error,
     operation?: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const canvasLensError = this.createError(
       ErrorType.OVERLAY,
@@ -191,7 +191,7 @@ export class ErrorHandler {
     err: Error,
     attribute?: string,
     value?: string,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const canvasLensError = this.createError(
       ErrorType.ATTRIBUTE_PARSING,
@@ -218,8 +218,12 @@ export class ErrorHandler {
   /**
    * Check if error is a CanvasLens error
    */
-  private static isCanvasLensError(error: any): error is CanvasLensError {
-    return error && typeof error.type === 'string' && error.type in ErrorType;
+  private static isCanvasLensError(error: unknown): error is CanvasLensError {
+    return error !== null &&
+           typeof error === 'object' &&
+           'type' in error &&
+           typeof (error as Record<string, unknown>).type === 'string' &&
+           Object.values(ErrorType).includes((error as Record<string, unknown>).type as ErrorType);
   }
 
   /**
@@ -316,13 +320,13 @@ export class ErrorHandler {
  */
 export function withErrorHandling(
   errorType: ErrorType,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
   fallback?: () => void
 ) {
-  return function (target: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
 
-    descriptor.value = function (...args: any[]) {
+    descriptor.value = function (...args: unknown[]) {
       try {
         return method.apply(this, args);
       } catch (error) {
@@ -341,7 +345,7 @@ export function withErrorHandling(
 export async function safeAsync<T>(
   asyncFn: () => Promise<T>,
   errorType: ErrorType,
-  context?: Record<string, any>,
+  context?: Record<string, unknown>,
   fallback?: () => T
 ): Promise<T | undefined> {
   try {

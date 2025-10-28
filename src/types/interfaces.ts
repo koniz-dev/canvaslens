@@ -10,7 +10,7 @@ export interface AnnotationManager {
   removeAnnotation(id: string): void;
   getAllAnnotations(): Annotation[];
   clearAll(): void;
-  getImageBounds(): { x: number; y: number; width: number; height: number };
+  getImageBounds(): { x: number; y: number; width: number; height: number } | null;
   isDrawing(): boolean;
 }
 
@@ -22,10 +22,10 @@ export interface ImageViewer {
   resize(size: Size): void;
   fitToView(): void;
   resetView(): void;
-  getCanvas(): HTMLCanvasElement;
+  getCanvas(): unknown;
   getZoomPanHandler(): unknown;
   getAnnotationManager(): AnnotationManager | null;
   setEventHandlers(handlers: EventHandlers): void;
   render(): void;
-  getImageBounds(): { x: number; y: number; width: number; height: number };
+  getImageBounds(): { x: number; y: number; width: number; height: number } | null;
 }

@@ -79,7 +79,7 @@ export abstract class BaseTool {
       type: this.getType(),
       points: [...points],
       style: { ...this.options.style },
-      data
+      data: data || {}
     };
   }
 }

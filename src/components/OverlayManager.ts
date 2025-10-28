@@ -189,8 +189,8 @@ export class OverlayManager {
     this.overlayContainer.addEventListener('click', handleBackgroundClick);
 
     // Store handlers for cleanup
-    (this.overlayContainer as any)._keyHandler = handleKeyDown;
-    (this.overlayContainer as any)._clickHandler = handleBackgroundClick;
+    (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._keyHandler = handleKeyDown;
+    (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._clickHandler = handleBackgroundClick;
   }
 
   /**
@@ -228,8 +228,8 @@ export class OverlayManager {
   private destroyOverlayContainer(): void {
     if (this.overlayContainer) {
       // Clean up event handlers
-      const keyHandler = (this.overlayContainer as any)._keyHandler;
-      const clickHandler = (this.overlayContainer as any)._clickHandler;
+      const keyHandler = (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._keyHandler;
+      const clickHandler = (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._clickHandler;
       
       if (keyHandler) {
         document.removeEventListener('keydown', keyHandler);

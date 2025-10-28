@@ -146,7 +146,7 @@ export class RenderOptimizer {
   ): {
     regionsToRender: RenderRegion[];
     regionsToSkip: RenderRegion[];
-    performanceMetrics: any;
+    performanceMetrics: { renderTime: number; regionCount: number; skippedRegions: number };
   } {
     const startTime = performance.now();
     
@@ -160,12 +160,9 @@ export class RenderOptimizer {
     const optimizationTime = endTime - startTime;
 
     const performanceMetrics = {
-      optimizationTime,
-      totalRegions: allRegions.length,
-      regionsToRender: regionsToRender.length,
-      regionsToSkip: regionsToSkip.length,
-      cullingRatio: allRegions.length > 0 ? 
-        (allRegions.length - regionsToRender.length) / allRegions.length : 0
+      renderTime: optimizationTime,
+      regionCount: regionsToRender.length,
+      skippedRegions: regionsToSkip.length
     };
 
     return {

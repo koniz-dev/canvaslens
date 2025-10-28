@@ -135,7 +135,7 @@ describe('Canvas Performance Tests', () => {
 
   describe('Memory Usage', () => {
     it('should not leak memory during repeated operations', async () => {
-      const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const initialMemory = (performance as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0;
       
       // Perform many operations
       for (let i = 0; i < 100; i++) {
@@ -147,11 +147,11 @@ describe('Canvas Performance Tests', () => {
       }
       
       // Force garbage collection if available
-      if ((global as any).gc) {
-        (global as any).gc();
+      if ((global as { gc?: () => void }).gc) {
+        (global as { gc?: () => void }).gc!();
       }
       
-      const finalMemory = (performance as any).memory?.usedJSHeapSize || 0;
+      const finalMemory = (performance as { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0;
       const memoryIncrease = finalMemory - initialMemory;
       
       // Memory increase should be reasonable (less than 50MB)

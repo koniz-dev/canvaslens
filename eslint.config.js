@@ -87,6 +87,20 @@ export default [
     },
   },
   {
+    // Allow console in logger files
+    files: ['src/utils/core/logger.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    // Allow console in test files
+    files: ['src/__tests__/**/*.ts', 'src/__tests__/**/*.tsx'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     // Ignore patterns
     ignores: [
       'dist/**',

@@ -90,7 +90,7 @@ describe('CanvasLens', () => {
     it('should throw error if canvas context is not available', () => {
       const mockCanvas = {
         getContext: jest.fn().mockReturnValue(null)
-      } as any;
+      } as unknown as HTMLCanvasElement;
       
       expect(() => new CanvasLens(mockCanvas)).toThrow('Could not get 2D context');
     });

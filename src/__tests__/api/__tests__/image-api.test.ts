@@ -29,7 +29,7 @@ class ImageAPI {
     return response.json();
   }
 
-  async getImage(id: string): Promise<{ id: string; url: string; metadata: any }> {
+  async getImage(id: string): Promise<{ id: string; url: string; metadata: Record<string, unknown> }> {
     const response = await fetch(`${this.baseURL}/images/${id}`, {
       headers: {
         ...(this.apiKey ? { 'Authorization': `Bearer ${this.apiKey}` } : {})
@@ -57,7 +57,7 @@ class ImageAPI {
   }
 
   async getImageList(page: number = 1, limit: number = 10): Promise<{
-    images: Array<{ id: string; url: string; metadata: any }>;
+    images: Array<{ id: string; url: string; metadata: Record<string, unknown> }>;
     total: number;
     page: number;
     limit: number;
@@ -75,7 +75,7 @@ class ImageAPI {
     return response.json();
   }
 
-  async saveAnnotations(imageId: string, annotations: any[]): Promise<void> {
+  async saveAnnotations(imageId: string, annotations: Record<string, unknown>[]): Promise<void> {
     const response = await fetch(`${this.baseURL}/images/${imageId}/annotations`, {
       method: 'POST',
       headers: {
@@ -90,7 +90,7 @@ class ImageAPI {
     }
   }
 
-  async getAnnotations(imageId: string): Promise<any[]> {
+  async getAnnotations(imageId: string): Promise<Record<string, unknown>[]> {
     const response = await fetch(`${this.baseURL}/images/${imageId}/annotations`, {
       headers: {
         ...(this.apiKey ? { 'Authorization': `Bearer ${this.apiKey}` } : {})

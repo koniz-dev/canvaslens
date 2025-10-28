@@ -1,31 +1,41 @@
 import { Annotation, Point, ToolConfig } from '../../types';
 
 export class ValidationHelper {
-  static isValidAnnotation(annotation: any): annotation is Annotation {
-    return annotation &&
-           typeof annotation.id === 'string' &&
-           typeof annotation.type === 'string' &&
-           Array.isArray(annotation.points) &&
-           annotation.points.length > 0 &&
-           annotation.style &&
-           typeof annotation.style.strokeColor === 'string' &&
-           typeof annotation.style.strokeWidth === 'number';
+  static isValidAnnotation(annotation: unknown): annotation is Annotation {
+    return Boolean(
+      annotation !== null &&
+      typeof annotation === 'object' &&
+      'id' in annotation &&
+      'type' in annotation &&
+      'points' in annotation &&
+      'style' in annotation &&
+      typeof (annotation as Record<string, unknown>).id === 'string' &&
+      typeof (annotation as Record<string, unknown>).type === 'string' &&
+      Array.isArray((annotation as Record<string, unknown>).points) &&
+      ((annotation as Record<string, unknown>).points as unknown[]).length > 0 &&
+      (annotation as Record<string, unknown>).style &&
+      typeof ((annotation as Record<string, unknown>).style as Record<string, unknown>).strokeColor === 'string' &&
+      typeof ((annotation as Record<string, unknown>).style as Record<string, unknown>).strokeWidth === 'number'
+    );
   }
 
-  static isValidPoint(point: any): point is Point {
-    return point &&
-           typeof point.x === 'number' &&
-           typeof point.y === 'number' &&
-           !isNaN(point.x) &&
-           !isNaN(point.y);
+  static isValidPoint(point: unknown): point is Point {
+    return point !== null &&
+           typeof point === 'object' &&
+           'x' in point &&
+           'y' in point &&
+           typeof (point as Record<string, unknown>).x === 'number' &&
+           typeof (point as Record<string, unknown>).y === 'number' &&
+           !isNaN((point as Record<string, unknown>).x as number) &&
+           !isNaN((point as Record<string, unknown>).y as number);
   }
 
-  static isValidToolConfig(config: any): config is ToolConfig {
-    return config &&
+  static isValidToolConfig(config: unknown): config is ToolConfig {
+    return config !== null &&
            typeof config === 'object' &&
-           (config.zoom === undefined || typeof config.zoom === 'boolean') &&
-           (config.pan === undefined || typeof config.pan === 'boolean') &&
-           (config.comparison === undefined || typeof config.comparison === 'boolean');
+           ((config as Record<string, unknown>).zoom === undefined || typeof (config as Record<string, unknown>).zoom === 'boolean') &&
+           ((config as Record<string, unknown>).pan === undefined || typeof (config as Record<string, unknown>).pan === 'boolean') &&
+           ((config as Record<string, unknown>).comparison === undefined || typeof (config as Record<string, unknown>).comparison === 'boolean');
   }
 
   static isValidImageFile(file: File): boolean {

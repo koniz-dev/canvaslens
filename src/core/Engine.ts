@@ -227,7 +227,7 @@ export class Engine {
     
     const handlerKey = eventMap[event];
     if (handlerKey) {
-      (this.eventHandlers as any)[handlerKey] = handler;
+      (this.eventHandlers as Record<string, unknown>)[handlerKey] = handler;
     }
   }
 
@@ -244,8 +244,8 @@ export class Engine {
     };
     
     const handlerKey = eventMap[event];
-    if (handlerKey && (this.eventHandlers as any)[handlerKey] === handler) {
-      (this.eventHandlers as any)[handlerKey] = undefined;
+    if (handlerKey && (this.eventHandlers as Record<string, unknown>)[handlerKey] === handler) {
+      (this.eventHandlers as Record<string, unknown>)[handlerKey] = undefined;
     }
   }
 
@@ -258,8 +258,8 @@ export class Engine {
       });
     }
 
-    if ((options as any).eventHandlers) {
-      this.setEventHandlers((options as any).eventHandlers);
+    if ('eventHandlers' in options && options.eventHandlers) {
+      this.setEventHandlers(options.eventHandlers as EventHandlers);
     }
   }
 

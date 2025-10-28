@@ -184,7 +184,7 @@ export class ComparisonManager {
    */
   private getImageBounds(): { x: number; y: number; width: number; height: number } | null {
     if (this.canvas.imageViewer) {
-      return (this.canvas.imageViewer as any).getImageBounds();
+      return (this.canvas.imageViewer as { getImageBounds: () => { x: number; y: number; width: number; height: number } | null }).getImageBounds();
     }
     return null;
   }
@@ -284,7 +284,7 @@ export class ComparisonManager {
     
     // Clear any selected annotations when entering comparison mode
     if (this.state.comparisonMode && this.canvas.annotationManager) {
-      (this.canvas.annotationManager as any).selectAnnotation(null);
+      (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
     }
     
     // Handle cursor state
@@ -309,7 +309,7 @@ export class ComparisonManager {
     
     // Clear any selected annotations when entering comparison mode
     if (enabled && this.canvas.annotationManager) {
-      (this.canvas.annotationManager as any).selectAnnotation(null);
+      (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
     }
     
     // Handle cursor state

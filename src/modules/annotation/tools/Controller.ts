@@ -1,5 +1,5 @@
 import { Renderer } from '@/core';
-import { AnnotationStyle, Tool } from '@/types';
+import { AnnotationStyle, Tool, Point } from '@/types';
 import { AnnotationRenderer } from '../Renderer';
 import { AnnotationManager } from '../Manager';
 import { BaseTool, ToolOptions, RectangleTool, ArrowTool, TextTool, CircleTool, LineTool } from './components';
@@ -189,7 +189,7 @@ export class AnnotationToolsController {
 
     const tool = this.currentTool;
     if (tool && 'getPreviewPoints' in tool && typeof tool.getPreviewPoints === 'function') {
-      const points = (tool as any).getPreviewPoints();
+      const points = (tool as { getPreviewPoints: () => Point[] }).getPreviewPoints();
       if (points.length > 0) {
         // Render preview (no need to apply view transform since points are in world coordinates)
         this.options.renderer.renderPreview(

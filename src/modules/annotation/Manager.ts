@@ -63,7 +63,7 @@ export class AnnotationManager {
     });
 
 
-    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this) as any, 16) as ((event: MouseEvent) => void) & { cleanup?: () => void };
+    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16) as ((event: MouseEvent) => void) & { cleanup?: () => void };
     this.cleanupCallback = this.cleanup.bind(this);
     MemoryManager.registerCleanup(this.cleanupCallback);
 
@@ -161,7 +161,8 @@ export class AnnotationManager {
   /**
    * Handle mouse move for dragging and hover detection
    */
-  private handleMouseMove(event: MouseEvent): void {
+  private handleMouseMove(...args: unknown[]): void {
+    const event = args[0] as MouseEvent;
     if (!this.enabled) return;
     
     const worldPoint = this.getWorldPointFromEvent(event);
@@ -729,11 +730,11 @@ export class AnnotationManager {
       'type' in annotation &&
       'points' in annotation &&
       'style' in annotation &&
-      typeof (annotation as any).id === 'string' &&
-      typeof (annotation as any).type === 'string' &&
-      Array.isArray((annotation as any).points) &&
-      (annotation as any).style &&
-      typeof (annotation as any).style.strokeColor === 'string'
+      typeof (annotation as Record<string, unknown>).id === 'string' &&
+      typeof (annotation as Record<string, unknown>).type === 'string' &&
+      Array.isArray((annotation as Record<string, unknown>).points) &&
+      (annotation as Record<string, unknown>).style !== null &&
+      typeof ((annotation as Record<string, unknown>).style as Record<string, unknown>).strokeColor === 'string'
     );
   }
 
@@ -819,8 +820,8 @@ export class AnnotationManager {
    * Check if comparison mode is active
    */
   private isComparisonModeActive(): boolean {
-    if (this.canvas.imageViewer && (this.canvas.imageViewer as any).isComparisonMode) {
-      return (this.canvas.imageViewer as any).isComparisonMode();
+    if (this.canvas.imageViewer && 'isComparisonMode' in this.canvas.imageViewer && typeof (this.canvas.imageViewer as Record<string, unknown>).isComparisonMode === 'function') {
+      return ((this.canvas.imageViewer as Record<string, unknown>).isComparisonMode as () => boolean)();
     }
     return false;
   }

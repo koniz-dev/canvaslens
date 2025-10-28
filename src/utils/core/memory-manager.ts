@@ -43,7 +43,7 @@ export class MemoryManager {
     return new WeakSet<T>();
   }
 
-  static debounce<T extends (...args: any[]) => any>(
+  static debounce<T extends (...args: unknown[]) => unknown>(
     func: T,
     wait: number
   ): T & { cleanup?: () => void } {
@@ -61,17 +61,17 @@ export class MemoryManager {
     };
 
     // Add cleanup method to debounced function
-    (debounced as any).cleanup = () => {
+    (debounced as T & { cleanup?: () => void }).cleanup = () => {
       if (timeout !== null) {
         clearTimeout(timeout);
         timeout = null;
       }
     };
 
-    return debounced;
+    return debounced as T & { cleanup?: () => void };
   }
 
-  static throttle<T extends (...args: any[]) => any>(
+  static throttle<T extends (...args: unknown[]) => unknown>(
     func: T,
     limit: number
   ): T & { cleanup?: () => void } {
@@ -90,7 +90,7 @@ export class MemoryManager {
     };
 
     // Add cleanup method to throttled function
-    (throttled as any).cleanup = () => {
+    (throttled as T & { cleanup?: () => void }).cleanup = () => {
       if (timeoutId !== null) {
         clearTimeout(timeoutId);
         timeoutId = null;
@@ -98,6 +98,6 @@ export class MemoryManager {
       }
     };
 
-    return throttled;
+    return throttled as T & { cleanup?: () => void };
   }
 }
