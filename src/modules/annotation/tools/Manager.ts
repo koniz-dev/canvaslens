@@ -1,6 +1,7 @@
-import { Renderer } from '../../../core';
-import { Annotation, AnnotationStyle, Tool } from '../../../types';
+import { Renderer } from '@/core';
+import { Annotation, AnnotationStyle, Tool } from '@/types';
 import { AnnotationRenderer } from '../Renderer';
+import { AnnotationManager } from '../Manager';
 import { AnnotationToolsEventHandler, EventHandlerOptions } from './EventHandler';
 import { AnnotationToolsController, ControllerOptions } from './Controller';
 import { AnnotationToolsUtils } from './Utils';
@@ -8,7 +9,7 @@ import { AnnotationToolsUtils } from './Utils';
 export interface ToolManagerOptions {
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
-  annotationManager?: any; // Reference to AnnotationManager for keyboard shortcuts
+  annotationManager?: AnnotationManager; // Reference to AnnotationManager for keyboard shortcuts
 }
 
 export class AnnotationToolsManager {
@@ -37,7 +38,7 @@ export class AnnotationToolsManager {
       renderer,
       defaultStyle: options.defaultStyle,
       availableTools: options.availableTools,
-      annotationManager: options.annotationManager
+      ...(options.annotationManager && { annotationManager: options.annotationManager })
     };
     this.controller = new AnnotationToolsController(controllerOptions);
 
@@ -48,7 +49,7 @@ export class AnnotationToolsManager {
       activeToolType: this.controller.getActiveToolType(),
       toolActivatedByKeyboard: this.controller.getToolActivatedByKeyboard(),
       toolManagerDrawing: this.toolManagerDrawing,
-      annotationManager: options.annotationManager,
+      ...(options.annotationManager && { annotationManager: options.annotationManager }),
       onActivateTool: (toolType) => {
         const result = this.controller.activateTool(toolType);
         this.controller.setToolActivatedByKeyboard(true);
@@ -201,7 +202,7 @@ export class AnnotationToolsManager {
   /**
    * Update tool configuration
    */
-  updateToolConfig(annotationConfig: any): void {
+  updateToolConfig(annotationConfig: Record<string, unknown>): void {
     this.controller.updateToolConfig(annotationConfig);
   }
 

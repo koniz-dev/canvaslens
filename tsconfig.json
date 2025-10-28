@@ -22,7 +22,16 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "moduleDetection": "force",
-    "importsNotUsedAsValues": "remove"
+    "importsNotUsedAsValues": "remove",
+    "baseUrl": "./src",
+    "paths": {
+      "@/types": ["./types"],
+      "@/core": ["./core"],
+      "@/components": ["./components"],
+      "@/modules": ["./modules"],
+      "@/utils": ["./utils"],
+      "@/constants": ["./constants"]
+    }
   },
   "include": [
     "src/**/*"

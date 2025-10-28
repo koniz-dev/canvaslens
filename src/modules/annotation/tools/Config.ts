@@ -1,5 +1,5 @@
-import { ToolConfig } from '../../../types';
-import { warn } from '../../../utils/core/logger';
+import { ToolConfig } from '@/types';
+import { warn } from '@/utils';
 
 /**
  * Tool configuration management utilities

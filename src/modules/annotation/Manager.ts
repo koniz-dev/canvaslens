@@ -1,10 +1,8 @@
-import { Renderer } from '../../core';
-import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '../../types';
+import { Renderer } from '@/core';
+import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '@/types';
 import { AnnotationRenderer } from './Renderer';
 import { AnnotationToolsManager, ToolManagerOptions } from './tools';
-import { error } from '../../utils/core/logger';
-import { ValidationHelper } from '../../utils/core/validation-helper';
-import { MemoryManager } from '../../utils/core/memory-manager';
+import { error, ValidationHelper, MemoryManager } from '@/utils';
 
 export interface AnnotationManagerOptions {
   enabled?: boolean;
@@ -25,7 +23,7 @@ export class AnnotationManager {
   private dragStartPoint: Point | null = null;
   private dragOffset: Point | null = null;
   private _hasChanges = false;
-  private throttledMouseMove: (event: MouseEvent) => void;
+  private throttledMouseMove: ((event: MouseEvent) => void) & { cleanup?: () => void };
   private cleanupCallback: () => void;
 
   constructor(canvas: Renderer, options: AnnotationManagerOptions = {}) {
@@ -65,7 +63,7 @@ export class AnnotationManager {
     });
 
 
-    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16);
+    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this) as any, 16) as ((event: MouseEvent) => void) & { cleanup?: () => void };
     this.cleanupCallback = this.cleanup.bind(this);
     MemoryManager.registerCleanup(this.cleanupCallback);
 
@@ -79,7 +77,7 @@ export class AnnotationManager {
     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
     
     this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
-    this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
+    this.canvas.addEventListener('mousemove', this.throttledMouseMove as unknown as EventListener);
     this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
     
   }
@@ -723,14 +721,19 @@ export class AnnotationManager {
   /**
    * Validate annotation object
    */
-  private isValidAnnotation(annotation: any): annotation is Annotation {
+  private isValidAnnotation(annotation: unknown): annotation is Annotation {
     return (
-      annotation &&
-      typeof annotation.id === 'string' &&
-      typeof annotation.type === 'string' &&
-      Array.isArray(annotation.points) &&
-      annotation.style &&
-      typeof annotation.style.strokeColor === 'string'
+      annotation !== null &&
+      typeof annotation === 'object' &&
+      'id' in annotation &&
+      'type' in annotation &&
+      'points' in annotation &&
+      'style' in annotation &&
+      typeof (annotation as any).id === 'string' &&
+      typeof (annotation as any).type === 'string' &&
+      Array.isArray((annotation as any).points) &&
+      (annotation as any).style &&
+      typeof (annotation as any).style.strokeColor === 'string'
     );
   }
 
@@ -825,7 +828,7 @@ export class AnnotationManager {
   /**
    * Update tool configuration
    */
-  updateToolConfig(annotationConfig: any): void {
+  updateToolConfig(annotationConfig: Record<string, unknown>): void {
     if (this.toolManager) {
       this.toolManager.updateToolConfig(annotationConfig);
     }
@@ -854,6 +857,12 @@ export class AnnotationManager {
    */
   private cleanup(): void {
     MemoryManager.unregisterCleanup(this.cleanupCallback);
+    
+    // Cleanup throttled function
+    if (this.throttledMouseMove && 'cleanup' in this.throttledMouseMove && this.throttledMouseMove.cleanup) {
+      this.throttledMouseMove.cleanup();
+    }
+    
     this.annotations.clear();
     this.selectedAnnotation = null;
     this.isDragging = false;

@@ -25,28 +25,28 @@ function getTimestamp(): string {
 /**
  * Format log message with timestamp and prefix
  */
-function formatMessage(level: string, ...args: any[]): any[] {
+function formatMessage(level: string, ...args: unknown[]): unknown[] {
   const timestamp = getTimestamp();
   const prefix = `[${timestamp}] [${level}]`;
   return [prefix, ...args];
 }
 
-export function log(...args: any[]): void {
+export function log(...args: unknown[]): void {
   if (isDevelopment()) {
     console.log(...formatMessage('DEBUG', ...args));
   }
 }
 
-export function warn(...args: any[]): void {
+export function warn(...args: unknown[]): void {
   if (isDevelopment()) {
     console.warn(...formatMessage('WARN', ...args));
   }
 }
 
-export function error(...args: any[]): void {
+export function error(...args: unknown[]): void {
   console.error(...formatMessage('ERROR', ...args));
 }
 
-export function info(...args: any[]): void {
+export function info(...args: unknown[]): void {
   console.info(...formatMessage('INFO', ...args));
 }

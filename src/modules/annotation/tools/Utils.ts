@@ -1,5 +1,5 @@
-import { Renderer } from '../../../core';
-import { Annotation, Point } from '../../../types';
+import { Renderer } from '@/core';
+import { Annotation, Point } from '@/types';
 
 export class AnnotationToolsUtils {
   private canvas: Renderer;

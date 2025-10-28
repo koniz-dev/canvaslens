@@ -1,5 +1,5 @@
-import { Point, Annotation, AnnotationStyle } from '../../../../types';
-import { Renderer } from '../../../../core/Renderer';
+import { Point, Annotation, AnnotationStyle } from '@/types';
+import { Renderer } from '@/core';
 import { AnnotationRenderer } from '../../Renderer';
 
 export interface ToolOptions {
@@ -73,7 +73,7 @@ export abstract class BaseTool {
   /**
    * Create annotation object
    */
-  protected createAnnotation(points: Point[], data?: any): Annotation {
+  protected createAnnotation(points: Point[], data?: Record<string, unknown>): Annotation {
     return {
       id: this.generateId(),
       type: this.getType(),

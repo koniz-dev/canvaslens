@@ -1,6 +1,7 @@
-import { Renderer } from '../../../core';
-import { Annotation, Point } from '../../../types';
+import { Renderer } from '@/core';
+import { Annotation, Point } from '@/types';
 import { AnnotationRenderer } from '../Renderer';
+import { AnnotationManager } from '../Manager';
 import { BaseTool } from './components';
 
 export interface EventHandlerOptions {
@@ -11,7 +12,7 @@ export interface EventHandlerOptions {
   toolActivatedByKeyboard: boolean;
   toolManagerDrawing: boolean;
   onAnnotationCreate?: (annotation: Annotation) => void | undefined;
-  annotationManager?: any;
+  annotationManager?: AnnotationManager;
   onActivateTool: (toolType: string) => boolean;
   onDeactivateTool: () => void;
   onScreenToWorld: (screenPoint: Point) => Point;
@@ -85,7 +86,7 @@ export class AnnotationToolsEventHandler {
     
     const annotation = this.options.currentTool.startDrawing(worldPoint);
     
-    if (this.options.canvas.annotationManager) {
+    if (this.options.canvas.annotationManager && 'selectAnnotation' in this.options.canvas.annotationManager) {
       (this.options.canvas.annotationManager as any).selectAnnotation(null);
     }
     
@@ -181,8 +182,11 @@ export class AnnotationToolsEventHandler {
   private handleKeyDown(event: KeyboardEvent): void {
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (this.options.annotationManager && this.options.annotationManager.selectedAnnotation) {
-        this.options.annotationManager.removeAnnotation(this.options.annotationManager.selectedAnnotation.id);
+      if (this.options.annotationManager && this.options.annotationManager.getSelectedAnnotation()) {
+        const selectedAnnotation = this.options.annotationManager.getSelectedAnnotation();
+        if (selectedAnnotation) {
+          this.options.annotationManager.removeAnnotation(selectedAnnotation.id);
+        }
         event.preventDefault();
         return;
       }

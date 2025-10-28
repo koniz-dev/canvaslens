@@ -1,6 +1,7 @@
-import { Renderer } from '../../../core';
-import { AnnotationStyle, Tool } from '../../../types';
+import { Renderer } from '@/core';
+import { AnnotationStyle, Tool } from '@/types';
 import { AnnotationRenderer } from '../Renderer';
+import { AnnotationManager } from '../Manager';
 import { BaseTool, ToolOptions, RectangleTool, ArrowTool, TextTool, CircleTool, LineTool } from './components';
 
 export interface ControllerOptions {
@@ -8,7 +9,7 @@ export interface ControllerOptions {
   renderer: AnnotationRenderer;
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
-  annotationManager?: any;
+  annotationManager?: AnnotationManager;
 }
 
 export class AnnotationToolsController {
@@ -144,7 +145,7 @@ export class AnnotationToolsController {
   /**
    * Update tool configuration
    */
-  updateToolConfig(annotationConfig: any): void {
+  updateToolConfig(annotationConfig: Record<string, unknown>): void {
     // Update tool availability based on configuration
     this.tools.forEach((tool, toolType) => {
       const isEnabled = annotationConfig[toolType];
@@ -186,9 +187,9 @@ export class AnnotationToolsController {
   renderPreview(): void {
     if (!this.currentTool || !this.currentTool.isCurrentlyDrawing()) return;
 
-    const tool = this.currentTool as any;
-    if (tool.getPreviewPoints) {
-      const points = tool.getPreviewPoints();
+    const tool = this.currentTool;
+    if (tool && 'getPreviewPoints' in tool && typeof tool.getPreviewPoints === 'function') {
+      const points = (tool as any).getPreviewPoints();
       if (points.length > 0) {
         // Render preview (no need to apply view transform since points are in world coordinates)
         this.options.renderer.renderPreview(

@@ -1,7 +1,7 @@
 /**
  * Manages event handling for CanvasLens Web Component
  */
-import { ImageData, Annotation, Point } from '../types';
+import { ImageData, Annotation, Point } from '@/types';
 
 export class EventManager {
   private element: HTMLElement;
@@ -15,36 +15,36 @@ export class EventManager {
    */
   setupEventListeners(): void {
     // Listen for custom events and forward them with lowercase names for external listeners
-    this.addEventListener('imageLoad', (e: any) => {
-      this.dispatchEvent('imageload', e.detail);
+    this.addEventListener('imageLoad', (e: Event) => {
+      this.dispatchEvent('imageload', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('imageLoadError', (e: any) => {
-      this.dispatchEvent('imageloaderror', e.detail);
+    this.addEventListener('imageLoadError', (e: Event) => {
+      this.dispatchEvent('imageloaderror', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('zoomChange', (e: any) => {
-      this.dispatchEvent('zoomchange', e.detail);
+    this.addEventListener('zoomChange', (e: Event) => {
+      this.dispatchEvent('zoomchange', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('panChange', (e: any) => {
-      this.dispatchEvent('panchange', e.detail);
+    this.addEventListener('panChange', (e: Event) => {
+      this.dispatchEvent('panchange', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('annotationAdd', (e: any) => {
-      this.dispatchEvent('annotationadd', e.detail);
+    this.addEventListener('annotationAdd', (e: Event) => {
+      this.dispatchEvent('annotationadd', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('annotationRemove', (e: any) => {
-      this.dispatchEvent('annotationremove', e.detail);
+    this.addEventListener('annotationRemove', (e: Event) => {
+      this.dispatchEvent('annotationremove', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('toolChange', (e: any) => {
-      this.dispatchEvent('toolchange', e.detail);
+    this.addEventListener('toolChange', (e: Event) => {
+      this.dispatchEvent('toolchange', (e as CustomEvent).detail);
     });
 
-    this.addEventListener('comparisonChange', (e: any) => {
-      this.dispatchEvent('comparisonchange', e.detail);
+    this.addEventListener('comparisonChange', (e: Event) => {
+      this.dispatchEvent('comparisonchange', (e as CustomEvent).detail);
     });
 
     // Listen for window resize to recalculate canvas size
@@ -88,14 +88,14 @@ export class EventManager {
   /**
    * Add event listener to the element
    */
-  private addEventListener(event: string, handler: (e: any) => void): void {
+  private addEventListener(event: string, handler: (e: Event) => void): void {
     this.element.addEventListener(event, handler);
   }
 
   /**
    * Dispatch custom event
    */
-  private dispatchEvent(eventName: string, detail?: any): void {
+  private dispatchEvent(eventName: string, detail?: unknown): void {
     this.element.dispatchEvent(new CustomEvent(eventName, { detail }));
   }
 

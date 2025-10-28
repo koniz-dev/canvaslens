@@ -46,10 +46,10 @@ export class MemoryManager {
   static debounce<T extends (...args: any[]) => any>(
     func: T,
     wait: number
-  ): (...args: Parameters<T>) => void {
+  ): T & { cleanup?: () => void } {
     let timeout: number | null = null;
     
-    return (...args: Parameters<T>) => {
+    const debounced = (...args: Parameters<T>) => {
       if (timeout !== null) {
         clearTimeout(timeout);
       }
@@ -59,20 +59,45 @@ export class MemoryManager {
         timeout = null;
       }, wait);
     };
+
+    // Add cleanup method to debounced function
+    (debounced as any).cleanup = () => {
+      if (timeout !== null) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+    };
+
+    return debounced;
   }
 
   static throttle<T extends (...args: any[]) => any>(
     func: T,
     limit: number
-  ): (...args: Parameters<T>) => void {
+  ): T & { cleanup?: () => void } {
     let inThrottle: boolean = false;
+    let timeoutId: number | null = null;
     
-    return (...args: Parameters<T>) => {
+    const throttled = (...args: Parameters<T>) => {
       if (!inThrottle) {
         func(...args);
         inThrottle = true;
-        setTimeout(() => inThrottle = false, limit);
+        timeoutId = window.setTimeout(() => {
+          inThrottle = false;
+          timeoutId = null;
+        }, limit);
       }
     };
+
+    // Add cleanup method to throttled function
+    (throttled as any).cleanup = () => {
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+        inThrottle = false;
+      }
+    };
+
+    return throttled;
   }
 }

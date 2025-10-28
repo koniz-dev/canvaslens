@@ -42,9 +42,9 @@ export interface ViewState {
 
 /**
  * Represents loaded image data and metadata
- * @interface ImageData
+ * @interface CanvasImageData
  */
-export interface ImageData {
+export interface CanvasImageData {
   /** The HTML image element */
   element: HTMLImageElement;
   /** Natural (original) image dimensions */
@@ -120,7 +120,7 @@ export interface Annotation {
   /** Styling properties for the annotation */
   style: AnnotationStyle;
   /** Additional data associated with the annotation */
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 /**
@@ -161,7 +161,7 @@ export interface Tool {
  */
 export interface EventHandlers {
   /** Called when an image is successfully loaded */
-  onImageLoad?: (imageData: ImageData) => void;
+  onImageLoad?: (imageData: CanvasImageData) => void;
   /** Called when image loading fails */
   onImageLoadError?: (error: Error) => void;
   /** Called when zoom level changes */
@@ -181,3 +181,4 @@ export interface EventHandlers {
 }
 
 export type { AnnotationManager, ImageViewer } from './interfaces';
+export type { CanvasImageData as ImageData };

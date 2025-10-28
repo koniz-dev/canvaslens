@@ -1,8 +1,8 @@
 /**
  * Utility class for parsing CanvasLens Web Component attributes
  */
-import { CanvasLensOptions } from '../types';
-import { AnnotationToolsConfig } from '../modules';
+import { CanvasLensOptions } from '@/types';
+import { AnnotationToolsConfig } from '@/modules';
 
 export class AttributeParser {
   /**

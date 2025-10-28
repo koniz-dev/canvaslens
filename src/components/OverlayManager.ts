@@ -1,9 +1,9 @@
 /**
  * Manages overlay mode for CanvasLens Web Component
  */
-import { Engine } from '../core';
-import { CanvasLensOptions } from '../types';
-import { error, warn } from '../utils/core/logger';
+import { Engine } from '@/core';
+import { CanvasLensOptions } from '@/types';
+import { error, warn } from '@/utils';
 
 export class OverlayManager {
   private element: HTMLElement;
@@ -88,7 +88,7 @@ export class OverlayManager {
     `;
 
     const closeButton = document.createElement('button');
-    closeButton.innerHTML = '✕';
+    closeButton.textContent = '✕';
     closeButton.style.cssText = `
       position: absolute;
       top: 20px;

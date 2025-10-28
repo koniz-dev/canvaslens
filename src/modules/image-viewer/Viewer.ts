@@ -1,10 +1,10 @@
-import { Renderer } from '../../core/Renderer';
-import { ImageData, Size, Point, EventHandlers } from '../../types';
-import { loadImage, getImageData, getImageDataOverlay } from '../../utils/image/image';
-import { error } from '../../utils/core/logger';
-import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan';
-import { AnnotationManager, AnnotationManagerOptions } from '../annotation';
-import { ComparisonManager, ComparisonOptions } from '../comparison';
+import { Renderer } from '@/core';
+import { ImageData, Size, Point, EventHandlers } from '@/types';
+import { loadImage, getImageData, getImageDataOverlay } from '@/utils';
+import { error } from '@/utils';
+import { ZoomPanHandler, ZoomPanOptions } from '@/modules';
+import { AnnotationManager, AnnotationManagerOptions } from '@/modules';
+import { ComparisonManager, ComparisonOptions } from '@/modules';
 
 export class ImageViewer {
   private canvas: Renderer;

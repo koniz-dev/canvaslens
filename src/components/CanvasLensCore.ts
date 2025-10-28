@@ -1,10 +1,9 @@
-import { ImageData, Annotation, Point } from '../types';
-import { Engine } from '../core';
+import { ImageData, Annotation, Point, ToolConfig } from '@/types';
+import { Engine } from '@/core';
 import { AttributeParser } from './AttributeParser';
 import { EventManager } from './EventManager';
 import { OverlayManager } from './OverlayManager';
-import { ErrorHandler, ErrorType, safeAsync } from '../utils/core/error-handler';
-import { error, warn } from '../utils/core/logger';
+import { ErrorHandler, ErrorType, safeAsync, error, warn } from '@/utils';
 
 export class CanvasLensCore {
   private element: HTMLElement;
@@ -349,7 +348,7 @@ export class CanvasLensCore {
    * Get the shadow root
    */
   private get shadowRoot(): ShadowRoot | null {
-    return (this.element as any).shadowRoot;
+    return (this.element as HTMLElement & { shadowRoot?: ShadowRoot }).shadowRoot || null;
   }
 
   /**
@@ -438,7 +437,7 @@ export class CanvasLensCore {
    * Update tools configuration (public API)
    * @param toolConfig - Tool configuration object
    */
-  updateTools(toolConfig: any): void {
+  updateTools(toolConfig: ToolConfig): void {
     if (!this.canvasLens) return;
     this.canvasLens.updateTools(toolConfig);
   }
@@ -488,15 +487,28 @@ export class CanvasLensCore {
       text-align: center;
       flex-direction: column;
     `;
-    errorDiv.innerHTML = `
-      <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
-      <div style="font-size: 16px; margin-bottom: 5px;">Failed to load image</div>
-      <div style="font-size: 12px; color: #999;">${src}</div>
-    `;
+    const iconDiv = document.createElement('div');
+    iconDiv.textContent = '⚠️';
+    iconDiv.style.cssText = 'font-size: 24px; margin-bottom: 10px;';
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.textContent = 'Failed to load image';
+    titleDiv.style.cssText = 'font-size: 16px; margin-bottom: 5px;';
+    
+    const srcDiv = document.createElement('div');
+    srcDiv.textContent = src;
+    srcDiv.style.cssText = 'font-size: 12px; color: #999;';
+    
+    errorDiv.appendChild(iconDiv);
+    errorDiv.appendChild(titleDiv);
+    errorDiv.appendChild(srcDiv);
 
     const container = this.shadowRoot.firstElementChild;
     if (container) {
-      container.innerHTML = '';
+      // Clear container safely
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
       container.appendChild(errorDiv);
     }
   }

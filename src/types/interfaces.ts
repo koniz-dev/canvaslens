@@ -1,4 +1,4 @@
-import { Size } from './index';
+import { Size, Annotation, CanvasImageData, EventHandlers } from './index';
 
 export interface AnnotationManager {
   destroy(): void;
@@ -6,26 +6,26 @@ export interface AnnotationManager {
   getActiveToolType(): string | null;
   activateTool(toolType: string): boolean;
   deactivateTool(): void;
-  addAnnotation(annotation: any): void;
+  addAnnotation(annotation: Annotation): void;
   removeAnnotation(id: string): void;
-  getAllAnnotations(): any[];
+  getAllAnnotations(): Annotation[];
   clearAll(): void;
-  getImageBounds(): any;
+  getImageBounds(): { x: number; y: number; width: number; height: number };
   isDrawing(): boolean;
 }
 
 export interface ImageViewer {
-  getImageData(): any;
+  getImageData(): CanvasImageData | null;
   isImageLoaded(): boolean;
   getZoomLevel(): number;
   getPanOffset(): { x: number; y: number };
   resize(size: Size): void;
   fitToView(): void;
   resetView(): void;
-  getCanvas(): any;
-  getZoomPanHandler(): any;
+  getCanvas(): HTMLCanvasElement;
+  getZoomPanHandler(): unknown;
   getAnnotationManager(): AnnotationManager | null;
-  setEventHandlers(handlers: any): void;
+  setEventHandlers(handlers: EventHandlers): void;
   render(): void;
-  getImageBounds(): any;
+  getImageBounds(): { x: number; y: number; width: number; height: number };
 }

@@ -1,5 +1,5 @@
-import { Size, Point, ViewState } from '../types';
-import { AnnotationManager, ImageViewer } from '../types/interfaces';
+import { Size, Point, ViewState } from '@/types';
+import { AnnotationManager, ImageViewer } from '@/types';
 
 export class Renderer {
   private canvas: HTMLCanvasElement;

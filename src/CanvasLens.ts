@@ -11,9 +11,9 @@
  * </canvas-lens>
  * ```
  */
-import { CanvasLensCore } from './components/CanvasLensCore';
-import { ToolConfig, Annotation } from './types';
-import { ErrorHandler, ErrorType } from './utils/core/error-handler';
+import { CanvasLensCore } from '@/components';
+import { ToolConfig, Annotation, ImageData } from '@/types';
+import { ErrorHandler, ErrorType } from '@/utils';
 
 export class CanvasLens extends HTMLElement {
   private core: CanvasLensCore | null = null;
@@ -51,8 +51,13 @@ export class CanvasLens extends HTMLElement {
     try {
       this.core = new CanvasLensCore(this);
       this.core.initialize();
-    } catch {
-      // Error handling is managed by CanvasLensCore
+    } catch (error) {
+      ErrorHandler.handleError(
+        error as Error,
+        { element: this, operation: 'initialize' }
+      );
+      // Re-throw to prevent silent failures
+      throw error;
     }
   }
 
@@ -327,7 +332,7 @@ export class CanvasLens extends HTMLElement {
    * Get current image data
    * @returns Image data object or null
    */
-  getImageData(): any {
+  getImageData(): ImageData | null {
     if (this.core) {
       return this.core.getImageData();
     }

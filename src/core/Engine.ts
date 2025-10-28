@@ -1,8 +1,8 @@
 
-import { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, ImageData } from '../types';
-import { ImageViewer, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, AnnotationToolsConfig } from '../modules';
-import { warn } from '../utils/core/logger';
-import { DEFAULT_CONFIG } from '../constants';
+import { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, ImageData } from '@/types';
+import { ImageViewer, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, AnnotationToolsConfig } from '@/modules';
+import { warn } from '@/utils';
+import { DEFAULT_CONFIG } from '@/constants';
 
 export class Engine {
   private container: HTMLElement;
