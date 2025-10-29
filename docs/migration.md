@@ -382,8 +382,8 @@ annotations.forEach(annotation => {
 **Solution:**
 ```javascript
 // Check tool configuration
-const tools = viewer.getTools();
-console.log('Current tool config:', tools);
+// Note: getTools() method is not available in current implementation
+// Use updateTools() to configure tools instead
 
 // Ensure tools are properly configured
 if (!tools.annotation) {

@@ -278,8 +278,8 @@ viewer.addEventListener('destroy', () => {
 **Solutions:**
 ```javascript
 // ✅ Check tool configuration and activation
-const toolConfig = viewer.getTools();
-console.log('Current tool config:', toolConfig);
+// Note: getTools() method is not available in current implementation
+// Use updateTools() to configure tools instead
 
 // Check if tool is enabled
 if (toolConfig.annotation?.rect) {
@@ -730,13 +730,11 @@ async function saveAnnotationsToServer() {
 #### Selection Handling
 ```javascript
 // Enable annotation selection
+// Note: selectAnnotation() method is not available in current implementation
+// Annotation selection is handled internally by the annotation system
 viewer.addEventListener('click', (event) => {
-  const clickedAnnotation = getAnnotationAtPoint(event.clientX, event.clientY);
-  if (clickedAnnotation) {
-    viewer.selectAnnotation(clickedAnnotation.id);
-  }
-  // Click outside to deselect - currently not supported via API
-  // You can click Escape key to deselect
+  // Selection is handled automatically by the annotation system
+  // No manual selection API is currently available
 });
 
 function getAnnotationAtPoint(x, y) {
@@ -1109,8 +1107,8 @@ viewer.addEventListener('destroy', () => {
 **A:** Check tool configuration and activation:
 ```javascript
 // Check current tool configuration
-const tools = viewer.getTools();
-console.log('Available tools:', tools);
+// Note: getTools() method is not available in current implementation
+// Tool configuration is set via updateTools() method
 
 // Check if tool activation was successful
 const success = viewer.activateTool('rect');

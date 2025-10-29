@@ -279,17 +279,6 @@ const annotations = viewer.getAnnotations();
 console.log(`Found ${annotations.length} annotations`);
 ```
 
-##### `selectAnnotation(id: string): void`
-
-Selects an annotation by its ID.
-
-**Parameters:**
-- `id` (string): Annotation ID
-
-**Example:**
-```javascript
-viewer.selectAnnotation('rect-1');
-```
 
 #### Comparison Mode
 
@@ -386,17 +375,6 @@ const newTools = {
 viewer.updateTools(newTools);
 ```
 
-##### `getTools(): ToolConfig`
-
-Returns the current tool configuration.
-
-**Returns:** Current tool configuration object
-
-**Example:**
-```javascript
-const tools = viewer.getTools();
-console.log('Current tools:', tools);
-```
 
 #### Image Information
 
