@@ -1,3 +1,3 @@
 // Image utilities exports
-export { ImageLoader } from './image-loader';
-export * from './image';
+export { ImageLoader } from './loader';
+export * from './utils';

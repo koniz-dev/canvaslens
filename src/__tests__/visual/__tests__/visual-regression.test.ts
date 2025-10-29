@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+// Imports removed
 
 // Visual regression testing utilities
 const captureCanvasSnapshot = (canvas: HTMLCanvasElement): string => {

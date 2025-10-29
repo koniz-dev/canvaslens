@@ -1,7 +1,4 @@
-/**
- * Manages event handling for CanvasLens Web Component
- */
-import { ImageData, Annotation, Point } from '@/types';
+import type { Point, Annotation, CustomImageData } from '../types';
 
 export class EventManager {
   private element: HTMLElement;
@@ -58,7 +55,7 @@ export class EventManager {
    */
   createEventHandlers() {
     return {
-      onImageLoad: (imageData: ImageData) => {
+      onImageLoad: (imageData: CustomImageData) => {
         this.dispatchEvent('imageLoad', imageData);
       },
       onImageLoadError: (error: Error) => {

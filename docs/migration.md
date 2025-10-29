@@ -89,8 +89,8 @@ viewer.tools = newTools;
 **Before (v0.0.x):**
 ```javascript
 // Old event handling
-viewer.onImageLoad = function(imageData) {
-  console.log('Image loaded:', imageData);
+viewer.onImageLoad = function(CustomImageData) {
+  console.log('Image loaded:', CustomImageData);
 };
 ```
 

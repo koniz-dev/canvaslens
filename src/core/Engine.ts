@@ -1,13 +1,22 @@
-
-import { CanvasLensOptions, EventHandlers, Size, ToolConfig, Annotation, ImageData } from '@/types';
-import { ImageViewer, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, AnnotationToolsConfig } from '@/modules';
-import { warn } from '@/utils';
-import { DEFAULT_CONFIG } from '@/constants';
+import { DEFAULT_CONFIG } from '../constants';
+import { AnnotationToolsConfig, ImageViewer } from '../modules';
+import type {
+  Annotation,
+  AnnotationManagerOptions,
+  CanvasLensOptions,
+  ComparisonOptions,
+  CustomImageData,
+  EventHandlers,
+  Size,
+  ToolConfig,
+  ZoomPanOptions
+} from '../types';
+import { warn } from '../utils/core/logger';
 
 export class Engine {
   private container: HTMLElement;
-  private options: CanvasLensOptions;
   private imageViewer: ImageViewer;
+  private options: CanvasLensOptions;
   private eventHandlers: EventHandlers;
 
   constructor(options: CanvasLensOptions) {
@@ -31,22 +40,20 @@ export class Engine {
 
     const tools = this.options.tools || AnnotationToolsConfig.DEFAULT_CONFIG;
 
-    const zoomPanOptions: ZoomPanOptions | undefined = 
+    const zoomPanOptions: ZoomPanOptions | undefined =
       AnnotationToolsConfig.hasZoomOrPan(tools) ? {
         enableZoom: !!tools.zoom,
         enablePan: !!tools.pan,
         maxZoom: this.options.maxZoom ?? 10,
         minZoom: this.options.minZoom ?? 0.1
       } : undefined;
-    
-    
 
-    const annotationOptions: AnnotationManagerOptions | undefined = 
+    const annotationOptions: AnnotationManagerOptions | undefined =
       AnnotationToolsConfig.hasAnnotations(tools) ? {
         enabled: true
       } : undefined;
 
-    const comparisonOptions: ComparisonOptions | undefined = 
+    const comparisonOptions: ComparisonOptions | undefined =
       AnnotationToolsConfig.hasComparison(tools) ? {
         comparisonMode: false
       } : undefined;
@@ -189,7 +196,7 @@ export class Engine {
 
 
 
-  getImageData(): ImageData | null {
+  getImageData(): CustomImageData | null {
     return this.imageViewer.getImageData();
   }
 
@@ -224,7 +231,7 @@ export class Engine {
       'toolChanged': 'onToolChange',
       'comparisonChanged': 'onComparisonChange'
     };
-    
+
     const handlerKey = eventMap[event];
     if (handlerKey) {
       (this.eventHandlers as Record<string, unknown>)[handlerKey] = handler;
@@ -242,7 +249,7 @@ export class Engine {
       'toolChanged': 'onToolChange',
       'comparisonChanged': 'onComparisonChange'
     };
-    
+
     const handlerKey = eventMap[event];
     if (handlerKey && (this.eventHandlers as Record<string, unknown>)[handlerKey] === handler) {
       (this.eventHandlers as Record<string, unknown>)[handlerKey] = undefined;
@@ -252,9 +259,9 @@ export class Engine {
   updateOptions(options: Partial<CanvasLensOptions>): void {
     this.options = { ...this.options, ...options };
     if (options.width || options.height) {
-      this.imageViewer.resize({ 
-        width: this.options.width!, 
-        height: this.options.height! 
+      this.imageViewer.resize({
+        width: this.options.width!,
+        height: this.options.height!
       });
     }
 
@@ -332,7 +339,7 @@ export class Engine {
    */
   updateToolConfig(toolConfig: ToolConfig): void {
     this.options.tools = { ...this.options.tools, ...toolConfig };
-    
+
     const zoomPanHandler = this.getZoomPanHandler();
     if (zoomPanHandler && AnnotationToolsConfig.hasZoomOrPan(this.options.tools)) {
       zoomPanHandler.updateOptions({
@@ -342,12 +349,12 @@ export class Engine {
         minZoom: this.options.minZoom ?? 0.1
       });
     }
-    
+
     const annotationManager = this.getAnnotationManager();
     if (annotationManager && toolConfig.annotation) {
       annotationManager.updateToolConfig(toolConfig.annotation);
     }
-    
+
     if (toolConfig.comparison !== undefined) {
       // Comparison tool config handling - to be implemented
     }

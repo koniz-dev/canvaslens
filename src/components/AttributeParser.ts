@@ -1,8 +1,5 @@
-/**
- * Utility class for parsing CanvasLens Web Component attributes
- */
-import { CanvasLensOptions } from '@/types';
-import { AnnotationToolsConfig } from '@/modules';
+import { AnnotationToolsConfig } from '../modules';
+import type { CanvasLensOptions } from '../types';
 
 export class AttributeParser {
   /**
@@ -23,11 +20,11 @@ export class AttributeParser {
       maxZoom: parseFloat(element.getAttribute('max-zoom') || '10'),
       minZoom: parseFloat(element.getAttribute('min-zoom') || '0.1')
     };
-    
+
     if (toolsConfig) {
       result.tools = toolsConfig;
     }
-    
+
     return result;
   }
 
@@ -52,10 +49,10 @@ export class AttributeParser {
   static getContainerDimensions(element: HTMLElement): { width: number; height: number } {
     const containerWidth = element.clientWidth || element.offsetWidth || 800;
     const containerHeight = element.clientHeight || element.offsetHeight || 600;
-    
+
     const width = this.parseSize(element.getAttribute('width'), containerWidth);
     const height = this.parseSize(element.getAttribute('height'), containerHeight);
-    
+
     return { width, height };
   }
 }

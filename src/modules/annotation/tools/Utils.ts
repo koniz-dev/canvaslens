@@ -1,5 +1,5 @@
-import { Renderer } from '@/core';
-import { Annotation, Point } from '@/types';
+import { Renderer } from '../../../core/Renderer';
+import type { Point, Annotation, Rectangle } from '../../../types';
 
 export class AnnotationToolsUtils {
   private canvas: Renderer;
@@ -22,7 +22,7 @@ export class AnnotationToolsUtils {
   /**
    * Get image bounds from the canvas (through annotation manager)
    */
-  getImageBounds(): { x: number; y: number; width: number; height: number } | null {
+  getImageBounds(): Rectangle | null {
     // Get image bounds from canvas annotation manager
     if (this.canvas.annotationManager) {
       return this.canvas.annotationManager.getImageBounds();
@@ -38,11 +38,11 @@ export class AnnotationToolsUtils {
     if (!bounds) {
       return true; // If no image bounds, allow drawing anywhere
     }
-    
-    return point.x >= bounds.x && 
-           point.x <= bounds.x + bounds.width &&
-           point.y >= bounds.y && 
-           point.y <= bounds.y + bounds.height;
+
+    return point.x >= bounds.x &&
+      point.x <= bounds.x + bounds.width &&
+      point.y >= bounds.y &&
+      point.y <= bounds.y + bounds.height;
   }
 
   /**
@@ -50,7 +50,7 @@ export class AnnotationToolsUtils {
    */
   meetsMinimumSize(annotation: Annotation, activeToolType: string | null): boolean {
     if (!activeToolType) return true;
-    
+
     // Minimum size thresholds for annotations (in pixels)
     const MIN_SIZE_THRESHOLDS = {
       rect: 10,    // Minimum 10px width or height
@@ -59,10 +59,10 @@ export class AnnotationToolsUtils {
       arrow: 8,    // Minimum 8px length
       text: 0      // Text doesn't have size constraint
     };
-    
+
     const minSize = MIN_SIZE_THRESHOLDS[activeToolType as keyof typeof MIN_SIZE_THRESHOLDS];
     if (minSize === undefined || minSize === 0) return true; // No size constraint
-    
+
     switch (annotation.type) {
       case 'rect': {
         if (annotation.points.length < 2) return false;
@@ -72,7 +72,7 @@ export class AnnotationToolsUtils {
         const height = Math.abs(end.y - start.y);
         return width >= minSize || height >= minSize;
       }
-        
+
       case 'circle': {
         if (annotation.points.length < 2) return false;
         const center = annotation.points[0]!;
@@ -82,7 +82,7 @@ export class AnnotationToolsUtils {
         );
         return radius >= minSize;
       }
-        
+
       case 'line':
       case 'arrow': {
         if (annotation.points.length < 2) return false;
@@ -93,10 +93,10 @@ export class AnnotationToolsUtils {
         );
         return length >= minSize;
       }
-        
+
       case 'text':
         return true; // Text doesn't have size constraint
-        
+
       default:
         return true;
     }
@@ -110,7 +110,7 @@ export class AnnotationToolsUtils {
     if (!bounds) {
       return point; // If no image bounds, return original point
     }
-    
+
     return {
       x: Math.max(bounds.x, Math.min(bounds.x + bounds.width, point.x)),
       y: Math.max(bounds.y, Math.min(bounds.y + bounds.height, point.y))

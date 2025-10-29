@@ -1,21 +1,9 @@
+import type { CanvasLensError } from '../../types';
+import { ErrorType } from '../../types';
 import { error, warn } from './logger';
 
-export enum ErrorType {
-  INITIALIZATION = 'INITIALIZATION',
-  IMAGE_LOAD = 'IMAGE_LOAD',
-  RENDERING = 'RENDERING',
-  ANNOTATION = 'ANNOTATION',
-  TOOL_ACTIVATION = 'TOOL_ACTIVATION',
-  OVERLAY = 'OVERLAY',
-  ATTRIBUTE_PARSING = 'ATTRIBUTE_PARSING',
-  UNKNOWN = 'UNKNOWN'
-}
-
-export interface CanvasLensError extends Error {
-  type: ErrorType;
-  context?: Record<string, unknown>;
-  recoverable?: boolean;
-}
+// Re-export ErrorType for convenience
+export { ErrorType };
 
 export class ErrorHandler {
   private static errorCallbacks: Array<(error: CanvasLensError) => void> = [];
@@ -65,7 +53,7 @@ export class ErrorHandler {
     // Attempt recovery if possible
     if (canvasLensError.recoverable && fallback) {
       try {
-        const _result = fallback();
+        fallback();
         warn('Error recovery successful:', canvasLensError.message);
       } catch (recoveryError) {
         error('Error recovery failed:', recoveryError instanceof Error ? recoveryError : new Error(String(recoveryError)));
@@ -220,10 +208,10 @@ export class ErrorHandler {
    */
   private static isCanvasLensError(error: unknown): error is CanvasLensError {
     return error !== null &&
-           typeof error === 'object' &&
-           'type' in error &&
-           typeof (error as Record<string, unknown>).type === 'string' &&
-           Object.values(ErrorType).includes((error as Record<string, unknown>).type as ErrorType);
+      typeof error === 'object' &&
+      'type' in error &&
+      typeof (error as Record<string, unknown>).type === 'string' &&
+      Object.values(ErrorType).includes((error as Record<string, unknown>).type as ErrorType);
   }
 
   /**
@@ -231,7 +219,7 @@ export class ErrorHandler {
    */
   private static logError(canvasLensError: CanvasLensError): void {
     const logMessage = `[${canvasLensError.type}] ${canvasLensError.message}`;
-    
+
     if (canvasLensError.recoverable) {
       warn(logMessage, canvasLensError.context);
     } else {
@@ -257,34 +245,34 @@ export class ErrorHandler {
    */
   private static getUserFriendlyMessage(
     errorType: ErrorType,
-    technicalMessage: string,
+    _technicalMessage: string,
     context?: string
   ): string {
     switch (errorType) {
       case ErrorType.INITIALIZATION:
         return 'CanvasLens failed to initialize. Please refresh the page and try again.';
-      
+
       case ErrorType.IMAGE_LOAD:
         if (context) {
           return `Unable to load image from "${context}". Please check the URL or try a different image.`;
         }
         return 'Failed to load image. Please check the image source and try again.';
-      
+
       case ErrorType.RENDERING:
         return 'Canvas rendering error. The image may be too large or corrupted.';
-      
+
       case ErrorType.ANNOTATION:
         return 'Annotation error. Please try again or refresh the page.';
-      
+
       case ErrorType.TOOL_ACTIVATION:
         return 'Tool activation failed. Please try selecting the tool again.';
-      
+
       case ErrorType.OVERLAY:
         return 'Overlay mode error. Please close and reopen the overlay.';
-      
+
       case ErrorType.ATTRIBUTE_PARSING:
         return 'Configuration error. Please check your settings and try again.';
-      
+
       default:
         return 'An unexpected error occurred. Please refresh the page and try again.';
     }
@@ -319,11 +307,11 @@ export class ErrorHandler {
  * Error boundary decorator for methods
  */
 export function withErrorHandling(
-  errorType: ErrorType,
+  _errorType: ErrorType,
   context?: Record<string, unknown>,
   fallback?: () => void
 ) {
-  return function (target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
+  return function (_target: unknown, _propertyName: string, descriptor: PropertyDescriptor) {
     const method = descriptor.value;
 
     descriptor.value = function (...args: unknown[]) {
@@ -344,7 +332,7 @@ export function withErrorHandling(
  */
 export async function safeAsync<T>(
   asyncFn: () => Promise<T>,
-  errorType: ErrorType,
+  _errorType: ErrorType,
   context?: Record<string, unknown>,
   fallback?: () => T
 ): Promise<T | undefined> {

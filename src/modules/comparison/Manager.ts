@@ -1,25 +1,7 @@
-import { Renderer } from '../../core';
-import { ImageData, Size, EventHandlers } from '../../types';
-import { loadImage, getImageData } from '../../utils/image/image';
+import { Renderer } from '../../core/Renderer';
+import type { EventHandlers, Size, ComparisonOptions, ComparisonState, CustomImageData, Rectangle } from '../../types';
 import { error } from '../../utils/core/logger';
-
-export interface ComparisonOptions {
-  sliderPosition?: number; // 0-100 percentage
-  sliderWidth?: number;
-  sliderColor?: string;
-  enableSynchronizedZoom?: boolean;
-  enableSynchronizedPan?: boolean;
-  eventHandlers?: EventHandlers;
-  comparisonMode?: boolean; // Enable comparison mode (before/after with annotations)
-}
-
-export interface ComparisonState {
-  beforeImage: ImageData | null;
-  afterImage: ImageData | null;
-  sliderPosition: number;
-  isDragging: boolean;
-  comparisonMode: boolean;
-}
+import { loadImage, getImageData } from '../../utils/image/utils';
 
 export class ComparisonManager {
   private canvas: Renderer;
@@ -35,7 +17,7 @@ export class ComparisonManager {
   constructor(canvas: Renderer, options: ComparisonOptions = {}) {
     this.canvas = canvas;
     this.eventHandlers = options.eventHandlers || {};
-    
+
     this.options = {
       sliderPosition: 50,
       sliderWidth: 4,
@@ -70,7 +52,7 @@ export class ComparisonManager {
    */
   private setupEventListeners(): void {
     const canvasElement = this.canvas.getElement();
-    
+
     // Use capture phase to handle events before zoom/pan
     canvasElement.addEventListener('mousedown', this.boundHandlers.handleMouseDown as EventListener, true);
     canvasElement.addEventListener('mousemove', this.boundHandlers.handleMouseMove as EventListener, true);
@@ -86,20 +68,19 @@ export class ComparisonManager {
     if (!this.state.comparisonMode) return;
 
     const mousePos = this.canvas.getMousePosition(event);
-    const _canvasSize = this.canvas.getSize();
-    
+
     // Get image bounds to position slider correctly
     const imageBounds = this.getImageBounds();
     if (!imageBounds) return;
-    
+
     // Calculate slider position relative to image bounds
     const sliderX = imageBounds.x + (imageBounds.width * this.state.sliderPosition) / 100;
     const tolerance = 30; // Increased tolerance for easier interaction
-    
+
     // Check if click is near the slider and within image bounds
-    if (Math.abs(mousePos.x - sliderX) <= tolerance && 
-        mousePos.y >= imageBounds.y && 
-        mousePos.y <= imageBounds.y + imageBounds.height) {
+    if (Math.abs(mousePos.x - sliderX) <= tolerance &&
+      mousePos.y >= imageBounds.y &&
+      mousePos.y <= imageBounds.y + imageBounds.height) {
       this.state.isDragging = true;
       this.canvas.getElement().style.cursor = 'ew-resize';
       event.preventDefault();
@@ -115,25 +96,25 @@ export class ComparisonManager {
 
     const mousePos = this.canvas.getMousePosition(event);
     const canvasSize = this.canvas.getSize();
-    
+
     // Get image bounds to position slider correctly
     const imageBounds = this.getImageBounds();
     if (!imageBounds) return;
-    
+
     // Check if mouse is near slider for cursor change
     const sliderX = imageBounds.x + (imageBounds.width * this.state.sliderPosition) / 100;
     const tolerance = 30;
-    const isNearSlider = Math.abs(mousePos.x - sliderX) <= tolerance && 
-                        mousePos.y >= imageBounds.y && 
-                        mousePos.y <= imageBounds.y + imageBounds.height;
-    
+    const isNearSlider = Math.abs(mousePos.x - sliderX) <= tolerance &&
+      mousePos.y >= imageBounds.y &&
+      mousePos.y <= imageBounds.y + imageBounds.height;
+
     // Update cursor based on proximity to slider
     if (isNearSlider && !this.state.isDragging) {
       this.canvas.getElement().style.cursor = 'ew-resize';
     } else if (!this.state.isDragging) {
       this.canvas.getElement().style.cursor = 'default';
     }
-    
+
     // Handle dragging
     if (this.state.isDragging) {
       // Get image bounds to limit slider movement
@@ -142,18 +123,18 @@ export class ComparisonManager {
         // Calculate slider position relative to image bounds
         const relativeX = mousePos.x - imageBounds.x;
         const imageWidth = imageBounds.width;
-        
+
         // Clamp slider position to image bounds
         const clampedX = Math.max(0, Math.min(imageWidth, relativeX));
         const newPosition = (clampedX / imageWidth) * 100;
-        
+
         this.setSliderPosition(newPosition);
       } else {
         // Fallback to canvas bounds if image bounds not available
         const newPosition = Math.max(0, Math.min(100, (mousePos.x / canvasSize.width) * 100));
         this.setSliderPosition(newPosition);
       }
-      
+
       event.preventDefault();
       event.stopPropagation(); // Prevent zoom/pan from handling this event
     }
@@ -182,9 +163,9 @@ export class ComparisonManager {
   /**
    * Get image bounds for limiting slider movement
    */
-  private getImageBounds(): { x: number; y: number; width: number; height: number } | null {
+  private getImageBounds(): Rectangle | null {
     if (this.canvas.imageViewer) {
-      return (this.canvas.imageViewer as { getImageBounds: () => { x: number; y: number; width: number; height: number } | null }).getImageBounds();
+      return (this.canvas.imageViewer as { getImageBounds: () => Rectangle | null }).getImageBounds();
     }
     return null;
   }
@@ -233,12 +214,12 @@ export class ComparisonManager {
   setSliderPosition(position: number): void {
     const clampedPosition = Math.max(0, Math.min(100, position));
     this.state.sliderPosition = clampedPosition;
-    
+
     // Trigger re-render through the image viewer
     if (this.state.comparisonMode && this.canvas.imageViewer) {
       this.canvas.imageViewer.render();
     }
-    
+
     // Trigger event if handler exists
     if (this.eventHandlers.onComparisonChange) {
       this.eventHandlers.onComparisonChange(clampedPosition);
@@ -281,19 +262,19 @@ export class ComparisonManager {
   toggleComparisonMode(): void {
     this.state.comparisonMode = !this.state.comparisonMode;
     this.options.comparisonMode = this.state.comparisonMode;
-    
+
     // Clear any selected annotations when entering comparison mode
     if (this.state.comparisonMode && this.canvas.annotationManager) {
       (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
     }
-    
+
     // Handle cursor state
     if (this.state.comparisonMode) {
       this.canvas.getElement().style.cursor = 'default';
     } else {
       this.restoreCursorState();
     }
-    
+
     // Trigger event if handler exists
     if (this.eventHandlers.onComparisonModeChange) {
       this.eventHandlers.onComparisonModeChange(this.state.comparisonMode);
@@ -306,19 +287,19 @@ export class ComparisonManager {
   setComparisonMode(enabled: boolean): void {
     this.state.comparisonMode = enabled;
     this.options.comparisonMode = enabled;
-    
+
     // Clear any selected annotations when entering comparison mode
     if (enabled && this.canvas.annotationManager) {
       (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
     }
-    
+
     // Handle cursor state
     if (enabled) {
       this.canvas.getElement().style.cursor = 'default';
     } else {
       this.restoreCursorState();
     }
-    
+
     // Trigger event if handler exists
     if (this.eventHandlers.onComparisonModeChange) {
       this.eventHandlers.onComparisonModeChange(enabled);
@@ -376,7 +357,7 @@ export class ComparisonManager {
 
       // Draw current image with annotations (only in clipped region)
       this.drawImage(ctx, this.state.afterImage!);
-      
+
       ctx.restore();
     } else {
       // Normal mode: Left = before image, Right = after image
@@ -391,7 +372,7 @@ export class ComparisonManager {
 
       // Draw after image (only in clipped region)
       this.drawImage(ctx, this.state.afterImage!);
-      
+
       ctx.restore();
     }
 
@@ -405,13 +386,13 @@ export class ComparisonManager {
   /**
    * Draw image with proper positioning
    */
-  private drawImage(ctx: CanvasRenderingContext2D, imageData: ImageData): void {
+  private drawImage(ctx: CanvasRenderingContext2D, CustomImageData: CustomImageData): void {
     ctx.drawImage(
-      imageData.element,
-      imageData.position.x,
-      imageData.position.y,
-      imageData.displaySize.width,
-      imageData.displaySize.height
+      CustomImageData.element,
+      CustomImageData.position.x,
+      CustomImageData.position.y,
+      CustomImageData.displaySize.width,
+      CustomImageData.displaySize.height
     );
   }
 
@@ -427,7 +408,7 @@ export class ComparisonManager {
     ctx.strokeStyle = sliderColor;
     ctx.lineWidth = sliderWidth;
     ctx.setLineDash([]);
-    
+
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, canvasSize.height);
@@ -453,12 +434,12 @@ export class ComparisonManager {
    */
   resize(size: Size): void {
     this.canvas.resize(size);
-    
+
     // Recalculate image dimensions if images are loaded
     if (this.state.beforeImage) {
       this.state.beforeImage = getImageData(this.state.beforeImage.element, size);
     }
-    
+
     if (this.state.afterImage) {
       this.state.afterImage = getImageData(this.state.afterImage.element, size);
     }
@@ -467,14 +448,14 @@ export class ComparisonManager {
   /**
    * Get before image data
    */
-  getBeforeImage(): ImageData | null {
+  getBeforeImage(): CustomImageData | null {
     return this.state.beforeImage;
   }
 
   /**
    * Get after image data
    */
-  getAfterImage(): ImageData | null {
+  getAfterImage(): CustomImageData | null {
     return this.state.afterImage;
   }
 

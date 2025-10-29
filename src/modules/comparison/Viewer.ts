@@ -1,10 +1,7 @@
 import { Renderer } from '../../core/Renderer';
-import { ImageData, Size, Point, EventHandlers } from '../../types';
-import { ComparisonManager, ComparisonOptions } from './Manager';
-import { ZoomPanHandler, ZoomPanOptions } from '../zoom-pan';
-
-// Re-export ComparisonOptions for external use
-export { ComparisonOptions } from './Manager';
+import type { EventHandlers, Size, ComparisonOptions, ZoomPanOptions, Point, CustomImageData } from '../../types';
+import { ZoomPanHandler } from '../zoom-pan/Handler';
+import { ComparisonManager } from './Manager';
 
 export class ComparisonViewer {
   private canvas: Renderer;
@@ -147,14 +144,14 @@ export class ComparisonViewer {
   /**
    * Get before image data
    */
-  getBeforeImage(): ImageData | null {
+  getBeforeImage(): CustomImageData | null {
     return this.comparisonManager.getBeforeImage();
   }
 
   /**
    * Get after image data
    */
-  getAfterImage(): ImageData | null {
+  getAfterImage(): CustomImageData | null {
     return this.comparisonManager.getAfterImage();
   }
 
@@ -201,7 +198,7 @@ export class ComparisonViewer {
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
     this.comparisonManager.setEventHandlers(handlers);
-    
+
     // Also update zoom/pan handler event handlers
     if (this.zoomPanHandler) {
       this.zoomPanHandler.setEventHandlers(handlers);
@@ -215,7 +212,7 @@ export class ComparisonViewer {
     if (this.zoomPanHandler && this.isReady()) {
       const beforeImage = this.getBeforeImage();
       const afterImage = this.getAfterImage();
-      
+
       if (beforeImage && afterImage) {
         // Use the larger image to determine fit
         const beforeBounds = {
@@ -224,7 +221,7 @@ export class ComparisonViewer {
           width: beforeImage.displaySize.width,
           height: beforeImage.displaySize.height
         };
-        
+
         const afterBounds = {
           x: afterImage.position.x,
           y: afterImage.position.y,
@@ -235,7 +232,7 @@ export class ComparisonViewer {
         // Use the larger bounds for fitting
         const useBefore = (beforeBounds.width * beforeBounds.height) > (afterBounds.width * afterBounds.height);
         const bounds = useBefore ? beforeBounds : afterBounds;
-        
+
         this.zoomPanHandler.fitToView(bounds);
       }
     }

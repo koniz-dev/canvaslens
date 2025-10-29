@@ -17,9 +17,9 @@ export class MemoryManager {
 
   static cleanup(): void {
     if (this.isCleaningUp) return;
-    
+
     this.isCleaningUp = true;
-    
+
     try {
       this.cleanupCallbacks.forEach(callback => {
         try {
@@ -28,7 +28,7 @@ export class MemoryManager {
           warn('Cleanup callback failed:', error);
         }
       });
-      
+
       this.cleanupCallbacks.length = 0;
     } finally {
       this.isCleaningUp = false;
@@ -48,12 +48,12 @@ export class MemoryManager {
     wait: number
   ): T & { cleanup?: () => void } {
     let timeout: number | null = null;
-    
+
     const debounced = (...args: Parameters<T>) => {
       if (timeout !== null) {
         clearTimeout(timeout);
       }
-      
+
       timeout = window.setTimeout(() => {
         func(...args);
         timeout = null;
@@ -77,7 +77,7 @@ export class MemoryManager {
   ): T & { cleanup?: () => void } {
     let inThrottle: boolean = false;
     let timeoutId: number | null = null;
-    
+
     const throttled = (...args: Parameters<T>) => {
       if (!inThrottle) {
         func(...args);

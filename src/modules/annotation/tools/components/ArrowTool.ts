@@ -1,4 +1,4 @@
-import { Point, Annotation } from '@/types';
+import type { Point, Annotation } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
 export class ArrowTool extends BaseTool {
@@ -30,16 +30,16 @@ export class ArrowTool extends BaseTool {
 
     const endPoint = { ...point };
     const startPoint = { ...this.startPoint }; // Store startPoint before canceling
-    
+
     // Reset state
     this.cancelDrawing();
 
     // Only create annotation if it has meaningful length
     const length = Math.sqrt(
-      Math.pow(endPoint.x - startPoint.x, 2) + 
+      Math.pow(endPoint.x - startPoint.x, 2) +
       Math.pow(endPoint.y - startPoint.y, 2)
     );
-    
+
     if (length < 10) {
       return null; // Too short to be meaningful
     }

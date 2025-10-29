@@ -1,27 +1,4 @@
-/**
- * Viewport culling utilities for performance optimization
- */
-import { Point, Size, Rectangle } from '../../types';
-
-export interface ViewportInfo {
-  /** Current viewport position */
-  position: Point;
-  /** Current viewport size */
-  size: Size;
-  /** Current zoom level */
-  zoom: number;
-  /** Viewport bounds */
-  bounds: Rectangle;
-}
-
-export interface CullableObject {
-  /** Object bounds */
-  bounds: Rectangle;
-  /** Object ID for identification */
-  id: string;
-  /** Whether object is visible */
-  visible?: boolean;
-}
+import type { Point, Size, Rectangle, ViewportInfo, CullableObject } from '../../types';
 
 export class ViewportCulling {
   /**
@@ -60,7 +37,7 @@ export class ViewportCulling {
     objects: T[],
     viewport: ViewportInfo
   ): T[] {
-    return objects.filter(object => 
+    return objects.filter(object =>
       this.rectanglesIntersect(object.bounds, viewport.bounds)
     );
   }
@@ -72,7 +49,7 @@ export class ViewportCulling {
     objects: T[],
     viewport: ViewportInfo
   ): T[] {
-    return objects.filter(object => 
+    return objects.filter(object =>
       this.rectangleContains(viewport.bounds, object.bounds)
     );
   }

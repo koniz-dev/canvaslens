@@ -2,17 +2,10 @@
  * Performance monitoring utilities for CanvasLens
  */
 
-export interface PerformanceMetrics {
-  renderTime: number;
-  annotationCount: number;
-  visibleAnnotations: number;
-  viewportCullingRatio: number;
-  memoryUsage?: number;
-  fps?: number;
-  frameDrops?: number;
-  userInteractions?: number;
-  timestamp: number;
-}
+import type { PerformanceMetrics } from '../../types';
+
+// Re-export PerformanceMetrics for convenience
+export type { PerformanceMetrics };
 
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
@@ -188,6 +181,13 @@ export class PerformanceMonitor {
   }
 
   /**
+   * Get last interaction timestamp
+   */
+  getLastInteractionTime(): number {
+    return this.lastInteractionTime;
+  }
+
+  /**
    * Clear all metrics
    */
   clear(): void {
@@ -213,13 +213,11 @@ export const performanceMonitor = new PerformanceMonitor();
 /**
  * Performance decorator for methods
  */
-export function measurePerformance(target: unknown, propertyName: string, descriptor: PropertyDescriptor) {
+export function measurePerformance(_target: unknown, _propertyName: string, descriptor: PropertyDescriptor) {
   const method = descriptor.value;
 
   descriptor.value = function (...args: unknown[]) {
-    const _startTime = performance.now();
     const result = method.apply(this, args);
-    const _endTime = performance.now();
     
     return result;
   };

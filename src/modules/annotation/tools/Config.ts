@@ -1,5 +1,5 @@
-import { ToolConfig } from '@/types';
-import { warn } from '@/utils';
+import type { ToolConfig } from '../../../types';
+import { warn } from '../../../utils/core/logger';
 
 /**
  * Tool configuration management utilities
@@ -26,20 +26,20 @@ export class AnnotationToolsConfig {
    */
   static parseFromAttribute(element: HTMLElement): ToolConfig | undefined {
     const toolsAttr = element.getAttribute('tools');
-    
+
     if (!toolsAttr) {
       return undefined; // Let Engine use its default
     }
 
     try {
       const parsed = JSON.parse(toolsAttr);
-      
+
       // Validate the parsed configuration
       if (typeof parsed !== 'object' || parsed === null) {
         warn('Tools configuration must be an object:', toolsAttr);
         return undefined;
       }
-      
+
       return parsed;
     } catch (e) {
       warn('Invalid JSON in tools configuration:', toolsAttr, e);

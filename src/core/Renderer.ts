@@ -1,5 +1,5 @@
-import { Size, Point, ViewState } from '@/types';
-import { AnnotationManager, ImageViewer } from '@/types';
+import type { AnnotationManager, ImageViewer } from '../modules';
+import type { Point, Rectangle, Size, ViewState } from '../types';
 
 export class Renderer {
   private canvas: HTMLCanvasElement;
@@ -9,15 +9,14 @@ export class Renderer {
   public imageViewer: ImageViewer | null = null;
   private resizeTimeout: number | null = null;
   private renderRequestId: number | null = null;
-  private dirtyRegions: Array<{ x: number; y: number; width: number; height: number }> = [];
-  private lastViewState: ViewState | null = null;
+  private dirtyRegions: Array<Rectangle> = [];
 
   constructor(container: HTMLElement, size: Size) {
     this.canvas = document.createElement('canvas');
     this.canvas.style.display = 'block';
     this.canvas.style.userSelect = 'none';
     this.canvas.style.touchAction = 'none';
-    
+
     const context = this.canvas.getContext('2d');
     if (!context) {
       throw new Error('Failed to get 2D context from canvas');
@@ -42,7 +41,7 @@ export class Renderer {
     if (this.resizeTimeout) {
       clearTimeout(this.resizeTimeout);
     }
-    
+
     // Debounce resize operations
     this.resizeTimeout = window.setTimeout(() => {
       this.performResize(size);
@@ -55,7 +54,7 @@ export class Renderer {
   private performResize(size: Size): void {
     this.canvas.width = size.width;
     this.canvas.height = size.height;
-    
+
     // Set CSS size to match device pixel ratio for crisp rendering
     const dpr = window.devicePixelRatio || 1;
     this.canvas.style.width = `${size.width}px`;
@@ -63,7 +62,7 @@ export class Renderer {
     this.canvas.width = size.width * dpr;
     this.canvas.height = size.height * dpr;
     this.ctx.scale(dpr, dpr);
-    
+
     // Trigger re-render after resize
     this.requestRender();
   }
@@ -128,7 +127,7 @@ export class Renderer {
   setViewState(viewState: Partial<ViewState>): void {
     const oldViewState = { ...this.viewState };
     this.viewState = { ...this.viewState, ...viewState };
-    
+
     // Track dirty regions for view state changes
     this.trackViewStateChange(oldViewState, this.viewState);
     this.requestRender();
@@ -140,9 +139,9 @@ export class Renderer {
   private trackViewStateChange(oldState: ViewState, newState: ViewState): void {
     // If view state changed significantly, mark entire canvas as dirty
     const scaleChanged = Math.abs(oldState.scale - newState.scale) > 0.01;
-    const offsetChanged = Math.abs(oldState.offsetX - newState.offsetX) > 1 || 
-                         Math.abs(oldState.offsetY - newState.offsetY) > 1;
-    
+    const offsetChanged = Math.abs(oldState.offsetX - newState.offsetX) > 1 ||
+      Math.abs(oldState.offsetY - newState.offsetY) > 1;
+
     if (scaleChanged || offsetChanged) {
       this.markEntireCanvasDirty();
     }
@@ -178,7 +177,7 @@ export class Renderer {
   /**
    * Get current dirty regions
    */
-  getDirtyRegions(): Array<{ x: number; y: number; width: number; height: number }> {
+  getDirtyRegions(): Array<Rectangle> {
     return [...this.dirtyRegions];
   }
 
@@ -189,7 +188,7 @@ export class Renderer {
     if (this.renderRequestId) {
       cancelAnimationFrame(this.renderRequestId);
     }
-    
+
     this.renderRequestId = requestAnimationFrame(() => {
       if (this.imageViewer) {
         this.imageViewer.render();
@@ -253,13 +252,13 @@ export class Renderer {
       clearTimeout(this.resizeTimeout);
       this.resizeTimeout = null;
     }
-    
+
     // Cancel pending render requests
     if (this.renderRequestId) {
       cancelAnimationFrame(this.renderRequestId);
       this.renderRequestId = null;
     }
-    
+
     // Clear references
     this.annotationManager = null;
     this.imageViewer = null;

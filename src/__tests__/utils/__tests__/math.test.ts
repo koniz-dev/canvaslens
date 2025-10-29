@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+// Imports removed
 
 // Mock utility functions - replace with actual imports when available
 const clamp = (value: number, min: number, max: number): number => {

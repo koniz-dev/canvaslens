@@ -1,4 +1,4 @@
-import { Point, Annotation } from '@/types';
+import type { Annotation, Point } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
 export class LineTool extends BaseTool {
@@ -11,7 +11,7 @@ export class LineTool extends BaseTool {
     this.isDrawing = true;
     this.startPoint = { ...point };
     this.currentPoints = [this.startPoint];
-    
+
     // Create annotation immediately when starting to draw
     this.currentAnnotation = this.createAnnotation([this.startPoint, this.startPoint]);
     return this.currentAnnotation;
@@ -25,7 +25,7 @@ export class LineTool extends BaseTool {
 
     // Update current points with start and current mouse position
     this.currentPoints = [this.startPoint, { ...point }];
-    
+
     // Update the existing annotation
     this.currentAnnotation.points = [this.startPoint, { ...point }];
   }
@@ -38,12 +38,12 @@ export class LineTool extends BaseTool {
 
     const endPoint = { ...point };
     const startPoint = { ...this.startPoint };
-    
+
     // Calculate line length
     const length = Math.sqrt(
       Math.pow(endPoint.x - startPoint.x, 2) + Math.pow(endPoint.y - startPoint.y, 2)
     );
-    
+
     // Only keep annotation if it has meaningful length
     if (length < 5) {
       this.cancelDrawing();
@@ -53,10 +53,10 @@ export class LineTool extends BaseTool {
     // Finalize the annotation
     this.currentAnnotation.points = [startPoint, endPoint];
     const finalAnnotation = this.currentAnnotation;
-    
+
     // Reset state
     this.cancelDrawing();
-    
+
     return finalAnnotation;
   }
 

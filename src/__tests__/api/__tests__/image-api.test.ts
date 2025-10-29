@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+// Imports removed
 
 // Mock API client - replace with actual implementation when available
 class ImageAPI {

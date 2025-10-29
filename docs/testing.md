@@ -83,9 +83,9 @@ HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
   measureText: jest.fn(() => ({ width: 100 })),
   fillText: jest.fn(),
   strokeText: jest.fn(),
-  createImageData: jest.fn(),
+  createCustomImageData: jest.fn(),
   getImageData: jest.fn(),
-  putImageData: jest.fn(),
+  putCustomImageData: jest.fn(),
   canvas: {
     width: 800,
     height: 600
@@ -966,18 +966,18 @@ describe('Canvas Output Visual Tests', () => {
       await viewer.loadImage(imageSrc);
 
       const canvas = viewer.canvas;
-      const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      const CustomImageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
       
       // Check that image data is not empty
-      expect(imageData.data.some(pixel => pixel !== 0)).toBe(true);
+      expect(CustomImageData.data.some(pixel => pixel !== 0)).toBe(true);
     });
 
     it('should maintain aspect ratio', async () => {
       const imageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==';
       await viewer.loadImage(imageSrc);
 
-      const imageData = viewer.getImageData();
-      const aspectRatio = imageData.naturalSize.width / imageData.naturalSize.height;
+      const CustomImageData = viewer.getImageData();
+      const aspectRatio = CustomImageData.naturalSize.width / CustomImageData.naturalSize.height;
       
       expect(aspectRatio).toBeCloseTo(1.0, 2); // Should be square
     });
@@ -1005,10 +1005,10 @@ describe('Canvas Output Visual Tests', () => {
       viewer.addAnnotation(annotation);
       
       const canvas = viewer.canvas;
-      const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+      const CustomImageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
       
       // Check that annotation was rendered (simplified check)
-      expect(imageData.data).toBeDefined();
+      expect(CustomImageData.data).toBeDefined();
     });
   });
 });
@@ -1368,9 +1368,9 @@ export class CanvasMock {
         measureText: jest.fn(() => ({ width: 100 })),
         fillText: jest.fn(),
         strokeText: jest.fn(),
-        createImageData: jest.fn(),
+        createCustomImageData: jest.fn(),
         getImageData: jest.fn(),
-        putImageData: jest.fn(),
+        putCustomImageData: jest.fn(),
         canvas: this
       };
     }

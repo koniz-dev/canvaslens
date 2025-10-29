@@ -1,10 +1,9 @@
-
 /**
  * Check if we're in development mode
  */
 function isDevelopment(): boolean {
-  return process.env.NODE_ENV === 'development' || 
-         typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).__DEV__ === true;
+  return process.env.NODE_ENV === 'development' ||
+    typeof window !== 'undefined' && (window as unknown as Record<string, unknown>).__DEV__ === true;
 }
 
 /**
@@ -12,7 +11,7 @@ function isDevelopment(): boolean {
  */
 function getTimestamp(): string {
   const now = new Date();
-  const timeString = now.toLocaleTimeString('vi-VN', { 
+  const timeString = now.toLocaleTimeString('vi-VN', {
     hour12: false,
     hour: '2-digit',
     minute: '2-digit',

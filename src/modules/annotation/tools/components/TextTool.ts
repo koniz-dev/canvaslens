@@ -1,9 +1,10 @@
-import { Point, Annotation } from '@/types';
+import type { Annotation, Point } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
 export class TextTool extends BaseTool {
   private textInput: HTMLInputElement | null = null;
-  private pendingAnnotation: { point: Point; resolve: (annotation: Annotation | null) => void } | null = null;
+  private: { point: Point; resolve: (annotation: Annotation | null) => void } | null = null;
+  private timeoutIds: ReturnType<typeof setTimeout>[] = [];
 
   /**
    * Start drawing text (show input dialog)
@@ -46,10 +47,10 @@ export class TextTool extends BaseTool {
     this.textInput.style.padding = '4px 8px';
     this.textInput.style.border = '2px solid #007bff';
     this.textInput.style.borderRadius = '4px';
-    this.textInput.style.fontSize = `${this.options.style.fontSize || 16}px`;
-    this.textInput.style.fontFamily = this.options.style.fontFamily || 'Arial, sans-serif';
+    this.textInput.style.fontSize = `${this.options.style?.fontSize || 16}px`;
+    this.textInput.style.fontFamily = this.options.style?.fontFamily || 'Arial, sans-serif';
     this.textInput.style.backgroundColor = 'white';
-    this.textInput.style.color = this.options.style.strokeColor;
+    this.textInput.style.color = this.options.style?.strokeColor || '#000000';
     this.textInput.style.minWidth = '100px';
 
     // Add to canvas container
@@ -74,7 +75,8 @@ export class TextTool extends BaseTool {
 
     this.textInput.addEventListener('blur', () => {
       // Delay to allow for click events and prevent conflicts
-      setTimeout(() => this.completeTextInput(), 200);
+      const timeoutId = setTimeout(() => this.completeTextInput(), 200);
+      this.timeoutIds.push(timeoutId);
     });
 
     // Prevent text input from being removed when clicking on it
@@ -105,21 +107,22 @@ export class TextTool extends BaseTool {
 
     // Clean up
     this.removeTextInput();
-    
+
     // Reset drawing state
     this.isDrawing = false;
     this.currentPoints = [];
     this.startPoint = null;
-    
+
     // Trigger annotation creation if we have a valid annotation
     if (annotation) {
       // We need to notify the tool manager about the new annotation
       // This will be handled by the tool manager's event system
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         // Trigger a custom event or use a callback mechanism
         const event = new CustomEvent('annotationCreated', { detail: annotation });
         this.canvas.getElement().dispatchEvent(event);
       }, 0);
+      this.timeoutIds.push(timeoutId);
     }
   }
 
@@ -165,6 +168,21 @@ export class TextTool extends BaseTool {
     super.cancelDrawing();
     if (this.textInput) {
       this.cancelTextInput();
+    }
+  }
+
+  /**
+   * Clean up resources and timers
+   */
+  destroy(): void {
+    // Clear all pending timeouts
+    this.timeoutIds.forEach(id => clearTimeout(id));
+    this.timeoutIds = [];
+
+    // Remove text input if it exists
+    if (this.textInput && this.textInput.parentNode) {
+      this.textInput.parentNode.removeChild(this.textInput);
+      this.textInput = null;
     }
   }
 }

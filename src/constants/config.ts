@@ -1,0 +1,8 @@
+export const DEFAULT_CONFIG = {
+  WIDTH: 800,
+  HEIGHT: 600,
+  BACKGROUND_COLOR: '#f0f0f0',
+  MAX_ZOOM: 10,
+  MIN_ZOOM: 0.1,
+  DEFAULT_ZOOM_FACTOR: 1.2
+} as const;

@@ -1,4 +1,4 @@
-import { Point, ViewState } from '../../types';
+import type { Point, ViewState } from '../../types';
 
 /**
  * Convert screen coordinates to world coordinates

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+// Imports removed
 
 // Mock CanvasLens class - replace with actual import when available
 class CanvasLens {

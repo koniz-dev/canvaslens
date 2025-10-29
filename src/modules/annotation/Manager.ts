@@ -1,15 +1,19 @@
-import { Renderer } from '@/core';
-import { Annotation, AnnotationStyle, Tool, Point, EventHandlers } from '@/types';
+import { Renderer } from '../../core/Renderer';
+import type {
+  AnnotationStyle,
+  Tool,
+  EventHandlers,
+  Annotation,
+  Point,
+  AnnotationManagerOptions,
+  Rectangle,
+  ToolManagerOptions
+} from '../../types';
+import { error } from '../../utils/core/logger';
+import { MemoryManager } from '../../utils/core/memory-manager';
+import { ValidationHelper } from '../../utils/core/validation-helper';
 import { AnnotationRenderer } from './Renderer';
-import { AnnotationToolsManager, ToolManagerOptions } from './tools';
-import { error, ValidationHelper, MemoryManager } from '@/utils';
-
-export interface AnnotationManagerOptions {
-  enabled?: boolean;
-  defaultStyle?: AnnotationStyle;
-  availableTools?: Tool[];
-  eventHandlers?: EventHandlers;
-}
+import { AnnotationToolsManager } from './tools/Manager';
 
 export class AnnotationManager {
   private canvas: Renderer;
@@ -20,9 +24,8 @@ export class AnnotationManager {
   private eventHandlers: EventHandlers;
   private enabled = true;
   private isDragging = false;
-  private dragStartPoint: Point | null = null;
   private dragOffset: Point | null = null;
-  private _hasChanges = false;
+  private hasUnsavedChanges = false;
   private throttledMouseMove: ((event: MouseEvent) => void) & { cleanup?: () => void };
   private cleanupCallback: () => void;
 
@@ -57,7 +60,7 @@ export class AnnotationManager {
     };
 
     this.toolManager = new AnnotationToolsManager(canvas, this.renderer, toolManagerOptions);
-    
+
     this.toolManager.setOnAnnotationCreate((annotation) => {
       this.addAnnotation(annotation);
     });
@@ -75,11 +78,11 @@ export class AnnotationManager {
    */
   private setupEventListeners(): void {
     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
-    
+
     this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
     this.canvas.addEventListener('mousemove', this.throttledMouseMove as unknown as EventListener);
     this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
-    
+
   }
 
   /**
@@ -87,13 +90,13 @@ export class AnnotationManager {
    */
   private handleContextMenu(event: MouseEvent): void {
     if (!this.enabled || this.toolManager.isDrawing()) return;
-    
+
     event.preventDefault();
     event.stopPropagation();
-    
+
     const point = this.canvas.getMousePosition(event);
     const worldPoint = this.screenToWorld(point);
-    
+
     const annotation = this.getAnnotationAt(worldPoint);
     if (annotation) {
       this.selectAnnotation(annotation);
@@ -106,10 +109,10 @@ export class AnnotationManager {
    */
   private handleMouseDown(event: MouseEvent): void {
     if (!this.canHandleMouseDown(event)) return;
-    
+
     const worldPoint = this.getWorldPointFromEvent(event);
     const annotation = this.getAnnotationAt(worldPoint);
-    
+
     if (annotation) {
       this.handleAnnotationClick(annotation, worldPoint, event);
     } else {
@@ -121,10 +124,10 @@ export class AnnotationManager {
     if (!this.enabled || event.button !== 0) {
       return false;
     }
-    
-    return !this.toolManager.isDrawing() && 
-           this.hasEnabledAnnotationTools() &&
-           !this.isComparisonModeActive();
+
+    return !this.toolManager.isDrawing() &&
+      this.hasEnabledAnnotationTools() &&
+      !this.isComparisonModeActive();
   }
 
   private getWorldPointFromEvent(event: MouseEvent): Point {
@@ -135,9 +138,9 @@ export class AnnotationManager {
   private handleAnnotationClick(annotation: Annotation, worldPoint: Point, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    
+
     this.selectAnnotation(annotation);
-    
+
     if (this.selectedAnnotation === annotation) {
       this.startDragging(annotation, worldPoint);
     }
@@ -145,8 +148,7 @@ export class AnnotationManager {
 
   private startDragging(annotation: Annotation, worldPoint: Point): void {
     this.isDragging = true;
-    this.dragStartPoint = worldPoint;
-    
+
     const annotationCenter = this.getAnnotationCenter(annotation);
     this.dragOffset = {
       x: worldPoint.x - annotationCenter.x,
@@ -164,14 +166,14 @@ export class AnnotationManager {
   private handleMouseMove(...args: unknown[]): void {
     const event = args[0] as MouseEvent;
     if (!this.enabled) return;
-    
+
     const worldPoint = this.getWorldPointFromEvent(event);
-    
+
     if (this.isDragging && this.selectedAnnotation && this.dragOffset) {
       this.handleDragging(worldPoint, event);
       return;
     }
-    
+
     this.handleHoverDetection(worldPoint);
   }
 
@@ -179,7 +181,7 @@ export class AnnotationManager {
     const newCenter = this.calculateNewCenter(worldPoint);
     this.moveAnnotation(this.selectedAnnotation!, newCenter);
     this.triggerViewStateChange();
-    
+
     event.preventDefault();
     event.stopPropagation();
   }
@@ -197,7 +199,7 @@ export class AnnotationManager {
 
   private handleHoverDetection(worldPoint: Point): void {
     if (this.isDragging || this.toolManager.isDrawing()) return;
-    
+
     const hoveredAnnotation = this.getAnnotationAt(worldPoint);
     this.updateCursorStyle(hoveredAnnotation);
   }
@@ -213,9 +215,8 @@ export class AnnotationManager {
   private handleMouseUp(event: MouseEvent): void {
     if (this.isDragging) {
       this.isDragging = false;
-      this.dragStartPoint = null;
       this.dragOffset = null;
-      
+
       event.preventDefault();
       event.stopPropagation();
     }
@@ -255,7 +256,7 @@ export class AnnotationManager {
    */
   setEventHandlers(handlers: EventHandlers): void {
     this.eventHandlers = { ...this.eventHandlers, ...handlers };
-    
+
   }
 
   /**
@@ -268,10 +269,10 @@ export class AnnotationManager {
     }
 
     this.annotations.set(annotation.id, annotation);
-    this._hasChanges = true;
-    
+    this.hasUnsavedChanges = true;
+
     this.triggerViewStateChange();
-    
+
     if (this.eventHandlers.onAnnotationAdd) {
       this.eventHandlers.onAnnotationAdd(annotation);
     }
@@ -285,8 +286,8 @@ export class AnnotationManager {
     if (!annotation) return false;
 
     this.annotations.delete(id);
-    this._hasChanges = true;
-    
+    this.hasUnsavedChanges = true;
+
     if (this.selectedAnnotation?.id === id) {
       this.selectedAnnotation = null;
     }
@@ -312,23 +313,23 @@ export class AnnotationManager {
    */
   private getAnnotationCenter(annotation: Annotation): Point {
     if (annotation.points.length === 0) return { x: 0, y: 0 };
-    
+
     if (annotation.type === 'rect' && annotation.points.length >= 2) {
       const point1 = annotation.points[0];
       const point2 = annotation.points[1];
       if (!point1 || !point2) return { x: 0, y: 0 };
-      
+
       const minX = Math.min(point1.x, point2.x);
       const maxX = Math.max(point1.x, point2.x);
       const minY = Math.min(point1.y, point2.y);
       const maxY = Math.max(point1.y, point2.y);
-      
+
       return {
         x: (minX + maxX) / 2,
         y: (minY + maxY) / 2
       };
     }
-    
+
     const firstPoint = annotation.points[0];
     return firstPoint || { x: 0, y: 0 };
   }
@@ -342,7 +343,7 @@ export class AnnotationManager {
       x: newCenter.x - currentCenter.x,
       y: newCenter.y - currentCenter.y
     };
-    
+
     annotation.points = annotation.points.map(point => ({
       x: point.x + offset.x,
       y: point.y + offset.y
@@ -361,13 +362,13 @@ export class AnnotationManager {
    */
   getAnnotationAt(point: Point): Annotation | null {
     const annotationArray = this.getAllAnnotations().reverse();
-    
+
     for (const annotation of annotationArray) {
       if (this.renderer.hitTest(point, annotation)) {
         return annotation;
       }
     }
-    
+
     return null;
   }
 
@@ -376,7 +377,7 @@ export class AnnotationManager {
    */
   selectAnnotation(annotation: Annotation | null): void {
     this.selectedAnnotation = annotation;
-    
+
     const event = new CustomEvent('annotationselect', {
       detail: annotation
     });
@@ -404,7 +405,7 @@ export class AnnotationManager {
     const annotationIds = Array.from(this.annotations.keys());
     this.annotations.clear();
     this.selectedAnnotation = null;
-    this._hasChanges = true;
+    this.hasUnsavedChanges = true;
 
     // Trigger remove events for all annotations
     if (this.eventHandlers.onAnnotationRemove) {
@@ -421,14 +422,14 @@ export class AnnotationManager {
     if (!this.enabled) return;
 
     const annotations = this.getAllAnnotations();
-    
-    
+
+
     this.renderer.renderAll(annotations);
-    
+
     if (this.selectedAnnotation) {
       this.renderSelectionHighlight(this.selectedAnnotation);
     }
-    
+
     this.toolManager.renderPreview();
   }
 
@@ -437,7 +438,7 @@ export class AnnotationManager {
    */
   private renderSelectionHighlight(annotation: Annotation): void {
     const ctx = this.canvas.getContext();
-    
+
     this.setupSelectionContext(ctx);
     this.renderSelectionByType(annotation, ctx);
     ctx.restore();
@@ -488,7 +489,7 @@ export class AnnotationManager {
    */
   private renderRectangleSelection(annotation: Annotation): void {
     if (annotation.type !== 'rect' || annotation.points.length < 2) return;
-    
+
     const ctx = this.canvas.getContext();
     const start = annotation.points[0]!;
     const end = annotation.points[1]!;
@@ -496,7 +497,7 @@ export class AnnotationManager {
     const maxX = Math.max(start.x, end.x);
     const minY = Math.min(start.y, end.y);
     const maxY = Math.max(start.y, end.y);
-    
+
     const padding = 5;
     ctx.strokeRect(
       minX - padding,
@@ -511,14 +512,14 @@ export class AnnotationManager {
    */
   private renderCircleSelection(annotation: Annotation): void {
     if (annotation.type !== 'circle' || annotation.points.length < 2) return;
-    
+
     const ctx = this.canvas.getContext();
     const center = annotation.points[0]!;
     const edge = annotation.points[1]!;
     const radius = Math.sqrt(
       Math.pow(edge.x - center.x, 2) + Math.pow(edge.y - center.y, 2)
     );
-    
+
     const padding = 5;
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius + padding, 0, 2 * Math.PI);
@@ -530,27 +531,27 @@ export class AnnotationManager {
    */
   private renderLineSelection(annotation: Annotation): void {
     if ((annotation.type !== 'line' && annotation.type !== 'arrow') || annotation.points.length < 2) return;
-    
+
     const ctx = this.canvas.getContext();
     const padding = 10;
-    
+
     for (let i = 0; i < annotation.points.length - 1; i++) {
       const start = annotation.points[i]!;
       const end = annotation.points[i + 1]!;
-      
+
       const dx = end.x - start.x;
       const dy = end.y - start.y;
       const length = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (length > 0) {
         const offsetX = (-dy / length) * padding;
         const offsetY = (dx / length) * padding;
-        
+
         ctx.beginPath();
         ctx.moveTo(start.x + offsetX, start.y + offsetY);
         ctx.lineTo(end.x + offsetX, end.y + offsetY);
         ctx.stroke();
-        
+
         ctx.beginPath();
         ctx.moveTo(start.x - offsetX, start.y - offsetY);
         ctx.lineTo(end.x - offsetX, end.y - offsetY);
@@ -564,20 +565,20 @@ export class AnnotationManager {
    */
   private renderTextSelection(annotation: Annotation): void {
     if (annotation.type !== 'text' || annotation.points.length < 1 || !annotation.data?.text) return;
-    
+
     const ctx = this.canvas.getContext();
     const textPos = annotation.points[0]!;
     const text = annotation.data.text as string;
     const fontSize = annotation.style.fontSize || 16;
     const fontFamily = annotation.style.fontFamily || 'Arial, sans-serif';
-    
+
     ctx.font = `${fontSize}px ${fontFamily}`;
-    
+
     const textMetrics = ctx.measureText(text);
     const textWidth = textMetrics.width;
-    
+
     const textHeight = fontSize * 0.8;
-    
+
     const padding = 5;
     ctx.strokeRect(
       textPos.x - padding,
@@ -590,7 +591,7 @@ export class AnnotationManager {
   /**
    * Get annotation bounding box
    */
-  private getAnnotationBounds(annotation: Annotation): { x: number; y: number; width: number; height: number } | null {
+  private getAnnotationBounds(annotation: Annotation): Rectangle | null {
     if (annotation.points.length === 0) return null;
 
     let minX = annotation.points[0]!.x;
@@ -698,7 +699,7 @@ export class AnnotationManager {
   importAnnotations(jsonData: string): boolean {
     try {
       const annotations: Annotation[] = JSON.parse(jsonData);
-      
+
       // Validate annotations
       if (!Array.isArray(annotations)) {
         throw new Error('Invalid annotation data format');
@@ -748,7 +749,7 @@ export class AnnotationManager {
   /**
    * Get image bounds from the parent viewer (if available)
    */
-  getImageBounds(): { x: number; y: number; width: number; height: number } | null {
+  getImageBounds(): Rectangle | null {
     if (this.canvas.imageViewer) {
       return this.canvas.imageViewer.getImageBounds();
     }
@@ -802,7 +803,10 @@ export class AnnotationManager {
         document.removeEventListener('click', removeMenu);
       }
     };
-    setTimeout(() => document.addEventListener('click', removeMenu), 0);
+    // Use requestAnimationFrame for better performance and cleanup
+    requestAnimationFrame(() => {
+      document.addEventListener('click', removeMenu);
+    });
   }
 
   /**
@@ -810,18 +814,18 @@ export class AnnotationManager {
    */
   private hasEnabledAnnotationTools(): boolean {
     if (!this.toolManager) return false;
-    
+
     const toolConfig = this.toolManager.getToolConfig();
-    return toolConfig.rect || toolConfig.arrow || toolConfig.text || 
-           toolConfig.circle || toolConfig.line;
+    return toolConfig.rect || toolConfig.arrow || toolConfig.text ||
+      toolConfig.circle || toolConfig.line;
   }
 
   /**
    * Check if comparison mode is active
    */
   private isComparisonModeActive(): boolean {
-    if (this.canvas.imageViewer && 'isComparisonMode' in this.canvas.imageViewer && typeof (this.canvas.imageViewer as Record<string, unknown>).isComparisonMode === 'function') {
-      return ((this.canvas.imageViewer as Record<string, unknown>).isComparisonMode as () => boolean)();
+    if (this.canvas.imageViewer && 'isComparisonMode' in this.canvas.imageViewer && typeof (this.canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
+      return ((this.canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
     }
     return false;
   }
@@ -849,7 +853,6 @@ export class AnnotationManager {
 
     this.clearAll();
     this.isDragging = false;
-    this.dragStartPoint = null;
     this.dragOffset = null;
   }
 
@@ -858,16 +861,15 @@ export class AnnotationManager {
    */
   private cleanup(): void {
     MemoryManager.unregisterCleanup(this.cleanupCallback);
-    
+
     // Cleanup throttled function
     if (this.throttledMouseMove && 'cleanup' in this.throttledMouseMove && this.throttledMouseMove.cleanup) {
       this.throttledMouseMove.cleanup();
     }
-    
+
     this.annotations.clear();
     this.selectedAnnotation = null;
     this.isDragging = false;
-    this.dragStartPoint = null;
     this.dragOffset = null;
   }
 
@@ -875,13 +877,13 @@ export class AnnotationManager {
    * Check if there are any changes to annotations
    */
   hasChanges(): boolean {
-    return this._hasChanges;
+    return this.hasUnsavedChanges;
   }
 
   /**
    * Reset the changes flag
    */
   resetChanges(): void {
-    this._hasChanges = false;
+    this.hasUnsavedChanges = false;
   }
 }

@@ -11,9 +11,10 @@
  * </canvas-lens>
  * ```
  */
-import { CanvasLensCore } from '@/components';
-import { ToolConfig, Annotation, ImageData } from '@/types';
-import { ErrorHandler, ErrorType } from '@/utils';
+import { CanvasLensCore } from './components/CanvasLensCore';
+import type { Annotation, CustomImageData, ToolConfig } from './types';
+import { ErrorType } from './types';
+import { ErrorHandler } from './utils/core/error-handler';
 
 export class CanvasLens extends HTMLElement {
   private core: CanvasLensCore | null = null;
@@ -332,7 +333,7 @@ export class CanvasLens extends HTMLElement {
    * Get current image data
    * @returns Image data object or null
    */
-  getImageData(): ImageData | null {
+  getImageData(): CustomImageData | null {
     if (this.core) {
       return this.core.getImageData();
     }

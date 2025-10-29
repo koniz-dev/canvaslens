@@ -10,8 +10,8 @@ HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation(() => ({
   strokeRect: jest.fn(),
   clearRect: jest.fn(),
   getImageData: jest.fn(() => ({ data: new Array(4) })),
-  putImageData: jest.fn(),
-  createImageData: jest.fn(() => ({ data: new Array(4) })),
+  putCustomCustomImageData: jest.fn(),
+  createCustomCustomImageData: jest.fn(() => ({ data: new Array(4) })),
   createLinearGradient: jest.fn(() => ({
     addColorStop: jest.fn()
   })),
@@ -97,7 +97,9 @@ global.requestAnimationFrame = jest.fn((cb) => {
   const timer = setTimeout(cb, 16);
   return timer as number;
 });
-global.cancelAnimationFrame = jest.fn((id) => clearTimeout(id));
+global.cancelAnimationFrame = jest.fn((id) => {
+  clearTimeout(id);
+});
 
 global.performance = {
   now: jest.fn(() => Date.now()),
@@ -116,11 +118,17 @@ afterAll(() => {
   console.error = originalError;
 });
 
-afterEach(() => {
-  jest.clearAllTimers();
-  jest.useRealTimers();
-});
-
+// Only use fake timers for specific tests that need them
 // beforeEach(() => {
 //   jest.useFakeTimers();
 // });
+
+afterEach(() => {
+  jest.clearAllTimers();
+  jest.clearAllMocks();
+});
+
+afterAll(() => {
+  jest.clearAllTimers();
+  jest.clearAllMocks();
+});

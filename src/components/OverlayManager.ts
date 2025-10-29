@@ -1,9 +1,6 @@
-/**
- * Manages overlay mode for CanvasLens Web Component
- */
-import { Engine } from '@/core';
-import { CanvasLensOptions } from '@/types';
-import { error, warn } from '@/utils';
+import { Engine } from '../core/Engine';
+import type { CanvasLensOptions } from '../types';
+import { error, warn } from '../utils/core/logger';
 
 export class OverlayManager {
   private element: HTMLElement;
@@ -230,7 +227,7 @@ export class OverlayManager {
       // Clean up event handlers
       const keyHandler = (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._keyHandler;
       const clickHandler = (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._clickHandler;
-      
+
       if (keyHandler) {
         document.removeEventListener('keydown', keyHandler);
       }

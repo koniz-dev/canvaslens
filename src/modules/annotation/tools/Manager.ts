@@ -1,21 +1,11 @@
-import { Renderer } from '@/core';
-import { Annotation, AnnotationStyle, Tool } from '@/types';
+import { Renderer } from '../../../core/Renderer';
+import type { Annotation, AnnotationStyle, ControllerOptions, EventHandlerOptions, Point, Tool, ToolManagerOptions } from '../../../types';
 import { AnnotationRenderer } from '../Renderer';
-import { AnnotationManager } from '../Manager';
-import { AnnotationToolsEventHandler, EventHandlerOptions } from './EventHandler';
-import { AnnotationToolsController, ControllerOptions } from './Controller';
+import { AnnotationToolsController } from './Controller';
+import { AnnotationToolsEventHandler } from './EventHandler';
 import { AnnotationToolsUtils } from './Utils';
 
-export interface ToolManagerOptions {
-  defaultStyle: AnnotationStyle;
-  availableTools: Tool[];
-  annotationManager?: AnnotationManager; // Reference to AnnotationManager for keyboard shortcuts
-}
-
 export class AnnotationToolsManager {
-  private canvas: Renderer;
-  private renderer: AnnotationRenderer;
-  private options: ToolManagerOptions;
   private eventHandler: AnnotationToolsEventHandler;
   private controller: AnnotationToolsController;
   private utils: AnnotationToolsUtils;
@@ -27,10 +17,6 @@ export class AnnotationToolsManager {
     renderer: AnnotationRenderer,
     options: ToolManagerOptions
   ) {
-    this.canvas = canvas;
-    this.renderer = renderer;
-    this.options = options;
-
     this.utils = new AnnotationToolsUtils(canvas);
 
     const controllerOptions: ControllerOptions = {
@@ -38,7 +24,7 @@ export class AnnotationToolsManager {
       renderer,
       defaultStyle: options.defaultStyle,
       availableTools: options.availableTools,
-      ...(options.annotationManager && { annotationManager: options.annotationManager })
+      ...(options.annotationManager && typeof options.annotationManager === 'object' ? { annotationManager: options.annotationManager } : {})
     };
     this.controller = new AnnotationToolsController(controllerOptions);
 
@@ -49,8 +35,8 @@ export class AnnotationToolsManager {
       activeToolType: this.controller.getActiveToolType(),
       toolActivatedByKeyboard: this.controller.getToolActivatedByKeyboard(),
       toolManagerDrawing: this.toolManagerDrawing,
-      ...(options.annotationManager && { annotationManager: options.annotationManager }),
-      onActivateTool: (toolType) => {
+      ...(options.annotationManager && typeof options.annotationManager === 'object' ? { annotationManager: options.annotationManager } : {}),
+      onActivateTool: (toolType: string) => {
         const result = this.controller.activateTool(toolType);
         this.controller.setToolActivatedByKeyboard(true);
         this.updateEventHandlerOptions();
@@ -60,10 +46,10 @@ export class AnnotationToolsManager {
         this.controller.deactivateTool();
         this.updateEventHandlerOptions();
       },
-      onScreenToWorld: (screenPoint) => this.utils.screenToWorld(screenPoint),
-      onIsPointInImageBounds: (point) => this.utils.isPointInImageBounds(point),
-      onMeetsMinimumSize: (annotation) => this.utils.meetsMinimumSize(annotation, this.controller.getActiveToolType()),
-      onClampPointToImageBounds: (point) => this.utils.clampPointToImageBounds(point)
+      onScreenToWorld: (screenPoint: Point) => this.utils.screenToWorld(screenPoint),
+      onIsPointInImageBounds: (point: Point) => this.utils.isPointInImageBounds(point),
+      onMeetsMinimumSize: (annotation: Annotation) => this.utils.meetsMinimumSize(annotation, this.controller.getActiveToolType()),
+      onClampPointToImageBounds: (point: Point) => this.utils.clampPointToImageBounds(point)
     };
 
     if (this.onAnnotationCreate) {

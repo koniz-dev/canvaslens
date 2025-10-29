@@ -1,4 +1,4 @@
-import { Size, Point, ImageData } from '../../types';
+import type { Size, Point, CustomImageData, Rectangle } from '../../types';
 
 /**
  * Calculate aspect ratio preserving dimensions to fit within container
@@ -8,15 +8,9 @@ export function calculateFitDimensions(
   naturalSize: Size,
   containerSize: Size
 ): { displaySize: Size; position: Point } {
-  const _naturalAspectRatio = naturalSize.width / naturalSize.height;
-  const _containerAspectRatio = containerSize.width / containerSize.height;
-
-  // Calculate scale factors for both dimensions
   const scaleX = containerSize.width / naturalSize.width;
   const scaleY = containerSize.height / naturalSize.height;
   
-  // Use the smaller scale factor to ensure image fits within container
-  // But don't scale up (scale > 1) - only scale down (scale <= 1)
   const scale = Math.min(scaleX, scaleY, 1);
 
   const displayWidth = naturalSize.width * scale;
@@ -41,13 +35,6 @@ export function calculateFitDimensionsOverlay(
   naturalSize: Size,
   containerSize: Size
 ): { displaySize: Size; position: Point } {
-  const _naturalAspectRatio = naturalSize.width / naturalSize.height;
-  const _containerAspectRatio = containerSize.width / containerSize.height;
-
-  // Calculate scale factors for both dimensions
-  const _scaleX = containerSize.width / naturalSize.width;
-  const _scaleY = containerSize.height / naturalSize.height;
-  
   // For overlay mode, don't scale - keep original size
   const scale = 1;
 
@@ -104,7 +91,7 @@ export function getImageData(
   containerSize: Size,
   type?: string,
   fileName?: string
-): ImageData {
+): CustomImageData {
   const naturalSize: Size = {
     width: image.naturalWidth,
     height: image.naturalHeight
@@ -115,7 +102,7 @@ export function getImageData(
     containerSize
   );
 
-  const imageData: ImageData = {
+  const CustomImageData: CustomImageData = {
     element: image,
     naturalSize,
     displaySize,
@@ -123,25 +110,25 @@ export function getImageData(
   };
 
   if (type) {
-    imageData.type = type;
+    CustomImageData.type = type;
   }
 
   if (fileName) {
-    imageData.fileName = fileName;
+    CustomImageData.fileName = fileName;
   }
 
-  return imageData;
+  return CustomImageData;
 }
 
 /**
  * Get image data from loaded image for overlay mode (allows scaling up)
  */
-export function getImageDataOverlay(
+export function getCustomImageDataOverlay(
   image: HTMLImageElement,
   containerSize: Size,
   type?: string,
   fileName?: string
-): ImageData {
+): CustomImageData {
   const naturalSize: Size = {
     width: image.naturalWidth,
     height: image.naturalHeight
@@ -152,7 +139,7 @@ export function getImageDataOverlay(
     containerSize
   );
 
-  const imageData: ImageData = {
+  const CustomImageData: CustomImageData = {
     element: image,
     naturalSize,
     displaySize,
@@ -160,20 +147,20 @@ export function getImageDataOverlay(
   };
 
   if (type) {
-    imageData.type = type;
+    CustomImageData.type = type;
   }
 
   if (fileName) {
-    imageData.fileName = fileName;
+    CustomImageData.fileName = fileName;
   }
 
-  return imageData;
+  return CustomImageData;
 }
 
 /**
  * Check if a point is inside a rectangle
  */
-export function isPointInRect(point: Point, rect: { x: number; y: number; width: number; height: number }): boolean {
+export function isPointInRect(point: Point, rect: Rectangle): boolean {
   return (
     point.x >= rect.x &&
     point.x <= rect.x + rect.width &&

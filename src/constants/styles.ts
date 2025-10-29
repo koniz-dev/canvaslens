@@ -1,0 +1,7 @@
+export const ANNOTATION_STYLES = {
+  DEFAULT_STROKE_COLOR: '#ff0000',
+  DEFAULT_FILL_COLOR: 'rgba(255, 0, 0, 0.2)',
+  DEFAULT_STROKE_WIDTH: 2,
+  DEFAULT_FONT_SIZE: 14,
+  DEFAULT_FONT_FAMILY: 'Arial, sans-serif'
+} as const;

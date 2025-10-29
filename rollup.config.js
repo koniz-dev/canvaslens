@@ -24,7 +24,8 @@ export default {
       tsconfig: './tsconfig.json',
       declaration: true,
       declarationDir: './dist',
-      sourceMap: !isProduction
+      sourceMap: !isProduction,
+      outputToFilesystem: true
     }),
     // Minify for production builds
     ...(isProduction ? [

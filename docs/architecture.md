@@ -264,7 +264,7 @@ interface ViewState {
   panX: number;
   panY: number;
   imageLoaded: boolean;
-  imageData: ImageData | null;
+  CustomImageData: CustomImageData | null;
 }
 ```
 

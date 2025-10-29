@@ -1,6 +1,6 @@
-import { Annotation, Point, AnnotationStyle } from '@/types';
-import { Renderer } from '@/core';
-import { performanceMonitor } from '@/utils';
+import { Renderer } from '../../core/Renderer';
+import type { Annotation, AnnotationStyle, Point, Rectangle } from '../../types';
+import { performanceMonitor } from '../../utils/performance/performance';
 
 export class AnnotationRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -41,14 +41,14 @@ export class AnnotationRenderer {
    */
   renderAll(annotations: Annotation[]): void {
     const startTime = performanceMonitor.startRender();
-    
+
     const viewport = this.getViewportBounds();
-    const visibleAnnotations = annotations.filter(annotation => 
+    const visibleAnnotations = annotations.filter(annotation =>
       this.isAnnotationInViewport(annotation, viewport)
     );
-    
+
     visibleAnnotations.forEach(annotation => this.render(annotation));
-    
+
     // Record performance metrics
     performanceMonitor.endRender(
       startTime,
@@ -60,16 +60,16 @@ export class AnnotationRenderer {
   /**
    * Get current viewport bounds in world coordinates
    */
-  private getViewportBounds(): { x: number; y: number; width: number; height: number } {
+  private getViewportBounds(): Rectangle {
     const viewState = this.canvas.getViewState();
     const canvasSize = this.canvas.getSize();
-    
+
     // Convert screen coordinates to world coordinates
     const worldX = -viewState.offsetX / viewState.scale;
     const worldY = -viewState.offsetY / viewState.scale;
     const worldWidth = canvasSize.width / viewState.scale;
     const worldHeight = canvasSize.height / viewState.scale;
-    
+
     return {
       x: worldX,
       y: worldY,
@@ -81,9 +81,9 @@ export class AnnotationRenderer {
   /**
    * Check if annotation is visible in viewport
    */
-  private isAnnotationInViewport(annotation: Annotation, viewport: { x: number; y: number; width: number; height: number }): boolean {
+  private isAnnotationInViewport(annotation: Annotation, viewport: Rectangle): boolean {
     const bounds = this.getAnnotationBounds(annotation);
-    
+
     // Check if annotation bounds intersect with viewport
     return !(
       bounds.x > viewport.x + viewport.width ||
@@ -96,7 +96,7 @@ export class AnnotationRenderer {
   /**
    * Get annotation bounds for culling
    */
-  private getAnnotationBounds(annotation: Annotation): { x: number; y: number; width: number; height: number } {
+  private getAnnotationBounds(annotation: Annotation): Rectangle {
     if (annotation.points.length < 2) {
       return { x: 0, y: 0, width: 0, height: 0 };
     }
@@ -114,7 +114,7 @@ export class AnnotationRenderer {
         };
       case 'circle': {
         const radius = Math.sqrt(
-          Math.pow(end.x - start.x, 2) + 
+          Math.pow(end.x - start.x, 2) +
           Math.pow(end.y - start.y, 2)
         );
         return {
@@ -152,7 +152,7 @@ export class AnnotationRenderer {
    */
   private applyStyle(style: AnnotationStyle): void {
     this.ctx.strokeStyle = style.strokeColor;
-    
+
     // Scale line width based on current view scale
     const viewState = this.getViewState();
     this.ctx.lineWidth = style.strokeWidth / (viewState?.scale || 1);
@@ -195,15 +195,6 @@ export class AnnotationRenderer {
     return this.canvas.getViewState();
   }
 
-  /**
-   * Convert world coordinates to screen coordinates
-   */
-  private worldToScreen(worldPoint: Point, viewState: { scale: number; offsetX: number; offsetY: number }): Point {
-    return {
-      x: worldPoint.x * viewState.scale + viewState.offsetX,
-      y: worldPoint.y * viewState.scale + viewState.offsetY
-    };
-  }
 
   /**
    * Render rectangle annotation
@@ -290,11 +281,11 @@ export class AnnotationRenderer {
 
     this.ctx.beginPath();
     this.ctx.moveTo(annotation.points[0]!.x, annotation.points[0]!.y);
-    
+
     for (let i = 1; i < annotation.points.length; i++) {
       this.ctx.lineTo(annotation.points[i]!.x, annotation.points[i]!.y);
     }
-    
+
     this.ctx.stroke();
   }
 
@@ -312,7 +303,7 @@ export class AnnotationRenderer {
     // Set font properties
     this.ctx.font = `${fontSize}px ${fontFamily}`;
     this.ctx.fillStyle = annotation.style.strokeColor;
-    
+
     // Draw text
     this.ctx.fillText(text, position.x, position.y);
   }
@@ -352,8 +343,8 @@ export class AnnotationRenderer {
 
     // Add tolerance for easier selection
     const tolerance = 5;
-    return point.x >= (minX - tolerance) && point.x <= (maxX + tolerance) && 
-           point.y >= (minY - tolerance) && point.y <= (maxY + tolerance);
+    return point.x >= (minX - tolerance) && point.x <= (maxX + tolerance) &&
+      point.y >= (minY - tolerance) && point.y <= (maxY + tolerance);
   }
 
   /**
@@ -406,7 +397,7 @@ export class AnnotationRenderer {
 
     const dot = A * C + B * D;
     const lenSq = C * C + D * D;
-    
+
     if (lenSq === 0) return Math.sqrt(A * A + B * B);
 
     let param = dot / lenSq;
@@ -440,17 +431,17 @@ export class AnnotationRenderer {
         const text = annotation.data.text as string;
         const fontSize = annotation.style.fontSize || 16;
         const fontFamily = annotation.style.fontFamily || 'Arial, sans-serif';
-        
+
         // Set font to match text rendering
         this.ctx.font = `${fontSize}px ${fontFamily}`;
         const textMetrics = this.ctx.measureText(text);
         const textWidth = textMetrics.width;
         const textHeight = fontSize * 0.8; // Match selection calculation
-        
+
         // Add tolerance for easier selection
         const tolerance = 5;
         return point.x >= (textPos.x - tolerance) && point.x <= (textPos.x + textWidth + tolerance) &&
-               point.y >= (textPos.y - textHeight - tolerance) && point.y <= (textPos.y + tolerance);
+          point.y >= (textPos.y - textHeight - tolerance) && point.y <= (textPos.y + tolerance);
       }
       default:
         return false;

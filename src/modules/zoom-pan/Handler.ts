@@ -1,15 +1,6 @@
-import { Renderer } from '../../core';
-import { ViewState, Point, EventHandlers } from '../../types';
-import { screenToWorld, clamp } from '../../utils/geometry/coordinate';
-
-export interface ZoomPanOptions {
-  enableZoom?: boolean;
-  enablePan?: boolean;
-  maxZoom?: number;
-  minZoom?: number;
-  zoomSpeed?: number;
-  panSpeed?: number;
-}
+import { Renderer } from '../../core/Renderer';
+import type { EventHandlers, Point, ViewState, ZoomPanOptions, Rectangle } from '../../types';
+import { clamp, screenToWorld } from '../../utils/geometry/coordinate';
 
 export class ZoomPanHandler {
   private canvas: Renderer;
@@ -18,10 +9,9 @@ export class ZoomPanHandler {
   private isPanning = false;
   private lastPanPoint: Point = { x: 0, y: 0 };
   private initialViewState: ViewState | null = null;
-  private annotationManager: { isToolActive: () => boolean; isDrawing: () => boolean; hasSelectedAnnotation: () => boolean } | null = null; // Reference to annotation manager - will be properly typed when circular dependency is resolved
   private wheelTimeout: number | null = null;
   private lastWheelTime = 0;
-  
+
   private boundHandleWheel: EventListener;
   private boundHandleMouseDown: EventListener;
   private boundHandleMouseMove: EventListener;
@@ -35,7 +25,7 @@ export class ZoomPanHandler {
   ) {
     this.canvas = canvas;
     this.eventHandlers = eventHandlers;
-    
+
     this.options = {
       enableZoom: true,
       enablePan: true,
@@ -53,9 +43,9 @@ export class ZoomPanHandler {
     this.boundHandleDoubleClick = this.handleDoubleClick.bind(this) as EventListener;
 
     this.setupEventListeners();
-    
+
     this.initialViewState = { ...this.canvas.getViewState() };
-    
+
     this.updateCursor();
   }
 
@@ -71,7 +61,7 @@ export class ZoomPanHandler {
    */
   private updateEventListeners(): void {
     this.removeEventListeners();
-    
+
     if (this.options.enableZoom) {
       this.canvas.addEventListener('wheel', this.boundHandleWheel, { passive: false });
     }
@@ -102,7 +92,6 @@ export class ZoomPanHandler {
    * Check if image is loaded
    */
   private isImageLoaded(): boolean {
-    const _hasImageViewer = !!this.canvas.imageViewer;
     const isLoaded = this.canvas.imageViewer ? this.canvas.imageViewer.isImageLoaded() : false;
     return isLoaded;
   }
@@ -136,22 +125,22 @@ export class ZoomPanHandler {
     if (!this.isImageLoaded()) {
       return;
     }
-    
+
     if (!this.options.enableZoom) {
       return;
     }
-    
+
     event.preventDefault();
-    
+
     const now = Date.now();
     if (now - this.lastWheelTime < 16) {
       return;
     }
     this.lastWheelTime = now;
-    
+
     const currentViewState = this.canvas.getViewState();
     const mousePos = this.canvas.getMousePosition(event);
-    
+
     const zoomFactor = event.deltaY > 0 ? 1 - this.options.zoomSpeed : 1 + this.options.zoomSpeed;
     const newScale = clamp(
       currentViewState.scale * zoomFactor,
@@ -160,7 +149,7 @@ export class ZoomPanHandler {
     );
 
     const worldPos = screenToWorld(mousePos, currentViewState);
-    
+
     const newOffsetX = mousePos.x - worldPos.x * newScale;
     const newOffsetY = mousePos.y - worldPos.y * newScale;
 
@@ -186,15 +175,15 @@ export class ZoomPanHandler {
     if (event.button !== 0 || !this.options.enablePan || !this.isImageLoaded()) {
       return;
     }
-    
+
     if (this.canvas.annotationManager) {
-      if (this.canvas.annotationManager.isToolActive() || 
-          this.canvas.annotationManager.isDrawing() ||
-          (this.canvas.annotationManager as unknown as { hasSelectedAnnotation: () => boolean }).hasSelectedAnnotation()) {
+      if (this.canvas.annotationManager.isToolActive() ||
+        this.canvas.annotationManager.isDrawing() ||
+        (this.canvas.annotationManager as unknown as { hasSelectedAnnotation: () => boolean }).hasSelectedAnnotation()) {
         return;
       }
     }
-    
+
     this.isPanning = true;
     this.lastPanPoint = this.canvas.getMousePosition(event);
     this.updateCursor();
@@ -207,16 +196,16 @@ export class ZoomPanHandler {
     if (!this.options.enablePan) {
       return;
     }
-    
+
     if (this.isAnnotationDrawing()) {
       return;
     }
-    
+
     if (!this.isPanning) return;
 
     const currentPos = this.canvas.getMousePosition(event);
     const currentViewState = this.canvas.getViewState();
-    
+
     const deltaX = (currentPos.x - this.lastPanPoint.x) * this.options.panSpeed;
     const deltaY = (currentPos.y - this.lastPanPoint.y) * this.options.panSpeed;
 
@@ -261,15 +250,15 @@ export class ZoomPanHandler {
   private updateViewState(newState: Partial<ViewState>): void {
     const oldState = this.canvas.getViewState();
     this.canvas.setViewState(newState);
-    
+
     const currentState = this.canvas.getViewState();
-    
+
     if (oldState.scale !== currentState.scale && this.eventHandlers.onZoomChange) {
       this.eventHandlers.onZoomChange(currentState.scale);
     }
-    
-    if ((oldState.offsetX !== currentState.offsetX || oldState.offsetY !== currentState.offsetY) && 
-        this.eventHandlers.onPanChange) {
+
+    if ((oldState.offsetX !== currentState.offsetX || oldState.offsetY !== currentState.offsetY) &&
+      this.eventHandlers.onPanChange) {
       this.eventHandlers.onPanChange({
         x: currentState.offsetX,
         y: currentState.offsetY
@@ -290,15 +279,15 @@ export class ZoomPanHandler {
     if (!this.isImageLoaded()) {
       return;
     }
-    
+
     const clampedScale = clamp(scale, this.options.minZoom, this.options.maxZoom);
     const currentState = this.canvas.getViewState();
-    
+
     if (center) {
       const worldPos = screenToWorld(center, currentState);
       const newOffsetX = center.x - worldPos.x * clampedScale;
       const newOffsetY = center.y - worldPos.y * clampedScale;
-      
+
       this.updateViewState({
         scale: clampedScale,
         offsetX: newOffsetX,
@@ -310,12 +299,12 @@ export class ZoomPanHandler {
         x: canvasSize.width / 2,
         y: canvasSize.height / 2
       };
-      
+
       const worldPos = screenToWorld(centerPoint, currentState);
-      
+
       const newOffsetX = centerPoint.x - worldPos.x * clampedScale;
       const newOffsetY = centerPoint.y - worldPos.y * clampedScale;
-      
+
       this.updateViewState({
         scale: clampedScale,
         offsetX: newOffsetX,
@@ -332,7 +321,7 @@ export class ZoomPanHandler {
     if (!this.isImageLoaded()) {
       return;
     }
-    
+
     const currentState = this.canvas.getViewState();
     this.zoomTo(currentState.scale * factor);
   }
@@ -345,7 +334,7 @@ export class ZoomPanHandler {
     if (!this.isImageLoaded()) {
       return;
     }
-    
+
     const currentState = this.canvas.getViewState();
     this.zoomTo(currentState.scale / factor);
   }
@@ -368,24 +357,24 @@ export class ZoomPanHandler {
   /**
    * Fit image to view (if image bounds are available)
    */
-  fitToView(imageBounds: { x: number; y: number; width: number; height: number }): void {
+  fitToView(imageBounds: Rectangle): void {
     // Don't fit to view if no image is loaded
     if (!this.isImageLoaded()) {
       return;
     }
-    
+
     const canvasSize = this.canvas.getSize();
-    
+
     const scaleX = canvasSize.width / imageBounds.width;
     const scaleY = canvasSize.height / imageBounds.height;
     const scale = Math.min(scaleX, scaleY, 1);
-    
+
     const scaledWidth = imageBounds.width * scale;
     const scaledHeight = imageBounds.height * scale;
-    
+
     const offsetX = (canvasSize.width - scaledWidth) / 2 - imageBounds.x * scale;
     const offsetY = (canvasSize.height - scaledHeight) / 2 - imageBounds.y * scale;
-    
+
     this.updateViewState({
       scale,
       offsetX,
@@ -396,24 +385,24 @@ export class ZoomPanHandler {
   /**
    * Fit image to view for overlay mode (allows scaling up)
    */
-  fitToViewOverlay(imageBounds: { x: number; y: number; width: number; height: number }): void {
+  fitToViewOverlay(imageBounds: Rectangle): void {
     // Don't fit to view if no image is loaded
     if (!this.isImageLoaded()) {
       return;
     }
-    
+
     const canvasSize = this.canvas.getSize();
-    
+
     const scaleX = canvasSize.width / imageBounds.width;
     const scaleY = canvasSize.height / imageBounds.height;
     const scale = Math.min(scaleX, scaleY);
-    
+
     const scaledWidth = imageBounds.width * scale;
     const scaledHeight = imageBounds.height * scale;
-    
+
     const offsetX = (canvasSize.width - scaledWidth) / 2 - imageBounds.x * scale;
     const offsetY = (canvasSize.height - scaledHeight) / 2 - imageBounds.y * scale;
-    
+
     this.updateViewState({
       scale,
       offsetX,
@@ -442,12 +431,12 @@ export class ZoomPanHandler {
   updateOptions(newOptions: Partial<ZoomPanOptions>): void {
     const oldOptions = { ...this.options };
     this.options = { ...this.options, ...newOptions };
-    
-    if (oldOptions.enableZoom !== this.options.enableZoom || 
-        oldOptions.enablePan !== this.options.enablePan) {
+
+    if (oldOptions.enableZoom !== this.options.enableZoom ||
+      oldOptions.enablePan !== this.options.enablePan) {
       this.updateEventListeners();
     }
-    
+
     this.updateCursor();
   }
 
@@ -470,15 +459,14 @@ export class ZoomPanHandler {
    */
   destroy(): void {
     this.removeEventListeners();
-    
+
     if (this.wheelTimeout) {
       clearTimeout(this.wheelTimeout);
       this.wheelTimeout = null;
     }
-    
+
     this.isPanning = false;
     this.lastPanPoint = { x: 0, y: 0 };
     this.initialViewState = null;
-    this.annotationManager = null;
   }
 }

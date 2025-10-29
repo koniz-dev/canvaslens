@@ -1,10 +1,6 @@
-import { Point, Annotation, AnnotationStyle } from '@/types';
-import { Renderer } from '@/core';
+import { Renderer } from '../../../../core/Renderer';
+import type { Point, Annotation, ToolOptions } from '../../../../types';
 import { AnnotationRenderer } from '../../Renderer';
-
-export interface ToolOptions {
-  style: AnnotationStyle;
-}
 
 export abstract class BaseTool {
   protected canvas: Renderer;
@@ -67,7 +63,7 @@ export abstract class BaseTool {
    * Generate unique ID for annotation
    */
   protected generateId(): string {
-    return `annotation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `annotation_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
@@ -78,7 +74,11 @@ export abstract class BaseTool {
       id: this.generateId(),
       type: this.getType(),
       points: [...points],
-      style: { ...this.options.style },
+      style: {
+        strokeColor: '#000000',
+        strokeWidth: 2,
+        ...this.options.style
+      },
       data: data || {}
     };
   }

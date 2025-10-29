@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import typescript from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
 import unusedImports from 'eslint-plugin-unused-imports';
+import importPlugin from 'eslint-plugin-import';
 
 export default [
   js.configs.recommended,
@@ -42,9 +43,24 @@ export default [
         afterEach: 'readonly',
       },
     },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+        node: {
+          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+        },
+      },
+      'import/parsers': {
+        '@typescript-eslint/parser': ['.ts', '.tsx'],
+      },
+    },
     plugins: {
       '@typescript-eslint': typescript,
       'unused-imports': unusedImports,
+      'import': importPlugin,
     },
     rules: {
       // Unused imports detection
@@ -84,6 +100,47 @@ export default [
       
       // Prevent unused function parameters
       '@typescript-eslint/no-unused-expressions': 'error',
+      
+      // Circular dependency detection
+      'import/no-cycle': ['error', { 
+        maxDepth: 10,
+        ignoreExternal: true,
+        allowUnsafeDynamicCyclicDependency: false
+      }],
+      
+      // Prevent self-imports
+      'import/no-self-import': 'error',
+      
+      // Prevent useless path segments
+      'import/no-useless-path-segments': 'error',
+      
+      // Ensure consistent import order
+      'import/order': ['warn', {
+        'groups': [
+          'builtin',
+          'external', 
+          'internal',
+          'parent',
+          'sibling',
+          'index'
+        ],
+        'newlines-between': 'never',
+        'alphabetize': {
+          'order': 'asc',
+          'caseInsensitive': true
+        }
+      }],
+      
+      // Prevent duplicate imports
+      'import/no-duplicates': 'error',
+      
+      // Ensure proper file extensions
+      'import/extensions': ['error', 'ignorePackages', {
+        'ts': 'never',
+        'tsx': 'never',
+        'js': 'never',
+        'jsx': 'never'
+      }],
     },
   },
   {
@@ -108,6 +165,7 @@ export default [
       'node_modules/**',
       '*.config.js',
       '*.config.ts',
+      'src/__tests__/**',
     ],
   },
 ];

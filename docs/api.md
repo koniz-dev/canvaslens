@@ -536,10 +536,10 @@ interface Point {
 }
 ```
 
-### ImageData
+### CustomImageData
 
 ```typescript
-interface ImageData {
+interface CustomImageData {
   naturalSize: { width: number; height: number };
   fileName: string;
   type: string;

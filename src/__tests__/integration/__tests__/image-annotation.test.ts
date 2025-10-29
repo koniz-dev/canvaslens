@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+// Imports removed
 
 // Mock annotation system - replace with actual imports when available
 interface Annotation {

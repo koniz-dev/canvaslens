@@ -1,9 +1,11 @@
-import { ImageData, Annotation, Point, ToolConfig } from '@/types';
-import { Engine } from '@/core';
+import { Engine } from '../core/Engine';
+import type { Annotation, CustomImageData, Point, ToolConfig } from '../types';
+import { ErrorType } from '../types';
+import { ErrorHandler, safeAsync } from '../utils/core/error-handler';
+import { error, warn } from '../utils/core/logger';
 import { AttributeParser } from './AttributeParser';
 import { EventManager } from './EventManager';
 import { OverlayManager } from './OverlayManager';
-import { ErrorHandler, ErrorType, safeAsync, error, warn } from '@/utils';
 
 export class CanvasLensCore {
   private element: HTMLElement;
@@ -11,7 +13,7 @@ export class CanvasLensCore {
   private eventManager: EventManager;
   private overlayManager: OverlayManager;
   private isDestroyed = false;
-  private _hasChanges = false;
+  private hasUnsavedChanges = false;
 
   constructor(element: HTMLElement) {
     this.element = element;
@@ -45,7 +47,7 @@ export class CanvasLensCore {
     if (this.isDestroyed) return;
 
     this.isDestroyed = true;
-    
+
     if (this.canvasLens) {
       this.canvasLens.destroy();
       this.canvasLens = null;
@@ -66,8 +68,8 @@ export class CanvasLensCore {
         case 'src':
           if (value) {
             this.canvasLens.loadImage(
-              value, 
-              this.element.getAttribute('image-type') || undefined, 
+              value,
+              this.element.getAttribute('image-type') || undefined,
               this.element.getAttribute('file-name') || undefined
             );
             this.resetChanges();
@@ -148,7 +150,7 @@ export class CanvasLensCore {
         );
         return;
       }
-      
+
       const img = new Image();
       img.onload = () => {
         if (this.canvasLens && !this.isDestroyed) {
@@ -247,21 +249,21 @@ export class CanvasLensCore {
   addAnnotation(annotation: Annotation): void {
     if (this.canvasLens && !this.isDestroyed) {
       this.canvasLens.addAnnotation(annotation);
-      this._hasChanges = true;
+      this.hasUnsavedChanges = true;
     }
   }
 
   removeAnnotation(annotationId: string): void {
     if (this.canvasLens && !this.isDestroyed) {
       this.canvasLens.removeAnnotation(annotationId);
-      this._hasChanges = true;
+      this.hasUnsavedChanges = true;
     }
   }
 
   clearAnnotations(): void {
     if (this.canvasLens && !this.isDestroyed) {
       this.canvasLens.clearAnnotations();
-      this._hasChanges = true;
+      this.hasUnsavedChanges = true;
     }
   }
 
@@ -319,7 +321,7 @@ export class CanvasLensCore {
     return false;
   }
 
-  getImageData(): ImageData | null {
+  getImageData(): CustomImageData | null {
     if (this.canvasLens && !this.isDestroyed) {
       return this.canvasLens.getImageData();
     }
@@ -341,7 +343,7 @@ export class CanvasLensCore {
   }
 
   hasChanges(): boolean {
-    return this._hasChanges;
+    return this.hasUnsavedChanges;
   }
 
   /**
@@ -375,7 +377,7 @@ export class CanvasLensCore {
 
     const container = this.shadowRoot.firstElementChild as HTMLElement;
     const options = AttributeParser.parseAttributes(this.element, container);
-    
+
     this.canvasLens = new Engine(options);
   }
 
@@ -397,7 +399,7 @@ export class CanvasLensCore {
     requestAnimationFrame(() => {
       if (this.canvasLens && !this.isDestroyed) {
         const { width, height } = AttributeParser.getContainerDimensions(this.element);
-        
+
         if (width > 0 && height > 0) {
           this.canvasLens.resize(width, height);
         }
@@ -412,8 +414,8 @@ export class CanvasLensCore {
     const src = this.element.getAttribute('src');
     if (src && this.canvasLens) {
       this.canvasLens.loadImage(
-        src, 
-        this.element.getAttribute('image-type') || undefined, 
+        src,
+        this.element.getAttribute('image-type') || undefined,
         this.element.getAttribute('file-name') || undefined
       );
     }
@@ -451,11 +453,11 @@ export class CanvasLensCore {
     const currentImageData = this.canvasLens.getImageData();
     this.destroy();
     this.initialize();
-    
+
     if (currentImageData && this.canvasLens) {
       this.canvasLens.loadImageElement(
-        currentImageData.element, 
-        currentImageData.type, 
+        currentImageData.element,
+        currentImageData.type,
         currentImageData.fileName
       );
     }
@@ -465,7 +467,7 @@ export class CanvasLensCore {
    * Reset changes flag
    */
   private resetChanges(): void {
-    this._hasChanges = false;
+    this.hasUnsavedChanges = false;
   }
 
   /**
@@ -490,15 +492,15 @@ export class CanvasLensCore {
     const iconDiv = document.createElement('div');
     iconDiv.textContent = '⚠️';
     iconDiv.style.cssText = 'font-size: 24px; margin-bottom: 10px;';
-    
+
     const titleDiv = document.createElement('div');
     titleDiv.textContent = 'Failed to load image';
     titleDiv.style.cssText = 'font-size: 16px; margin-bottom: 5px;';
-    
+
     const srcDiv = document.createElement('div');
     srcDiv.textContent = src;
     srcDiv.style.cssText = 'font-size: 12px; color: #999;';
-    
+
     errorDiv.appendChild(iconDiv);
     errorDiv.appendChild(titleDiv);
     errorDiv.appendChild(srcDiv);

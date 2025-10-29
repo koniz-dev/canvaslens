@@ -1,34 +1,5 @@
-/**
- * Render optimization utilities for CanvasLens
- */
-import { Rectangle } from '../../types';
-import { ViewportCulling, ViewportInfo } from './viewport-culling';
-
-export interface RenderRegion {
-  /** Region bounds */
-  bounds: Rectangle;
-  /** Region priority (higher = render first) */
-  priority: number;
-  /** Whether region is dirty */
-  dirty: boolean;
-  /** Last render time */
-  lastRenderTime: number;
-}
-
-export interface RenderOptions {
-  /** Enable viewport culling */
-  enableCulling?: boolean;
-  /** Culling margin in pixels */
-  cullingMargin?: number;
-  /** Maximum render regions per frame */
-  maxRegionsPerFrame?: number;
-  /** Enable dirty region tracking */
-  enableDirtyRegions?: boolean;
-  /** Enable render batching */
-  enableBatching?: boolean;
-  /** Batch size for rendering */
-  batchSize?: number;
-}
+import type { Rectangle, RenderRegion, RenderOptions, ViewportInfo } from '../../types';
+import { ViewportCulling } from './viewport-culling';
 
 export class RenderOptimizer {
   private static readonly DEFAULT_MAX_REGIONS = 10;
@@ -38,7 +9,6 @@ export class RenderOptimizer {
   private renderRegions: Map<string, RenderRegion> = new Map();
   private dirtyRegions: Set<string> = new Set();
   private renderQueue: string[] = [];
-  private isRendering = false;
 
   /**
    * Add or update a render region
@@ -57,7 +27,7 @@ export class RenderOptimizer {
     };
 
     this.renderRegions.set(id, region);
-    
+
     if (dirty) {
       this.dirtyRegions.add(id);
       this.addToRenderQueue(id, priority);
@@ -122,12 +92,14 @@ export class RenderOptimizer {
       const cullableRegions = regions.map(region => ({
         id: this.getRegionId(region),
         bounds: region.bounds,
-        visible: true
+        visible: true,
+        priority: region.priority,
+        type: 'region'
       }));
 
       const expandedViewport = ViewportCulling.expandViewport(viewport, cullingMargin);
       const visibleRegions = ViewportCulling.cullObjects(cullableRegions, expandedViewport);
-      const visibleIds = new Set(visibleRegions.map(r => r.id));
+      const visibleIds = new Set(visibleRegions.map(r => (r as { id: string }).id));
 
       regions = regions.filter(region => visibleIds.has(this.getRegionId(region)));
     }
@@ -149,10 +121,10 @@ export class RenderOptimizer {
     performanceMetrics: { renderTime: number; regionCount: number; skippedRegions: number };
   } {
     const startTime = performance.now();
-    
+
     const regionsToRender = this.getRegionsToRender(viewport, options);
     const allRegions = Array.from(this.renderRegions.values());
-    const regionsToSkip = allRegions.filter(region => 
+    const regionsToSkip = allRegions.filter(region =>
       !regionsToRender.includes(region)
     );
 
@@ -180,7 +152,7 @@ export class RenderOptimizer {
     batchSize: number = RenderOptimizer.DEFAULT_BATCH_SIZE
   ): RenderRegion[][] {
     const batches: RenderRegion[][] = [];
-    
+
     for (let i = 0; i < regions.length; i += batchSize) {
       batches.push(regions.slice(i, i + batchSize));
     }
@@ -207,9 +179,9 @@ export class RenderOptimizer {
       totalRegions: regions.length,
       dirtyRegions: dirtyRegions.length,
       queuedRegions: this.renderQueue.length,
-      averagePriority: priorities.length > 0 ? 
+      averagePriority: priorities.length > 0 ?
         priorities.reduce((a, b) => a + b, 0) / priorities.length : 0,
-      oldestDirtyRegion: dirtyTimes.length > 0 ? 
+      oldestDirtyRegion: dirtyTimes.length > 0 ?
         Math.min(...dirtyTimes) : 0
     };
   }
@@ -229,7 +201,7 @@ export class RenderOptimizer {
   private addToRenderQueue(id: string, priority: number): void {
     // Remove if already in queue
     this.removeFromRenderQueue(id);
-    
+
     // Insert based on priority
     let insertIndex = this.renderQueue.length;
     for (let i = 0; i < this.renderQueue.length; i++) {
@@ -242,7 +214,7 @@ export class RenderOptimizer {
         }
       }
     }
-    
+
     this.renderQueue.splice(insertIndex, 0, id);
   }
 
@@ -297,7 +269,7 @@ export class RenderOptimizer {
 
       let currentRegion = regions[i];
       if (!currentRegion) continue;
-      
+
       processed.add(i);
 
       // Find overlapping regions

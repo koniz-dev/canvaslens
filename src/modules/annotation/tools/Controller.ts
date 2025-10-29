@@ -1,16 +1,12 @@
-import { Renderer } from '@/core';
-import { AnnotationStyle, Tool, Point } from '@/types';
-import { AnnotationRenderer } from '../Renderer';
-import { AnnotationManager } from '../Manager';
-import { BaseTool, ToolOptions, RectangleTool, ArrowTool, TextTool, CircleTool, LineTool } from './components';
-
-export interface ControllerOptions {
-  canvas: Renderer;
-  renderer: AnnotationRenderer;
-  defaultStyle: AnnotationStyle;
-  availableTools: Tool[];
-  annotationManager?: AnnotationManager;
-}
+import type { Renderer } from '../../../core/Renderer';
+import type { AnnotationStyle, Tool, ToolOptions, Point, ControllerOptions } from '../../../types';
+import type { AnnotationRenderer } from '../Renderer';
+import { ArrowTool } from './components/ArrowTool';
+import { BaseTool } from './components/BaseTool';
+import { CircleTool } from './components/CircleTool';
+import { LineTool } from './components/LineTool';
+import { RectangleTool } from './components/RectangleTool';
+import { TextTool } from './components/TextTool';
 
 export class AnnotationToolsController {
   private options: ControllerOptions;
@@ -33,11 +29,11 @@ export class AnnotationToolsController {
     };
 
     // Create tool instances
-    this.tools.set('rect', new RectangleTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('arrow', new ArrowTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('text', new TextTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('circle', new CircleTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('line', new LineTool(this.options.canvas, this.options.renderer, toolOptions));
+    this.tools.set('rect', new RectangleTool(this.options.canvas as unknown as Renderer, this.options.renderer as unknown as AnnotationRenderer, toolOptions));
+    this.tools.set('arrow', new ArrowTool(this.options.canvas as unknown as Renderer, this.options.renderer as unknown as AnnotationRenderer, toolOptions));
+    this.tools.set('text', new TextTool(this.options.canvas as unknown as Renderer, this.options.renderer as unknown as AnnotationRenderer, toolOptions));
+    this.tools.set('circle', new CircleTool(this.options.canvas as unknown as Renderer, this.options.renderer as unknown as AnnotationRenderer, toolOptions));
+    this.tools.set('line', new LineTool(this.options.canvas as unknown as Renderer, this.options.renderer as unknown as AnnotationRenderer, toolOptions));
 
     // Set default tool to rectangle
     this.currentTool = this.tools.get('rect') || null;
@@ -62,7 +58,7 @@ export class AnnotationToolsController {
 
     this.currentTool = tool;
     this.activeToolType = toolType;
-    
+
     return true;
   }
 
@@ -74,7 +70,7 @@ export class AnnotationToolsController {
     if (this.currentTool) {
       this.currentTool.cancelDrawing();
     }
-    
+
     this.currentTool = null;
     this.activeToolType = null;
     this.toolActivatedByKeyboard = false; // Reset flag
@@ -147,7 +143,7 @@ export class AnnotationToolsController {
    */
   updateToolConfig(annotationConfig: Record<string, unknown>): void {
     // Update tool availability based on configuration
-    this.tools.forEach((tool, toolType) => {
+    this.tools.forEach((_tool, toolType) => {
       const isEnabled = annotationConfig[toolType];
       if (isEnabled === false) {
         // If tool is disabled and currently active, deactivate it
@@ -192,7 +188,7 @@ export class AnnotationToolsController {
       const points = (tool as { getPreviewPoints: () => Point[] }).getPreviewPoints();
       if (points.length > 0) {
         // Render preview (no need to apply view transform since points are in world coordinates)
-        this.options.renderer.renderPreview(
+        (this.options.renderer as unknown as AnnotationRenderer).renderPreview(
           this.currentTool.getType(),
           points,
           this.options.defaultStyle

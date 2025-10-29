@@ -1,4 +1,4 @@
-import { Point, Annotation } from '@/types';
+import type { Annotation, Point } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
 export class CircleTool extends BaseTool {
@@ -11,7 +11,7 @@ export class CircleTool extends BaseTool {
     this.isDrawing = true;
     this.startPoint = { ...point };
     this.currentPoints = [this.startPoint];
-    
+
     // Create annotation immediately when starting to draw
     this.currentAnnotation = this.createAnnotation([this.startPoint, this.startPoint]);
     return this.currentAnnotation;
@@ -25,7 +25,7 @@ export class CircleTool extends BaseTool {
 
     // Update current points with center and edge point
     this.currentPoints = [this.startPoint, { ...point }];
-    
+
     // Update the existing annotation
     this.currentAnnotation.points = [this.startPoint, { ...point }];
   }
@@ -38,12 +38,12 @@ export class CircleTool extends BaseTool {
 
     const edgePoint = { ...point };
     const centerPoint = { ...this.startPoint };
-    
+
     // Calculate radius
     const radius = Math.sqrt(
       Math.pow(edgePoint.x - centerPoint.x, 2) + Math.pow(edgePoint.y - centerPoint.y, 2)
     );
-    
+
     // Only keep annotation if it has meaningful radius
     if (radius < 5) {
       this.cancelDrawing();
@@ -53,10 +53,10 @@ export class CircleTool extends BaseTool {
     // Finalize the annotation
     this.currentAnnotation.points = [centerPoint, edgePoint];
     const finalAnnotation = this.currentAnnotation;
-    
+
     // Reset state
     this.cancelDrawing();
-    
+
     return finalAnnotation;
   }
 

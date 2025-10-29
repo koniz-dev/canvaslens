@@ -1,35 +1,6 @@
-/**
- * Advanced image loading utilities with lazy loading and optimization
- */
-import { ImageData, Size } from '../../types';
+import type { CustomImageData, ImageLoadOptions, LazyLoadOptions, Size } from '../../types';
 import { ErrorHandler } from '../core/error-handler';
 import { warn } from '../core/logger';
-
-export interface ImageLoadOptions {
-  /** Maximum image size before lazy loading (in bytes) */
-  maxSizeForEagerLoad?: number;
-  /** Enable progressive loading for large images */
-  progressiveLoading?: boolean;
-  /** Enable image compression for large images */
-  enableCompression?: boolean;
-  /** Compression quality (0-1) */
-  compressionQuality?: number;
-  /** Enable WebP format if supported */
-  preferWebP?: boolean;
-  /** Enable AVIF format if supported */
-  preferAVIF?: boolean;
-}
-
-export interface LazyLoadOptions {
-  /** Root margin for intersection observer */
-  rootMargin?: string;
-  /** Threshold for intersection observer */
-  threshold?: number;
-  /** Enable placeholder while loading */
-  showPlaceholder?: boolean;
-  /** Placeholder image URL */
-  placeholderUrl?: string;
-}
 
 export class ImageLoader {
   private static readonly DEFAULT_MAX_SIZE = 2 * 1024 * 1024; // 2MB
@@ -43,7 +14,7 @@ export class ImageLoader {
     src: string,
     options: ImageLoadOptions = {},
     lazyOptions: LazyLoadOptions = {}
-  ): Promise<ImageData> {
+  ): Promise<CustomImageData> {
     const {
       maxSizeForEagerLoad = this.DEFAULT_MAX_SIZE,
       progressiveLoading = true,
@@ -81,7 +52,7 @@ export class ImageLoader {
   static async loadImageFromFile(
     file: File,
     options: ImageLoadOptions = {}
-  ): Promise<ImageData> {
+  ): Promise<CustomImageData> {
     const {
       enableCompression = true,
       compressionQuality = this.DEFAULT_COMPRESSION_QUALITY,
@@ -117,7 +88,7 @@ export class ImageLoader {
   static async preloadImages(
     sources: string[],
     options: ImageLoadOptions = {}
-  ): Promise<ImageData[]> {
+  ): Promise<CustomImageData[]> {
     const promises = sources.map(src => 
       this.loadImage(src, options).catch(error => {
         warn(`Failed to preload image: ${src}`, error);
@@ -126,7 +97,7 @@ export class ImageLoader {
     );
 
     const results = await Promise.all(promises);
-    return results.filter((result): result is ImageData => result !== null);
+    return results.filter((result): result is CustomImageData => result !== null);
   }
 
   /**
@@ -155,7 +126,7 @@ export class ImageLoader {
   private static async loadImageLazy(
     src: string,
     options: LazyLoadOptions
-  ): Promise<ImageData> {
+  ): Promise<CustomImageData> {
     const {
       rootMargin = '50px',
       threshold = 0.1,
@@ -185,13 +156,13 @@ export class ImageLoader {
       }
 
       img.onload = () => {
-        const imageData: ImageData = {
+        const CustomImageData: CustomImageData = {
           element: img,
           naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
           displaySize: { width: img.width, height: img.height },
           position: { x: 0, y: 0 }
         };
-        resolve(imageData);
+        resolve(CustomImageData);
       };
 
       img.onerror = () => {
@@ -210,7 +181,7 @@ export class ImageLoader {
   private static async loadImageOptimized(
     src: string,
     options: Partial<ImageLoadOptions> = {}
-  ): Promise<ImageData> {
+  ): Promise<CustomImageData> {
     const {
       progressiveLoading = true,
       enableCompression: _enableCompression = true,
@@ -247,13 +218,13 @@ export class ImageLoader {
       }
 
       img.onload = () => {
-        const imageData: ImageData = {
+        const CustomImageData: CustomImageData = {
           element: img,
           naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
           displaySize: { width: img.width, height: img.height },
           position: { x: 0, y: 0 }
         };
-        resolve(imageData);
+        resolve(CustomImageData);
       };
 
       img.onerror = () => {
@@ -269,7 +240,7 @@ export class ImageLoader {
     file: File,
     quality: number,
     preferWebP: boolean
-  ): Promise<ImageData> {
+  ): Promise<CustomImageData> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -300,7 +271,7 @@ export class ImageLoader {
           // Create new image from compressed data
           const compressedImg = new Image();
           compressedImg.onload = () => {
-            const imageData: ImageData = {
+            const CustomImageData: CustomImageData = {
               element: compressedImg,
               naturalSize: { width: compressedImg.naturalWidth, height: compressedImg.naturalHeight },
               displaySize: { width: compressedImg.width, height: compressedImg.height },
@@ -308,7 +279,7 @@ export class ImageLoader {
               type: outputFormat,
               fileName: file.name
             };
-            resolve(imageData);
+            resolve(CustomImageData);
           };
           compressedImg.onerror = () => reject(new Error('Failed to load compressed image'));
           compressedImg.src = compressedDataUrl;
@@ -326,7 +297,7 @@ export class ImageLoader {
   /**
    * Load file directly without compression
    */
-  private static async loadFileDirectly(file: File): Promise<ImageData> {
+  private static async loadFileDirectly(file: File): Promise<CustomImageData> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       
@@ -334,7 +305,7 @@ export class ImageLoader {
         const img = new Image();
         
         img.onload = () => {
-          const imageData: ImageData = {
+          const CustomImageData: CustomImageData = {
             element: img,
             naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
             displaySize: { width: img.width, height: img.height },
@@ -342,7 +313,7 @@ export class ImageLoader {
             type: file.type,
             fileName: file.name
           };
-          resolve(imageData);
+          resolve(CustomImageData);
         };
 
         img.onerror = () => reject(new Error('Failed to load image from file'));
@@ -409,7 +380,7 @@ export class ImageLoader {
    * Create image thumbnail
    */
   static async createThumbnail(
-    imageData: ImageData,
+    CustomImageData: CustomImageData,
     maxSize: number = 200
   ): Promise<string> {
     const canvas = document.createElement('canvas');
@@ -419,7 +390,7 @@ export class ImageLoader {
       throw new Error('Failed to get canvas context');
     }
 
-    const { naturalSize } = imageData;
+    const { naturalSize } = CustomImageData;
     const aspectRatio = naturalSize.width / naturalSize.height;
     
     let thumbnailWidth = maxSize;
@@ -434,7 +405,7 @@ export class ImageLoader {
     canvas.width = thumbnailWidth;
     canvas.height = thumbnailHeight;
 
-    ctx.drawImage(imageData.element, 0, 0, thumbnailWidth, thumbnailHeight);
+    ctx.drawImage(CustomImageData.element, 0, 0, thumbnailWidth, thumbnailHeight);
     
     return canvas.toDataURL('image/jpeg', 0.8);
   }

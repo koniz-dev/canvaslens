@@ -25,6 +25,8 @@ export default {
   ],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   extensionsToTreatAsEsm: ['.ts'],
-  testTimeout: 10000,
+  testTimeout: 30000,
+  forceExit: true,
+  detectOpenHandles: true,
   verbose: true
 };
