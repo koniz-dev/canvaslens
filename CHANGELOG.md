@@ -1,3 +1,11 @@
+## [1.2.0](https://github.com/koniz-dev/canvaslens/compare/v1.1.0...v1.2.0) (2025-10-29)
+
+### Features
+
+* enhance CanvasLens with improved performance, testing, and tooling ([9ddb39f](https://github.com/koniz-dev/canvaslens/commit/9ddb39f13f5ecb2115ed50f0f56b4f3a0c9faeac))
+* enhance ESLint configuration and improve type safety across the codebase ([8e8b407](https://github.com/koniz-dev/canvaslens/commit/8e8b4078c8fe8d90e004c23a144eb5011d958d58))
+* update annotation system and documentation ([bd81d6d](https://github.com/koniz-dev/canvaslens/commit/bd81d6d90d9c09a483f060866d72478f687b554f))
+
 ## [1.1.0](https://github.com/koniz-dev/canvaslens/compare/v1.0.1...v1.1.0) (2025-10-14)
 
 ### Features
