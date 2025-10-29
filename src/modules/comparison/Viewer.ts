@@ -1,6 +1,6 @@
 import { Renderer } from '../../core/Renderer';
 import type { EventHandlers, Size, ComparisonOptions, ZoomPanOptions, Point, CustomImageData } from '../../types';
-import { ZoomPanHandler } from '../zoom-pan/Handler';
+import { ZoomPanHandler } from '../zoom-pan';
 import { ComparisonManager } from './Manager';
 
 export class ComparisonViewer {

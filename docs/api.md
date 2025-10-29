@@ -44,29 +44,75 @@ The main Web Component that provides all CanvasLens functionality.
 
 #### Image Loading
 
-##### `loadImage(src: string): Promise<void>`
+##### `loadImage(src: string, type?: string, fileName?: string): Promise<void>`
 
 Loads an image from the specified URL.
 
 **Parameters:**
 - `src` (string): Image source URL or data URI
+- `type` (string, optional): Image MIME type (e.g., "image/jpeg")
+- `fileName` (string, optional): File name for display purposes
 
 **Returns:** Promise that resolves when image is loaded
 
 **Example:**
 ```javascript
 const viewer = document.querySelector('canvas-lens');
-await viewer.loadImage('https://example.com/new-image.jpg');
+await viewer.loadImage('https://example.com/new-image.jpg', 'image/jpeg', 'photo.jpg');
+```
+
+##### `loadImageFromFile(file: File): void`
+
+Loads an image from a File object (e.g., from file input).
+
+**Parameters:**
+- `file` (File): File object from file input
+
+**Example:**
+```javascript
+const fileInput = document.getElementById('file-input');
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    viewer.loadImageFromFile(file);
+  }
+});
 ```
 
 #### View Control
 
-##### `zoomTo(level: number): void`
+##### `zoomIn(factor?: number): void`
+
+Zooms in by the specified factor.
+
+**Parameters:**
+- `factor` (number, optional): Zoom factor (default: 1.2)
+
+**Example:**
+```javascript
+viewer.zoomIn(); // Zoom in by 1.2x
+viewer.zoomIn(1.5); // Zoom in by 1.5x
+```
+
+##### `zoomOut(factor?: number): void`
+
+Zooms out by the specified factor.
+
+**Parameters:**
+- `factor` (number, optional): Zoom factor (default: 1.2)
+
+**Example:**
+```javascript
+viewer.zoomOut(); // Zoom out by 1.2x
+viewer.zoomOut(1.5); // Zoom out by 1.5x
+```
+
+##### `zoomTo(scale: number): void`
 
 Sets the zoom level to the specified value.
 
 **Parameters:**
-- `level` (number): Zoom level (1.0 = 100%, 2.0 = 200%, etc.)
+- `scale` (number): Zoom scale (1.0 = 100%, 2.0 = 200%, etc.)
 
 **Example:**
 ```javascript
@@ -91,7 +137,20 @@ Resets the view to the initial state (zoom level 1.0, centered).
 viewer.resetView();
 ```
 
-##### `getZoom(): number`
+##### `resize(width: number, height: number): void`
+
+Resizes the canvas to the specified dimensions.
+
+**Parameters:**
+- `width` (number): New width in pixels
+- `height` (number): New height in pixels
+
+**Example:**
+```javascript
+viewer.resize(1200, 800);
+```
+
+##### `getZoomLevel(): number`
 
 Returns the current zoom level.
 
@@ -99,11 +158,11 @@ Returns the current zoom level.
 
 **Example:**
 ```javascript
-const currentZoom = viewer.getZoom();
+const currentZoom = viewer.getZoomLevel();
 console.log(`Current zoom: ${currentZoom * 100}%`);
 ```
 
-##### `getPan(): {x: number, y: number}`
+##### `getPanOffset(): {x: number, y: number}`
 
 Returns the current pan offset.
 
@@ -111,31 +170,41 @@ Returns the current pan offset.
 
 **Example:**
 ```javascript
-const pan = viewer.getPan();
+const pan = viewer.getPanOffset();
 console.log(`Pan offset: x=${pan.x}, y=${pan.y}`);
 ```
 
 #### Tool Management
 
-##### `activateTool(tool: string): void`
+##### `activateTool(toolType: string): boolean`
 
 Activates the specified annotation tool.
 
 **Parameters:**
-- `tool` (string): Tool name ("rect", "arrow", "text", "circle", "line")
+- `toolType` (string): Tool type ("rect", "arrow", "text", "circle", "line")
+
+**Returns:** true if tool was activated successfully, false if tool type is invalid or unavailable
 
 **Example:**
 ```javascript
-viewer.activateTool('rect'); // Activate rectangle tool
+const success = viewer.activateTool('rect'); // Activate rectangle tool
+if (success) {
+  console.log('Rectangle tool activated');
+}
 ```
 
-##### `deactivateTool(): void`
+##### `deactivateTool(): boolean`
 
 Deactivates the currently active tool.
 
+**Returns:** true if tool was deactivated successfully
+
 **Example:**
 ```javascript
-viewer.deactivateTool();
+const success = viewer.deactivateTool();
+if (success) {
+  console.log('Tool deactivated');
+}
 ```
 
 ##### `getActiveTool(): string | null`
@@ -242,43 +311,33 @@ Toggles between normal view and comparison mode.
 viewer.toggleComparisonMode();
 ```
 
-##### `setComparisonImage(src: string): Promise<void>`
+##### `setComparisonMode(enabled: boolean): void`
 
-Sets the comparison image for before/after comparison.
-
-**Parameters:**
-- `src` (string): Comparison image source URL
-
-**Returns:** Promise that resolves when image is loaded
-
-**Example:**
-```javascript
-await viewer.setComparisonImage('https://example.com/after-image.jpg');
-```
-
-##### `setComparisonPosition(position: number): void`
-
-Sets the comparison slider position.
+Sets the comparison mode state.
 
 **Parameters:**
-- `position` (number): Position between 0 and 1 (0 = show before, 1 = show after)
+- `enabled` (boolean): true to enable comparison mode, false to disable
 
 **Example:**
 ```javascript
-viewer.setComparisonPosition(0.7); // Show 70% after image
+viewer.setComparisonMode(true); // Enable comparison mode
+viewer.setComparisonMode(false); // Disable comparison mode
 ```
 
-##### `getComparisonPosition(): number`
+##### `isComparisonMode(): boolean`
 
-Returns the current comparison slider position.
+Checks if comparison mode is currently enabled.
 
-**Returns:** Position between 0 and 1
+**Returns:** true if comparison mode is enabled
 
 **Example:**
 ```javascript
-const position = viewer.getComparisonPosition();
-console.log(`Comparison position: ${position * 100}%`);
+if (viewer.isComparisonMode()) {
+  console.log('Comparison mode is active');
+}
 ```
+
+**Note:** The actual comparison image loading and position control methods are handled internally by the comparison manager module.
 
 #### Overlay Mode
 
@@ -346,6 +405,52 @@ Returns the current tool configuration.
 ```javascript
 const tools = viewer.getTools();
 console.log('Current tools:', tools);
+```
+
+#### Image Information
+
+##### `isImageLoaded(): boolean`
+
+Checks if an image is currently loaded.
+
+**Returns:** true if image is loaded
+
+**Example:**
+```javascript
+if (viewer.isImageLoaded()) {
+  console.log('Image is ready for viewing');
+}
+```
+
+##### `getImageData(): CustomImageData | null`
+
+Returns the current image data.
+
+**Returns:** Image data object or null if no image is loaded
+
+**Example:**
+```javascript
+const imageData = viewer.getImageData();
+if (imageData) {
+  console.log(`Image size: ${imageData.naturalSize.width}x${imageData.naturalSize.height}`);
+  console.log(`File name: ${imageData.fileName}`);
+}
+```
+
+#### State Management
+
+##### `hasChanges(): boolean`
+
+Checks if there are unsaved changes (annotations, view state, etc.).
+
+**Returns:** true if there are changes
+
+**Example:**
+```javascript
+if (viewer.hasChanges()) {
+  console.log('There are unsaved changes');
+  // Show save prompt or auto-save
+}
 ```
 
 ## Events
@@ -454,29 +559,17 @@ viewer.addEventListener('comparisonchange', (event) => {
 });
 ```
 
-#### `overlayopen`
+#### `error`
 
-Fired when the overlay is opened.
+Fired when an error occurs.
 
-**Event Detail:** None
-
-**Example:**
-```javascript
-viewer.addEventListener('overlayopen', () => {
-  console.log('Overlay opened');
-});
-```
-
-#### `overlayclose`
-
-Fired when the overlay is closed.
-
-**Event Detail:** None
+**Event Detail:** `CanvasLensError` object
 
 **Example:**
 ```javascript
-viewer.addEventListener('overlayclose', () => {
-  console.log('Overlay closed');
+viewer.addEventListener('error', (event) => {
+  console.error('CanvasLens error:', event.detail);
+  // Handle error appropriately
 });
 ```
 
@@ -503,14 +596,16 @@ interface ToolConfig {
 
 ```typescript
 interface Annotation {
+  /** Unique identifier for the annotation */
   id: string;
+  /** Type of annotation */
   type: 'rect' | 'arrow' | 'text' | 'circle' | 'line';
-  x: number;
-  y: number;
-  width?: number;
-  height?: number;
-  text?: string;
-  style?: AnnotationStyle;
+  /** Array of points defining the annotation */
+  points: Point[];
+  /** Styling properties for the annotation */
+  style: AnnotationStyle;
+  /** Additional data associated with the annotation */
+  data?: Record<string, unknown>;
 }
 ```
 
@@ -518,12 +613,31 @@ interface Annotation {
 
 ```typescript
 interface AnnotationStyle {
-  strokeColor?: string;
-  strokeWidth?: number;
+  /** Stroke color (hex, rgb, or named color) */
+  strokeColor: string;
+  /** Fill color (optional) */
   fillColor?: string;
+  /** Stroke width in pixels */
+  strokeWidth: number;
+  /** Line style for strokes */
+  lineStyle?: 'solid' | 'dashed' | 'dotted';
+  /** Font size for text annotations */
   fontSize?: number;
+  /** Font family for text annotations */
   fontFamily?: string;
-  fontWeight?: string;
+}
+```
+
+### Tool
+
+```typescript
+interface Tool {
+  /** Display name of the tool */
+  name: string;
+  /** Type of annotation this tool creates */
+  type: Annotation['type'];
+  /** Optional icon for the tool */
+  icon?: string;
 }
 ```
 
@@ -531,8 +645,40 @@ interface AnnotationStyle {
 
 ```typescript
 interface Point {
+  /** X coordinate */
   x: number;
+  /** Y coordinate */
   y: number;
+}
+```
+
+### Size
+
+```typescript
+interface Size {
+  /** Width in pixels */
+  width: number;
+  /** Height in pixels */
+  height: number;
+}
+```
+
+### Rectangle
+
+```typescript
+interface Rectangle extends Point, Size {}
+```
+
+### ViewState
+
+```typescript
+interface ViewState {
+  /** Zoom scale factor (1.0 = 100%) */
+  scale: number;
+  /** Horizontal pan offset in pixels */
+  offsetX: number;
+  /** Vertical pan offset in pixels */
+  offsetY: number;
 }
 ```
 
@@ -540,8 +686,11 @@ interface Point {
 
 ```typescript
 interface CustomImageData {
+  /** Natural dimensions of the image */
   naturalSize: { width: number; height: number };
+  /** File name of the image */
   fileName: string;
+  /** MIME type of the image */
   type: string;
 }
 ```
@@ -550,15 +699,46 @@ interface CustomImageData {
 
 ```typescript
 interface CanvasLensOptions {
+  /** Container element where CanvasLens will be rendered */
   container: HTMLElement;
-  width?: string | number;
-  height?: string | number;
+  /** Initial width in pixels (default: 800) */
+  width?: number;
+  /** Initial height in pixels (default: 600) */
+  height?: number;
+  /** Background color (default: '#f0f0f0') */
   backgroundColor?: string;
+  /** Tool configuration */
   tools?: ToolConfig;
+  /** Maximum zoom level (default: 10) */
   maxZoom?: number;
+  /** Minimum zoom level (default: 0.1) */
   minZoom?: number;
-  imageType?: string;
-  fileName?: string;
+}
+```
+
+### CanvasLensError
+
+```typescript
+interface CanvasLensError {
+  /** Error type */
+  type: ErrorType;
+  /** Error message */
+  message: string;
+  /** Additional error details */
+  details?: Record<string, unknown>;
+}
+```
+
+### ErrorType
+
+```typescript
+enum ErrorType {
+  INITIALIZATION = 'INITIALIZATION',
+  IMAGE_LOAD = 'IMAGE_LOAD',
+  INVALID_TOOL = 'INVALID_TOOL',
+  ANNOTATION_ERROR = 'ANNOTATION_ERROR',
+  VIEW_ERROR = 'VIEW_ERROR',
+  RENDER_ERROR = 'RENDER_ERROR'
 }
 ```
 
@@ -566,28 +746,72 @@ interface CanvasLensOptions {
 
 | Shortcut | Action |
 |----------|--------|
-| `Alt + R` | Toggle rectangle tool |
-| `Alt + A` | Toggle arrow tool |
-| `Alt + T` | Toggle text tool |
-| `Alt + C` | Toggle circle tool |
-| `Alt + L` | Toggle line tool |
+| `Alt + R` | Activate rectangle tool |
+| `Alt + A` | Activate arrow tool |
+| `Alt + T` | Activate text tool |
+| `Alt + C` | Activate circle tool |
+| `Alt + L` | Activate line tool |
 | `Escape` | Deactivate current tool |
 | `Delete` / `Backspace` | Delete selected annotation |
 | `Double Click` | Reset view to initial state |
+| `Mouse Wheel` | Zoom in/out (cursor-centered) |
+| `Left Click + Drag` | Pan around the image |
+| `Right Click + Drag` | Pan around the image (alternative) |
+| `Space + Drag` | Pan mode (when no tool active) |
+| `Ctrl/Cmd + 0` | Fit image to view |
+| `Ctrl/Cmd + +` | Zoom in |
+| `Ctrl/Cmd + -` | Zoom out |
 
 ## Error Handling
 
 CanvasLens provides comprehensive error handling with the following error types:
 
-- `ImageLoadError`: Failed to load image
-- `InvalidToolError`: Invalid tool configuration
-- `AnnotationError`: Annotation-related errors
-- `ViewError`: View manipulation errors
+- `INITIALIZATION`: Component initialization errors
+- `IMAGE_LOAD`: Image loading failures
+- `INVALID_TOOL`: Invalid tool configuration or usage
+- `ANNOTATION_ERROR`: Annotation-related errors
+- `VIEW_ERROR`: View manipulation errors
+- `RENDER_ERROR`: Canvas rendering errors
 
 **Example:**
 ```javascript
 viewer.addEventListener('error', (event) => {
-  console.error('CanvasLens error:', event.detail);
+  const error = event.detail;
+  console.error('CanvasLens error:', error.message);
+  
+  switch (error.type) {
+    case 'IMAGE_LOAD':
+      console.error('Failed to load image:', error.details?.src);
+      break;
+    case 'INVALID_TOOL':
+      console.error('Invalid tool:', error.details?.toolType);
+      break;
+    default:
+      console.error('Unknown error:', error);
+  }
+});
+```
+
+### Error Recovery
+
+CanvasLens automatically handles many errors gracefully:
+
+- **Image Load Failures**: Shows error state and allows retry
+- **Invalid Tool Usage**: Falls back to default tool or pan mode
+- **Rendering Errors**: Attempts to recover and re-render
+- **Initialization Errors**: Provides fallback configuration
+
+### Custom Error Handling
+
+You can implement custom error handling by listening to the `error` event:
+
+```javascript
+viewer.addEventListener('error', (event) => {
+  // Custom error handling logic
+  if (error.type === 'IMAGE_LOAD') {
+    // Show user-friendly message
+    showNotification('Failed to load image. Please try again.');
+  }
 });
 ```
 

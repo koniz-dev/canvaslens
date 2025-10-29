@@ -2,9 +2,9 @@ import { Renderer } from '../../core/Renderer';
 import type { EventHandlers, Size, ZoomPanOptions, AnnotationManagerOptions, ComparisonOptions, Point, CustomImageData, Rectangle } from '../../types';
 import { error } from '../../utils/core/logger';
 import { loadImage, getImageData, getCustomImageDataOverlay } from '../../utils/image/utils';
-import { AnnotationManager } from '../annotation/Manager';
-import { ComparisonManager } from '../comparison/Manager';
-import { ZoomPanHandler } from '../zoom-pan/Handler';
+import { AnnotationManager } from '../annotation';
+import { ComparisonManager } from '../comparison';
+import { ZoomPanHandler } from '../zoom-pan';
 
 export class ImageViewer {
   private canvas: Renderer;

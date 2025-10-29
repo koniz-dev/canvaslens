@@ -2,9 +2,6 @@ import type { CanvasLensError } from '../../types';
 import { ErrorType } from '../../types';
 import { error, warn } from './logger';
 
-// Re-export ErrorType for convenience
-export { ErrorType };
-
 export class ErrorHandler {
   private static errorCallbacks: Array<(error: CanvasLensError) => void> = [];
 

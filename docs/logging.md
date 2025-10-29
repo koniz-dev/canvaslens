@@ -6,7 +6,7 @@ CanvasLens uses a smart logging system to ensure that debug messages don't appea
 
 ## Logging Structure
 
-### 1. Logger Utility (`src/utils/logger.ts`)
+### 1. Logger Utility (`src/utils/core/logger.ts`)
 
 The library provides the following logging functions:
 
@@ -24,7 +24,7 @@ The logger automatically detects the environment through:
 ## Usage in Code
 
 ```typescript
-import { log, warn, error, info } from './utils/logger';
+import { log, warn, error, info } from '@koniz-dev/canvaslens';
 
 // Only displayed in development
 log('Debug information');
@@ -95,7 +95,7 @@ To migrate existing code:
 
 1. Import logger utility:
 ```typescript
-import { log, warn, error, info } from './utils/logger';
+import { log, warn, error, info } from '@koniz-dev/canvaslens';
 ```
 
 2. Replace console statements:

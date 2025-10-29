@@ -101,6 +101,14 @@ function validateImageFormat(src) {
   }
   return true; // Assume valid for URLs
 }
+
+// Use the built-in image loading with error handling
+viewer.addEventListener('error', (event) => {
+  console.error('CanvasLens error:', event.detail);
+  if (event.detail.type === 'IMAGE_LOAD') {
+    console.error('Image loading failed:', event.detail.message);
+  }
+});
 ```
 
 ### 3. Tools Not Working
@@ -129,6 +137,12 @@ viewer.updateTools({
     arrow: true
   }
 });
+
+// Check if tool activation was successful
+const success = viewer.activateTool('rect');
+if (!success) {
+  console.error('Failed to activate tool. Check if tool is enabled in configuration.');
+}
 ```
 
 #### Event Handler Issues
@@ -188,6 +202,136 @@ canvas-lens {
   --canvas-height: 600px;
   border: 1px solid #ddd;
   border-radius: 8px;
+}
+```
+
+### 5. Current Common Issues
+
+#### Performance Monitoring Not Working
+
+**Symptoms:**
+- Performance metrics not showing
+- Console errors about performance monitoring
+- No performance data available
+
+**Solutions:**
+```javascript
+// ✅ Enable performance monitoring
+import { performanceMonitor } from '@koniz-dev/canvaslens';
+
+// Enable monitoring
+performanceMonitor.enable();
+
+// Check if monitoring is working
+const metrics = performanceMonitor.getMetrics();
+console.log('Performance metrics:', metrics);
+
+// Handle performance events
+viewer.addEventListener('performance', (event) => {
+  console.log('Performance update:', event.detail);
+});
+```
+
+#### Memory Management Issues
+
+**Symptoms:**
+- Memory usage keeps growing
+- Browser becomes slow over time
+- Memory warnings in console
+
+**Solutions:**
+```javascript
+// ✅ Use built-in memory management
+import { MemoryManager } from '@koniz-dev/canvaslens';
+
+const memoryManager = new MemoryManager();
+
+// Enable monitoring
+memoryManager.enableMonitoring();
+
+// Set thresholds
+memoryManager.setThresholds({
+  warning: 50 * 1024 * 1024, // 50MB
+  critical: 100 * 1024 * 1024 // 100MB
+});
+
+// Handle memory events
+memoryManager.on('warning', (usage) => {
+  console.warn('Memory usage high:', usage);
+  // Trigger cleanup
+  memoryManager.cleanup();
+});
+
+// Clean up when done
+viewer.addEventListener('destroy', () => {
+  memoryManager.disposeAll();
+});
+```
+
+#### Tool Activation Failures
+
+**Symptoms:**
+- Tools don't activate when clicked
+- Console errors about tool activation
+- Tools appear disabled
+
+**Solutions:**
+```javascript
+// ✅ Check tool configuration and activation
+const toolConfig = viewer.getTools();
+console.log('Current tool config:', toolConfig);
+
+// Check if tool is enabled
+if (toolConfig.annotation?.rect) {
+  const success = viewer.activateTool('rect');
+  if (!success) {
+    console.error('Failed to activate rect tool');
+  }
+} else {
+  console.error('Rect tool not enabled in configuration');
+}
+
+// Listen for tool change events
+viewer.addEventListener('toolchange', (event) => {
+  console.log('Tool changed to:', event.detail.tool);
+});
+```
+
+#### Image Loading with Error Handling
+
+**Symptoms:**
+- Images fail to load silently
+- No error messages shown
+- Blank canvas with no feedback
+
+**Solutions:**
+```javascript
+// ✅ Proper error handling for image loading
+viewer.addEventListener('error', (event) => {
+  const error = event.detail;
+  console.error('CanvasLens error:', error);
+  
+  switch (error.type) {
+    case 'IMAGE_LOAD':
+      console.error('Image loading failed:', error.message);
+      // Show user-friendly error message
+      showErrorMessage('Failed to load image. Please check the URL and try again.');
+      break;
+    case 'INITIALIZATION':
+      console.error('Initialization failed:', error.message);
+      break;
+    case 'RENDER_ERROR':
+      console.error('Rendering error:', error.message);
+      break;
+  }
+});
+
+// Use the loadImage method with proper error handling
+try {
+  await viewer.loadImage('image.jpg', 'image/jpeg', 'my-image.jpg');
+  console.log('Image loaded successfully');
+} catch (error) {
+  console.error('Image loading failed:', error);
 }
 ```
 
@@ -275,11 +419,11 @@ ctx.imageSmoothingQuality = 'high';
 
 // Use requestAnimationFrame for smooth animations
 function smoothZoom(targetZoom) {
-  const currentZoom = viewer.getZoom();
+  const currentZoom = viewer.getZoomLevel();
   const step = (targetZoom - currentZoom) / 10;
   
   function animate() {
-    const newZoom = viewer.getZoom() + step;
+    const newZoom = viewer.getZoomLevel() + step;
     if (Math.abs(newZoom - targetZoom) < 0.01) {
       viewer.zoomTo(targetZoom);
     } else {
@@ -373,7 +517,17 @@ viewer.addEventListener('annotationadd', debouncedRender);
 ```javascript
 // Only render visible annotations
 function renderVisibleAnnotations() {
-  const viewport = getViewport();
+  const zoom = viewer.getZoomLevel();
+  const pan = viewer.getPanOffset();
+  const canvas = viewer.canvas;
+  
+  const viewport = {
+    x: -pan.x / zoom,
+    y: -pan.y / zoom,
+    width: canvas.width / zoom,
+    height: canvas.height / zoom
+  };
+  
   const annotations = viewer.getAnnotations();
   const visibleAnnotations = annotations.filter(annotation => 
     isAnnotationVisible(annotation, viewport)
@@ -605,8 +759,8 @@ function getAnnotationAtPoint(x, y) {
 // Ensure proper coordinate transformation
 function transformCoordinates(clientX, clientY) {
   const rect = viewer.canvas.getBoundingClientRect();
-  const zoom = viewer.getZoom();
-  const pan = viewer.getPan();
+  const zoom = viewer.getZoomLevel();
+  const pan = viewer.getPanOffset();
   
   return {
     x: (clientX - rect.left - pan.x) / zoom,
@@ -914,6 +1068,61 @@ const data = JSON.stringify(annotations, null, 2);
 2. Implement progressive loading
 3. Use image tiling for very large images
 4. Consider using WebGL for better performance
+
+### Q: How do I use the built-in performance monitoring?
+
+**A:** CanvasLens includes built-in performance monitoring:
+```javascript
+import { performanceMonitor } from '@koniz-dev/canvaslens';
+
+// Enable monitoring
+performanceMonitor.enable();
+
+// Get current metrics
+const metrics = performanceMonitor.getMetrics();
+console.log('FPS:', metrics.fps);
+console.log('Memory usage:', metrics.memoryUsage);
+
+// Start profiling
+performanceMonitor.startProfiling('my-operation');
+// ... do work ...
+performanceMonitor.stopProfiling('my-operation');
+```
+
+### Q: How do I handle memory leaks?
+
+**A:** Use the built-in memory management:
+```javascript
+import { MemoryManager } from '@koniz-dev/canvaslens';
+
+const memoryManager = new MemoryManager();
+memoryManager.enableMonitoring();
+
+// Set up cleanup
+viewer.addEventListener('destroy', () => {
+  memoryManager.disposeAll();
+});
+```
+
+### Q: How do I debug tool activation issues?
+
+**A:** Check tool configuration and activation:
+```javascript
+// Check current tool configuration
+const tools = viewer.getTools();
+console.log('Available tools:', tools);
+
+// Check if tool activation was successful
+const success = viewer.activateTool('rect');
+if (!success) {
+  console.error('Tool activation failed');
+}
+
+// Listen for tool changes
+viewer.addEventListener('toolchange', (event) => {
+  console.log('Active tool:', event.detail.tool);
+});
+```
 
 ## Getting Help
 

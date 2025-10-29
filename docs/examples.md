@@ -23,6 +23,7 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: block;
         }
     </style>
 </head>
@@ -35,6 +36,12 @@
     
     <script type="module">
         import { CanvasLens } from '@koniz-dev/canvaslens';
+        
+        // Optional: Add event listeners
+        const viewer = document.querySelector('canvas-lens');
+        viewer.addEventListener('imageload', (e) => {
+            console.log('Image loaded:', e.detail);
+        });
     </script>
 </body>
 </html>
@@ -117,8 +124,16 @@ const ImageViewer = ({ src, width = "800px", height = "600px" }) => {
       viewer.height = height;
       containerRef.current.appendChild(viewer);
       
+      // Add event listeners
+      const handleImageLoad = (e) => {
+        console.log('Image loaded:', e.detail);
+      };
+      
+      viewer.addEventListener('imageload', handleImageLoad);
+      
       return () => {
-        if (containerRef.current) {
+        viewer.removeEventListener('imageload', handleImageLoad);
+        if (containerRef.current && viewer.parentNode) {
           containerRef.current.removeChild(viewer);
         }
       };
@@ -148,15 +163,18 @@ const useCanvasLens = (options = {}) => {
       const canvasLens = new CanvasLens();
       
       // Set up event listeners
-      canvasLens.addEventListener('imageload', () => {
+      const handleImageLoad = () => {
         setIsLoading(false);
         setError(null);
-      });
+      };
       
-      canvasLens.addEventListener('error', (e) => {
-        setError(e.detail);
+      const handleError = (e) => {
+        setError(e.detail.message);
         setIsLoading(false);
-      });
+      };
+
+      canvasLens.addEventListener('imageload', handleImageLoad);
+      canvasLens.addEventListener('error', handleError);
 
       // Apply options
       Object.assign(canvasLens, options);
@@ -165,6 +183,8 @@ const useCanvasLens = (options = {}) => {
       setViewer(canvasLens);
 
       return () => {
+        canvasLens.removeEventListener('imageload', handleImageLoad);
+        canvasLens.removeEventListener('error', handleError);
         if (containerRef.current && canvasLens.parentNode) {
           containerRef.current.removeChild(canvasLens);
         }
@@ -172,12 +192,12 @@ const useCanvasLens = (options = {}) => {
     }
   }, []);
 
-  const loadImage = async (src) => {
+  const loadImage = async (src, type, fileName) => {
     if (viewer) {
       setIsLoading(true);
       setError(null);
       try {
-        await viewer.loadImage(src);
+        await viewer.loadImage(src, type, fileName);
       } catch (err) {
         setError(err.message);
         setIsLoading(false);
@@ -185,12 +205,27 @@ const useCanvasLens = (options = {}) => {
     }
   };
 
+  const getImageData = () => {
+    return viewer ? viewer.getImageData() : null;
+  };
+
+  const getZoomLevel = () => {
+    return viewer ? viewer.getZoomLevel() : 1;
+  };
+
+  const getPanOffset = () => {
+    return viewer ? viewer.getPanOffset() : { x: 0, y: 0 };
+  };
+
   return {
     containerRef,
     viewer,
     isLoading,
     error,
-    loadImage
+    loadImage,
+    getImageData,
+    getZoomLevel,
+    getPanOffset
   };
 };
 
@@ -261,21 +296,25 @@ onMounted(() => {
     viewer.value.tools = JSON.stringify(props.tools);
     
     // Set up event listeners
-    viewer.value.addEventListener('imageload', (e) => {
+    const handleImageLoad = (e) => {
       isLoading.value = false;
       error.value = null;
       emit('imageload', e.detail);
-    });
+    };
     
-    viewer.value.addEventListener('error', (e) => {
-      error.value = e.detail;
+    const handleError = (e) => {
+      error.value = e.detail.message;
       isLoading.value = false;
       emit('error', e.detail);
-    });
+    };
     
-    viewer.value.addEventListener('annotationadd', (e) => {
+    const handleAnnotationAdd = (e) => {
       emit('annotationadd', e.detail);
-    });
+    };
+    
+    viewer.value.addEventListener('imageload', handleImageLoad);
+    viewer.value.addEventListener('error', handleError);
+    viewer.value.addEventListener('annotationadd', handleAnnotationAdd);
     
     container.value.appendChild(viewer.value);
   }
@@ -382,15 +421,18 @@ export class ImageViewerComponent implements OnInit, OnDestroy {
       this.viewer.tools = JSON.stringify(this.tools);
       
       // Set up event listeners
-      this.viewer.addEventListener('imageload', () => {
+      const handleImageLoad = () => {
         this.isLoading = false;
         this.error = null;
-      });
+      };
       
-      this.viewer.addEventListener('error', (e: any) => {
-        this.error = e.detail;
+      const handleError = (e: any) => {
+        this.error = e.detail.message;
         this.isLoading = false;
-      });
+      };
+      
+      this.viewer.addEventListener('imageload', handleImageLoad);
+      this.viewer.addEventListener('error', handleError);
       
       this.container.nativeElement.appendChild(this.viewer);
     }
@@ -429,15 +471,17 @@ const viewer = document.querySelector('canvas-lens');
 const customAnnotation = {
   id: 'custom-1',
   type: 'rect',
-  x: 100,
-  y: 100,
-  width: 200,
-  height: 150,
+  points: [
+    { x: 100, y: 100 },
+    { x: 300, y: 100 },
+    { x: 300, y: 250 },
+    { x: 100, y: 250 }
+  ],
   style: {
     strokeColor: '#ff0000',
     strokeWidth: 3,
     fillColor: 'rgba(255, 0, 0, 0.2)',
-    dashArray: [5, 5] // Dashed border
+    lineStyle: 'dashed'
   }
 };
 
@@ -486,22 +530,25 @@ updateTools({
 ```javascript
 const viewer = document.querySelector('canvas-lens');
 
-// Zoom to specific level
-viewer.zoomTo(2.5);
+// Zoom operations
+viewer.zoomIn(1.5); // Zoom in by 1.5x
+viewer.zoomOut(1.2); // Zoom out by 1.2x
+viewer.zoomTo(2.5); // Set zoom to 2.5x
 
-// Pan to specific position
-viewer.setPan(100, 50);
-
-// Fit image to view
-viewer.fitToView();
-
-// Reset to initial state
-viewer.resetView();
+// View control
+viewer.fitToView(); // Fit image to viewport
+viewer.resetView(); // Reset to initial state
 
 // Get current view state
-const zoom = viewer.getZoom();
-const pan = viewer.getPan();
+const zoom = viewer.getZoomLevel();
+const pan = viewer.getPanOffset();
 console.log(`Zoom: ${zoom}, Pan: ${pan.x}, ${pan.y}`);
+
+// Check if image is loaded
+if (viewer.isImageLoaded()) {
+  const imageData = viewer.getImageData();
+  console.log('Image info:', imageData);
+}
 ```
 
 ### 4. Annotation Management
@@ -514,32 +561,41 @@ const annotations = [
   {
     id: 'rect-1',
     type: 'rect',
-    x: 50,
-    y: 50,
-    width: 100,
-    height: 80,
-    style: { strokeColor: '#ff0000' }
+    points: [
+      { x: 50, y: 50 },
+      { x: 150, y: 50 },
+      { x: 150, y: 130 },
+      { x: 50, y: 130 }
+    ],
+    style: { 
+      strokeColor: '#ff0000',
+      strokeWidth: 2,
+      fillColor: 'rgba(255, 0, 0, 0.1)'
+    }
   },
   {
     id: 'arrow-1',
     type: 'arrow',
-    x: 200,
-    y: 100,
-    width: 150,
-    height: 50,
-    style: { strokeColor: '#00ff00' }
+    points: [
+      { x: 200, y: 100 },
+      { x: 350, y: 100 }
+    ],
+    style: { 
+      strokeColor: '#00ff00',
+      strokeWidth: 3
+    }
   },
   {
     id: 'text-1',
     type: 'text',
-    x: 300,
-    y: 200,
-    text: 'Important Note',
+    points: [{ x: 300, y: 200 }],
     style: { 
+      strokeColor: '#0000ff',
+      strokeWidth: 1,
       fontSize: 16, 
-      fontFamily: 'Arial',
-      fillColor: '#0000ff'
-    }
+      fontFamily: 'Arial'
+    },
+    data: { text: 'Important Note' }
   }
 ];
 
@@ -571,10 +627,9 @@ viewer.clearAnnotations();
   </canvas-lens>
   
   <div class="comparison-controls">
-    <button onclick="setComparisonPosition(0)">Before</button>
-    <input type="range" id="slider" min="0" max="1" step="0.01" value="0.5" 
-           oninput="setComparisonPosition(this.value)">
-    <button onclick="setComparisonPosition(1)">After</button>
+    <button onclick="toggleComparison()">Toggle Comparison</button>
+    <button onclick="enableComparison()">Enable Comparison</button>
+    <button onclick="disableComparison()">Disable Comparison</button>
   </div>
 </div>
 
@@ -583,16 +638,28 @@ viewer.clearAnnotations();
   
   const viewer = document.getElementById('comparison-viewer');
   
-  // Set comparison image
-  await viewer.setComparisonImage('https://example.com/after.jpg');
+  function toggleComparison() {
+    viewer.toggleComparisonMode();
+  }
   
-  function setComparisonPosition(position) {
-    viewer.setComparisonPosition(parseFloat(position));
+  function enableComparison() {
+    viewer.setComparisonMode(true);
+  }
+  
+  function disableComparison() {
+    viewer.setComparisonMode(false);
+  }
+  
+  // Check comparison state
+  function checkComparisonState() {
+    if (viewer.isComparisonMode()) {
+      console.log('Comparison mode is active');
+    }
   }
   
   // Listen for comparison changes
   viewer.addEventListener('comparisonchange', (e) => {
-    document.getElementById('slider').value = e.detail;
+    console.log('Comparison position changed:', e.detail);
   });
 </script>
 ```
@@ -633,23 +700,34 @@ viewer.clearAnnotations();
   const viewer = document.getElementById('medical-viewer');
   
   function addMeasurement() {
-    viewer.activateTool('rect');
-    // Custom logic for measurements
+    const success = viewer.activateTool('rect');
+    if (success) {
+      console.log('Rectangle tool activated for measurements');
+    }
   }
   
   function addNote() {
-    viewer.activateTool('text');
-    // Custom logic for notes
+    const success = viewer.activateTool('text');
+    if (success) {
+      console.log('Text tool activated for notes');
+    }
   }
   
   function exportAnnotations() {
     const annotations = viewer.getAnnotations();
-    const data = JSON.stringify(annotations, null, 2);
+    const imageData = viewer.getImageData();
+    const exportData = {
+      image: imageData,
+      annotations: annotations,
+      exportDate: new Date().toISOString()
+    };
+    
+    const data = JSON.stringify(exportData, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'annotations.json';
+    a.download = 'medical-annotations.json';
     a.click();
   }
 </script>
@@ -697,10 +775,15 @@ viewer.clearAnnotations();
   function addCommentToList(annotation) {
     const commentDiv = document.createElement('div');
     commentDiv.className = 'comment';
+    commentDiv.setAttribute('data-id', annotation.id);
+    
+    const position = annotation.points[0];
+    const text = annotation.data?.text || '';
+    
     commentDiv.innerHTML = `
       <strong>${annotation.type.toUpperCase()}</strong>
-      <p>Position: (${annotation.x}, ${annotation.y})</p>
-      ${annotation.text ? `<p>Text: ${annotation.text}</p>` : ''}
+      <p>Position: (${position.x}, ${position.y})</p>
+      ${text ? `<p>Text: ${text}</p>` : ''}
       <button onclick="removeComment('${annotation.id}')">Remove</button>
     `;
     commentsList.appendChild(commentDiv);
@@ -717,9 +800,12 @@ viewer.clearAnnotations();
   
   function saveReview() {
     const annotations = viewer.getAnnotations();
+    const imageData = viewer.getImageData();
     const review = {
       timestamp: new Date().toISOString(),
-      annotations: annotations
+      image: imageData,
+      annotations: annotations,
+      hasChanges: viewer.hasChanges()
     };
     
     // Save to server or local storage
@@ -762,13 +848,19 @@ viewer.clearAnnotations();
   // Set up all comparison viewers
   const viewers = document.querySelectorAll('canvas-lens');
   
-  viewers.forEach(async (viewer, index) => {
+  viewers.forEach((viewer, index) => {
     const afterImages = [
       'https://example.com/kitchen-after.jpg',
       'https://example.com/living-after.jpg'
     ];
     
-    await viewer.setComparisonImage(afterImages[index]);
+    // Enable comparison mode
+    viewer.setComparisonMode(true);
+    
+    // Listen for comparison changes
+    viewer.addEventListener('comparisonchange', (e) => {
+      console.log(`Gallery item ${index} comparison position:`, e.detail);
+    });
   });
 </script>
 ```
@@ -811,10 +903,16 @@ viewer.clearAnnotations();
   function selectTool(tool) {
     if (tool === 'highlight') {
       // Custom highlight tool using rectangle with transparent fill
-      viewer.activateTool('rect');
-      // Set custom style for highlighting
+      const success = viewer.activateTool('rect');
+      if (success) {
+        console.log('Highlight tool activated');
+        // Set custom style for highlighting
+      }
     } else {
-      viewer.activateTool(tool);
+      const success = viewer.activateTool(tool);
+      if (success) {
+        console.log(`${tool} tool activated`);
+      }
     }
   }
   
@@ -826,10 +924,13 @@ viewer.clearAnnotations();
   
   function exportDocument() {
     const annotations = viewer.getAnnotations();
+    const imageData = viewer.getImageData();
     const documentData = {
       source: viewer.src,
+      image: imageData,
       annotations: annotations,
-      exportDate: new Date().toISOString()
+      exportDate: new Date().toISOString(),
+      hasChanges: viewer.hasChanges()
     };
     
     // Export as JSON or PDF with annotations
@@ -903,12 +1004,16 @@ class CustomTool {
     return {
       id: `custom-${Date.now()}`,
       type: 'custom',
-      x: Math.min(start.x, end.x),
-      y: Math.min(start.y, end.y),
-      width: Math.abs(end.x - start.x),
-      height: Math.abs(end.y - start.y),
-      startPoint: start,
-      endPoint: end
+      points: [start, end],
+      style: {
+        strokeColor: '#ff0000',
+        strokeWidth: 2,
+        lineStyle: 'solid'
+      },
+      data: {
+        startPoint: start,
+        endPoint: end
+      }
     };
   }
   
@@ -1019,6 +1124,7 @@ class LazyImageLoader {
     
     try {
       await this.viewer.loadImage(imageSrc);
+      console.log('Image loaded successfully:', imageSrc);
     } catch (error) {
       console.error('Failed to load image:', imageSrc, error);
     } finally {
@@ -1133,8 +1239,8 @@ class AnnotationOptimizer {
   }
   
   getViewport() {
-    const zoom = this.viewer.getZoom();
-    const pan = this.viewer.getPan();
+    const zoom = this.viewer.getZoomLevel();
+    const pan = this.viewer.getPanOffset();
     const canvas = this.viewer.canvas;
     
     return {
@@ -1146,12 +1252,13 @@ class AnnotationOptimizer {
   }
   
   isAnnotationInViewport(annotation, viewport) {
-    return !(
-      annotation.x > viewport.x + viewport.width ||
-      annotation.x + annotation.width < viewport.x ||
-      annotation.y > viewport.y + viewport.height ||
-      annotation.y + annotation.height < viewport.y
-    );
+    // Check if any point of the annotation is within the viewport
+    return annotation.points.some(point => {
+      return point.x >= viewport.x && 
+             point.x <= viewport.x + viewport.width &&
+             point.y >= viewport.y && 
+             point.y <= viewport.y + viewport.height;
+    });
   }
 }
 

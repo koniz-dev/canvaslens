@@ -4,9 +4,6 @@
 
 import type { PerformanceMetrics } from '../../types';
 
-// Re-export PerformanceMetrics for convenience
-export type { PerformanceMetrics };
-
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
   private maxMetrics = 100; // Keep last 100 measurements

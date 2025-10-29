@@ -1,7 +1,8 @@
 // Annotation module
-export { AnnotationManager } from "./annotation/Manager";
-
-export { AnnotationRenderer } from "./annotation/Renderer";
+export {
+  AnnotationManager,
+  AnnotationRenderer,
+} from './annotation';
 
 export {
   AnnotationToolsManager,
@@ -9,24 +10,22 @@ export {
   AnnotationToolsController,
   AnnotationToolsUtils,
   AnnotationToolsConfig,
-} from "./annotation/tools";
-
-export {
   BaseTool,
   RectangleTool,
   ArrowTool,
   TextTool,
   CircleTool,
   LineTool,
-} from "./annotation/tools/components";
+} from './annotation/tools';
 
 // Comparison module
-export { ComparisonManager } from "./comparison/Manager";
-
-export { ComparisonViewer } from "./comparison/Viewer";
+export {
+  ComparisonManager,
+  ComparisonViewer,
+} from './comparison';
 
 // Image viewer module
-export { ImageViewer } from "./image-viewer/Viewer";
+export { ImageViewer } from './image-viewer';
 
 // Zoom-pan module
-export { ZoomPanHandler } from "./zoom-pan/Handler";
+export { ZoomPanHandler } from './zoom-pan';

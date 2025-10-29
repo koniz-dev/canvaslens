@@ -1,7 +1,6 @@
 // Core utilities
 export { 
   ErrorHandler, 
-  ErrorType, 
   withErrorHandling, 
   safeAsync 
 } from './core/error-handler';

@@ -43,30 +43,60 @@ npm run dev
 canvaslens/
 ├── src/                    # Source code
 │   ├── CanvasLens.ts      # Main Web Component
-│   ├── CanvasLens.d.ts    # TypeScript declarations
 │   ├── index.ts           # Main exports
 │   ├── components/        # Component modules
 │   │   ├── CanvasLensCore.ts
 │   │   ├── AttributeParser.ts
 │   │   ├── EventManager.ts
-│   │   └── OverlayManager.ts
+│   │   ├── OverlayManager.ts
+│   │   └── index.ts
 │   ├── core/              # Core engine
-│   │   └── Engine.ts
+│   │   ├── Engine.ts
+│   │   ├── Renderer.ts
+│   │   └── index.ts
 │   ├── modules/           # Feature modules
-│   │   ├── ImageViewer.ts
-│   │   ├── AnnotationManager.ts
-│   │   └── ComparisonManager.ts
+│   │   ├── annotation/    # Annotation system
+│   │   │   ├── Manager.ts
+│   │   │   ├── Renderer.ts
+│   │   │   ├── tools/
+│   │   │   └── index.ts
+│   │   ├── comparison/    # Comparison mode
+│   │   ├── image-viewer/  # Image viewing
+│   │   ├── zoom-pan/      # Zoom and pan
+│   │   └── index.ts
 │   ├── types/             # TypeScript type definitions
+│   │   ├── annotation.ts
+│   │   ├── config.ts
+│   │   ├── geometry.ts
+│   │   ├── image.ts
+│   │   ├── errors.ts
+│   │   └── index.ts
 │   ├── utils/             # Utility functions
+│   │   ├── core/          # Core utilities
+│   │   ├── performance/   # Performance tools
+│   │   ├── image/         # Image utilities
+│   │   ├── geometry/      # Geometry utilities
+│   │   └── index.ts
 │   ├── constants/         # Application constants
+│   │   ├── config.ts
+│   │   ├── events.ts
+│   │   ├── tools.ts
+│   │   └── index.ts
 │   └── __tests__/         # Test files
+│       ├── unit/
+│       ├── integration/
+│       ├── performance/
+│       ├── visual/
+│       └── api/
 ├── docs/                  # Documentation
 ├── playground/            # Framework examples
 ├── dist/                  # Built files
 ├── package.json
 ├── tsconfig.json
 ├── rollup.config.js
-└── jest.config.js
+├── jest.config.js
+├── eslint.config.js
+└── commitlint.config.js
 ```
 
 ## Development Workflow
@@ -116,7 +146,7 @@ export class NewFeature {
 4. **Add to Engine**
 ```typescript
 // src/core/Engine.ts
-import { NewFeature } from '../modules/NewFeature';
+import { NewFeature } from '../modules';
 
 export class Engine {
   private newFeature: NewFeature;
@@ -131,7 +161,7 @@ export class Engine {
 5. **Add tests**
 ```typescript
 // src/__tests__/modules/NewFeature.test.ts
-import { NewFeature } from '../../modules/NewFeature';
+import { NewFeature } from '../../modules';
 
 describe('NewFeature', () => {
   it('should initialize correctly', () => {
@@ -163,12 +193,25 @@ npm run test:visual
 npm run test:api
 ```
 
+#### Linting and Code Quality
+
+```bash
+# Run ESLint
+npm run lint
+
+# Fix linting issues automatically
+npm run lint:fix
+
+# Clean build artifacts
+npm run clean
+```
+
 #### Writing Tests
 
 ##### Unit Tests
 ```typescript
 // src/__tests__/utils/logger.test.ts
-import { log, warn, error, info } from '../../utils/logger';
+import { log, warn, error, info } from '../../utils/core/logger';
 
 describe('Logger', () => {
   beforeEach(() => {
@@ -252,6 +295,22 @@ The build process uses Rollup with the following plugins:
 - **@rollup/plugin-node-resolve**: Node module resolution
 - **@rollup/plugin-commonjs**: CommonJS module support
 - **@rollup/plugin-terser**: Code minification (production only)
+
+#### Build Scripts
+
+```bash
+# Development build (with linting)
+npm run build
+
+# Production build (optimized)
+npm run build:prod
+
+# Clean build artifacts
+npm run clean
+
+# Prepare for publishing
+npm run prepublishOnly
+```
 
 ### 4. Code Quality
 
@@ -446,7 +505,7 @@ class CanvasRenderer {
 
 #### Console Logging
 ```typescript
-import { log, warn, error, info } from './utils/logger';
+import { log, warn, error, info } from '@koniz-dev/canvaslens';
 
 // Use appropriate log levels
 log('Debug information'); // Only in development
@@ -522,6 +581,8 @@ npm version major
 - [ ] Build successful
 - [ ] Playground examples tested
 - [ ] Cross-browser testing completed
+- [ ] Linting passes
+- [ ] Type checking passes
 
 ### 3. Publishing
 
@@ -532,9 +593,27 @@ npm run build:prod
 # Run tests
 npm test
 
+# Run linting
+npm run lint
+
 # Publish to npm
 npm publish
 ```
+
+### 4. Automated Release
+
+The project uses semantic-release for automated versioning and publishing:
+
+```bash
+# Trigger automated release
+npm run release
+```
+
+This will:
+- Analyze commits for semantic versioning
+- Update CHANGELOG.md
+- Create git tags
+- Publish to npm
 
 ## Contributing
 
@@ -602,6 +681,12 @@ npm install
 
 # Clear TypeScript cache
 npx tsc --build --clean
+
+# Clear build artifacts
+npm run clean
+
+# Check for TypeScript errors
+npx tsc --noEmit
 ```
 
 #### Test Failures
@@ -611,6 +696,12 @@ npm test -- --verbose
 
 # Run specific test file
 npm test -- src/__tests__/specific.test.ts
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run tests in watch mode
+npm run test:watch
 ```
 
 #### Type Errors
@@ -620,6 +711,9 @@ npx tsc --showConfig
 
 # Run type checking only
 npx tsc --noEmit
+
+# Run linting to check for type issues
+npm run lint
 ```
 
 ### 2. Getting Help
@@ -636,8 +730,10 @@ npx tsc --noEmit
 - **Write tests first** (TDD approach)
 - **Keep functions small** and focused
 - **Use meaningful names** for variables and functions
-- **Handle errors gracefully**
-- **Document public APIs**
+- **Handle errors gracefully** with proper error types
+- **Document public APIs** with JSDoc comments
+- **Follow TypeScript best practices**
+- **Use proper type definitions**
 
 ### 2. Performance
 
@@ -646,14 +742,19 @@ npx tsc --noEmit
 - **Minimize DOM operations**
 - **Cache expensive calculations**
 - **Use efficient data structures**
+- **Leverage built-in performance tools** (PerformanceMonitor, RenderOptimizer)
+- **Use viewport culling** for large datasets
+- **Optimize canvas rendering**
 
 ### 3. Security
 
-- **Validate all inputs**
-- **Sanitize user content**
+- **Validate all inputs** using ValidationHelper
+- **Sanitize user content** properly
 - **Handle CORS properly**
 - **Avoid eval() and similar functions**
 - **Keep dependencies updated**
+- **Use proper error handling** without exposing sensitive data
+- **Validate image sources** and file types
 
 ### 4. Accessibility
 
@@ -662,5 +763,8 @@ npx tsc --noEmit
 - **Include ARIA attributes**
 - **Test with screen readers**
 - **Ensure color contrast**
+- **Support touch interactions**
+- **Provide alternative text** for images
+- **Use proper focus management**
 
 This development guide provides a comprehensive overview of how to contribute to CanvasLens effectively. Follow these guidelines to ensure high-quality, maintainable code that benefits the entire community.

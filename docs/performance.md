@@ -14,7 +14,7 @@
 
 ## Performance Overview
 
-CanvasLens is designed for high-performance image viewing and annotation, but performance can be affected by various factors including image size, browser capabilities, and implementation choices. This guide provides comprehensive strategies for optimizing CanvasLens performance.
+CanvasLens is designed for high-performance image viewing and annotation with built-in optimization features. Performance can be affected by various factors including image size, browser capabilities, and implementation choices. This guide provides comprehensive strategies for optimizing CanvasLens performance.
 
 ### Performance Metrics
 
@@ -25,6 +25,8 @@ Key performance indicators to monitor:
 - **Memory Usage**: RAM consumption over time
 - **CPU Usage**: Processor utilization during operations
 - **Interaction Latency**: Response time to user actions
+- **Canvas Operations**: Number of canvas operations per frame
+- **Viewport Culling**: Efficiency of off-screen element culling
 
 ### Performance Targets
 
@@ -32,6 +34,8 @@ Key performance indicators to monitor:
 - **Rendering**: 60 FPS during zoom/pan operations
 - **Memory**: < 500MB for typical usage
 - **Interaction**: < 16ms response time (60 FPS)
+- **Canvas Operations**: < 100 operations per frame
+- **Viewport Culling**: 90%+ efficiency for large datasets
 
 ## Image Optimization
 
@@ -832,92 +836,101 @@ if (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chr
 
 ## Performance Monitoring
 
-### 1. Performance Metrics Collection
+### 1. Built-in Performance Tools
 
-#### FPS Monitoring
+#### Performance Monitor
 ```javascript
-class FPSMonitor {
-  constructor() {
-    this.frameCount = 0;
-    this.lastTime = performance.now();
-    this.fps = 0;
-  }
-  
-  update() {
-    this.frameCount++;
-    const currentTime = performance.now();
-    
-    if (currentTime - this.lastTime >= 1000) {
-      this.fps = this.frameCount;
-      this.frameCount = 0;
-      this.lastTime = currentTime;
-      
-      this.onFPSUpdate(this.fps);
-    }
-  }
-  
-  onFPSUpdate(fps) {
-    console.log(`FPS: ${fps}`);
-    
-    // Adjust quality based on FPS
-    if (fps < 30) {
-      this.reduceQuality();
-    } else if (fps > 55) {
-      this.increaseQuality();
-    }
-  }
-  
-  reduceQuality() {
-    // Reduce rendering quality
-    viewer.setQuality('medium');
-  }
-  
-  increaseQuality() {
-    // Increase rendering quality
-    viewer.setQuality('high');
-  }
-}
+import { PerformanceMonitor, performanceMonitor } from '@koniz-dev/canvaslens';
+
+// Enable performance monitoring
+const monitor = new PerformanceMonitor();
+monitor.start();
+
+// Or use the global instance
+performanceMonitor.start();
+
+// Get performance metrics
+const metrics = performanceMonitor.getMetrics();
+console.log('FPS:', metrics.fps);
+console.log('Memory:', metrics.memoryUsage);
+console.log('Render Time:', metrics.renderTime);
 ```
 
-#### Memory Monitoring
+#### Performance Profiling
 ```javascript
-class MemoryMonitor {
-  constructor() {
-    this.memoryInfo = null;
-    this.checkMemory();
-  }
-  
-  checkMemory() {
-    if (performance.memory) {
-      this.memoryInfo = {
-        used: performance.memory.usedJSHeapSize,
-        total: performance.memory.totalJSHeapSize,
-        limit: performance.memory.jsHeapSizeLimit
-      };
-      
-      this.onMemoryUpdate(this.memoryInfo);
-    }
-  }
-  
-  onMemoryUpdate(memoryInfo) {
-    const usagePercent = (memoryInfo.used / memoryInfo.limit) * 100;
-    
-    if (usagePercent > 80) {
-      console.warn('High memory usage detected');
-      this.triggerGarbageCollection();
-    }
-  }
-  
-  triggerGarbageCollection() {
-    // Clear caches and trigger GC
-    viewer.clearCaches();
-    
-    // Force garbage collection if available
-    if (window.gc) {
-      window.gc();
-    }
-  }
-}
+// Start performance profiling
+performanceMonitor.startProfiling('image-load');
+
+// Perform operations
+await viewer.loadImage('large-image.jpg');
+
+// Stop profiling and get results
+const profile = performanceMonitor.stopProfiling('image-load');
+console.log('Profile:', profile);
+```
+
+#### Render Optimizer
+```javascript
+import { RenderOptimizer } from '@koniz-dev/canvaslens';
+
+// Create render optimizer
+const optimizer = new RenderOptimizer(viewer);
+
+// Enable optimizations
+optimizer.enableDirtyRegionTracking();
+optimizer.enableViewportCulling();
+optimizer.enableFrameRateControl(60);
+```
+
+#### Viewport Culling
+```javascript
+import { ViewportCulling } from '@koniz-dev/canvaslens';
+
+// Create viewport culler
+const culler = new ViewportCulling(viewer);
+
+// Enable culling for annotations
+culler.enableForAnnotations();
+culler.setCullingThreshold(100); // Only render 100 annotations at once
+```
+
+#### Memory Management
+```javascript
+import { MemoryManager } from '@koniz-dev/canvaslens';
+
+// Create memory manager
+const memoryManager = new MemoryManager();
+
+// Enable memory monitoring
+memoryManager.enableMonitoring();
+
+// Set memory thresholds
+memoryManager.setThresholds({
+  warning: 100 * 1024 * 1024, // 100MB
+  critical: 200 * 1024 * 1024  // 200MB
+});
+
+// Get memory usage
+const usage = memoryManager.getUsage();
+console.log('Memory usage:', usage);
+
+// Clean up resources
+memoryManager.cleanup();
+```
+
+#### Performance Metrics
+```javascript
+// Get comprehensive performance metrics
+const metrics = performanceMonitor.getMetrics();
+
+console.log('Performance Metrics:', {
+  fps: metrics.fps,
+  memoryUsage: metrics.memoryUsage,
+  renderTime: metrics.renderTime,
+  canvasOperations: metrics.canvasOperations,
+  viewportCulling: metrics.viewportCulling,
+  annotationCount: metrics.annotationCount
+});
 ```
 
 ### 2. Performance Profiling
@@ -966,16 +979,37 @@ console.log(`Image load took ${loadTime}ms`);
 
 ### 1. General Performance Guidelines
 
+#### Built-in Performance Tools
+```javascript
+// ✅ Good - Use built-in performance tools
+import { PerformanceMonitor, RenderOptimizer, ViewportCulling } from '@koniz-dev/canvaslens';
+
+const monitor = new PerformanceMonitor();
+const optimizer = new RenderOptimizer(viewer);
+const culler = new ViewportCulling(viewer);
+
+// Enable optimizations
+monitor.start();
+optimizer.enableDirtyRegionTracking();
+culler.enableForAnnotations();
+```
+
 #### Code Organization
 ```javascript
 // ✅ Good - Efficient object creation
 const annotation = {
   id: generateId(),
   type: 'rect',
-  x: startX,
-  y: startY,
-  width: endX - startX,
-  height: endY - startY
+  points: [
+    { x: startX, y: startY },
+    { x: endX, y: startY },
+    { x: endX, y: endY },
+    { x: startX, y: endY }
+  ],
+  style: {
+    strokeColor: '#ff0000',
+    strokeWidth: 2
+  }
 };
 
 // ❌ Bad - Inefficient object creation
@@ -1049,6 +1083,22 @@ function renderInefficient() {
   renderText();
   renderCircles();
 }
+```
+
+#### Performance Optimization
+```javascript
+// ✅ Good - Use built-in optimizations
+import { RenderOptimizer } from '@koniz-dev/canvaslens';
+
+const optimizer = new RenderOptimizer(viewer);
+optimizer.enableDirtyRegionTracking();
+optimizer.enableViewportCulling();
+optimizer.enableFrameRateControl(60);
+
+// ❌ Bad - Manual optimization without tools
+// Manual dirty region tracking
+// Manual viewport culling
+// Manual frame rate control
 ```
 
 ### 3. Memory Management Best Practices

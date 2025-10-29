@@ -46,8 +46,8 @@ CanvasLens is built with a modular, layered architecture that separates concerns
 ┌─────────────────────────────────────────────────────────────┐
 │                      Module Layer                           │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌─────┐ │
-│  │ ImageViewer  │ │ Annotation   │ │ Comparison   │ │ ... │ │
-│  │              │ │ Manager      │ │ Manager      │ │     │ │
+│  │ ImageViewer  │ │ Annotation   │ │ Comparison   │ │Zoom │ │
+│  │              │ │ Manager      │ │ Manager      │ │Pan  │ │
 │  └──────────────┘ └──────────────┘ └──────────────┘ └─────┘ │
 └─────────────────────────────────────────────────────────────┘
                                 │
@@ -55,8 +55,8 @@ CanvasLens is built with a modular, layered architecture that separates concerns
 ┌─────────────────────────────────────────────────────────────┐
 │                     Utility Layer                           │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌─────┐ │
-│  │   Logger     │ │ ErrorHandler │ │   Helpers    │ │ ... │ │
-│  │              │ │              │ │              │ │     │ │
+│  │   Logger     │ │ ErrorHandler │ │ Performance  │ │ ... │ │
+│  │              │ │              │ │ Monitor      │ │     │ │
 │  └──────────────┘ └──────────────┘ └──────────────┘ └─────┘ │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -140,13 +140,13 @@ class Engine {
 
 ### 3. Module Layer
 
-#### ImageViewer
+#### ImageViewer Module
 - **Purpose**: Core image viewing functionality
 - **Responsibilities**:
   - Image loading and rendering
-  - Zoom and pan operations
   - Canvas management
   - View state management
+  - Image data handling
 
 ```typescript
 class ImageViewer {
@@ -165,15 +165,19 @@ class ImageViewer {
 }
 ```
 
-#### AnnotationManager
+#### Annotation Module
 - **Purpose**: Handles all annotation functionality
+- **Components**:
+  - `Manager`: Annotation lifecycle management
+  - `Renderer`: Annotation rendering logic
+  - `tools/`: Individual tool implementations
 - **Responsibilities**:
   - Annotation creation and editing
   - Tool management
   - Annotation rendering
   - Selection and interaction
 
-#### ComparisonManager
+#### Comparison Module
 - **Purpose**: Manages before/after image comparison
 - **Responsibilities**:
   - Comparison mode toggling
@@ -181,21 +185,40 @@ class ImageViewer {
   - Synchronized view control
   - Comparison rendering
 
+#### Zoom-Pan Module
+- **Purpose**: Handles zoom and pan operations
+- **Responsibilities**:
+  - Zoom level management
+  - Pan offset calculations
+  - View transformation
+  - Mouse/touch event handling
+
 ### 4. Utility Layer
 
-#### Logger
-- **Purpose**: Centralized logging system
-- **Features**:
+#### Core Utilities (`utils/core/`)
+- **Logger**: Centralized logging system
   - Environment-aware logging
   - Production-safe log removal
-  - Multiple log levels
-
-#### ErrorHandler
-- **Purpose**: Centralized error handling
-- **Features**:
-  - Error categorization
-  - Recovery mechanisms
+  - Multiple log levels (log, warn, error, info)
+- **ErrorHandler**: Centralized error handling
+  - Error categorization and recovery
   - User-friendly error messages
+  - Safe async operation handling
+- **MemoryManager**: Memory management and cleanup
+- **ValidationHelper**: Input validation and sanitization
+
+#### Performance Utilities (`utils/performance/`)
+- **PerformanceMonitor**: Performance metrics collection
+- **RenderOptimizer**: Canvas rendering optimization
+- **ViewportCulling**: Viewport-based rendering optimization
+
+#### Image Utilities (`utils/image/`)
+- **ImageLoader**: Advanced image loading with caching
+- **Image Utils**: Image processing and manipulation helpers
+
+#### Geometry Utilities (`utils/geometry/`)
+- **Coordinate Utils**: Coordinate transformation functions
+- **Geometry Helpers**: Mathematical calculations for shapes and positions
 
 ## Data Flow
 
@@ -206,13 +229,19 @@ User creates <canvas-lens> element
     ↓
 CanvasLens constructor called
     ↓
-CanvasLensCore created
+Shadow DOM attached
+    ↓
+connectedCallback() triggered
+    ↓
+CanvasLensCore created and initialized
     ↓
 Engine initialized with options
     ↓
-Modules (ImageViewer, AnnotationManager, etc.) created
+Modules (ImageViewer, Annotation, Comparison, ZoomPan) created
     ↓
 Event listeners attached
+    ↓
+Attribute parsing and validation
     ↓
 Ready for user interaction
 ```
@@ -220,39 +249,49 @@ Ready for user interaction
 ### 2. Image Loading Flow
 
 ```
-User sets 'src' attribute
+User sets 'src' attribute or calls loadImage()
     ↓
-attributeChangedCallback triggered
+attributeChangedCallback triggered (if via attribute)
     ↓
 AttributeParser validates and parses
     ↓
 CanvasLensCore.loadImage() called
     ↓
-Engine.loadImage() called
+Engine coordinates image loading
     ↓
-ImageViewer.loadImage() called
+ImageViewer module loads image
     ↓
-Image loaded and rendered
+ImageLoader utility handles loading
     ↓
-'imageload' event fired
+Image processed and validated
+    ↓
+Canvas rendered with new image
+    ↓
+'imageload' event fired with image data
 ```
 
 ### 3. Annotation Flow
 
 ```
-User activates annotation tool
+User activates annotation tool (via API or keyboard)
     ↓
-Tool activation event
+Tool activation event triggered
     ↓
-AnnotationManager.activateTool() called
+Annotation Manager.activateTool() called
     ↓
-Mouse/touch events captured
+Tool state updated in Engine
     ↓
-Annotation created
+Mouse/touch events captured by EventManager
     ↓
-Annotation rendered
+Tool-specific event handlers process input
     ↓
-'annotationadd' event fired
+Annotation created with validation
+    ↓
+Annotation added to collection
+    ↓
+Canvas re-rendered with new annotation
+    ↓
+'annotationadd' event fired with annotation data
 ```
 
 ## State Management
@@ -260,20 +299,37 @@ Annotation rendered
 ### View State
 ```typescript
 interface ViewState {
-  zoom: number;
-  panX: number;
-  panY: number;
-  imageLoaded: boolean;
-  CustomImageData: CustomImageData | null;
+  /** Zoom scale factor (1.0 = 100%) */
+  scale: number;
+  /** Horizontal pan offset in pixels */
+  offsetX: number;
+  /** Vertical pan offset in pixels */
+  offsetY: number;
+}
+```
+
+### Image State
+```typescript
+interface ImageState {
+  /** Whether an image is currently loaded */
+  isLoaded: boolean;
+  /** Current image data */
+  imageData: CustomImageData | null;
+  /** Image dimensions */
+  dimensions: Size | null;
 }
 ```
 
 ### Tool State
 ```typescript
 interface ToolState {
+  /** Currently active tool type */
   activeTool: string | null;
+  /** Tool configuration */
   toolConfig: ToolConfig;
+  /** Whether user is currently drawing */
   isDrawing: boolean;
+  /** Current annotation being created */
   currentAnnotation: Annotation | null;
 }
 ```
@@ -281,10 +337,26 @@ interface ToolState {
 ### Comparison State
 ```typescript
 interface ComparisonState {
+  /** Whether comparison mode is enabled */
   isComparisonMode: boolean;
-  comparisonImage: HTMLImageElement | null;
+  /** Comparison image data */
+  comparisonImage: CustomImageData | null;
+  /** Slider position (0-1) */
   sliderPosition: number;
+  /** Whether views are synchronized */
   isSynchronized: boolean;
+}
+```
+
+### Annotation State
+```typescript
+interface AnnotationState {
+  /** All annotations on the canvas */
+  annotations: Annotation[];
+  /** Currently selected annotation */
+  selectedAnnotation: string | null;
+  /** Whether annotations have been modified */
+  hasChanges: boolean;
 }
 ```
 
@@ -296,11 +368,22 @@ interface ComparisonState {
 - Module-to-module communication
 - State change notifications
 - Error propagation
+- Performance monitoring events
 
 #### External Events
-- User interaction events
-- Public API events
-- Web Component lifecycle events
+- `imageload`: Image loaded successfully
+- `zoomchange`: Zoom level changed
+- `panchange`: Pan position changed
+- `annotationadd`: Annotation added
+- `annotationremove`: Annotation removed
+- `toolchange`: Active tool changed
+- `comparisonchange`: Comparison slider position changed
+- `error`: Error occurred
+
+#### Web Component Lifecycle Events
+- `connectedCallback`: Component connected to DOM
+- `disconnectedCallback`: Component disconnected from DOM
+- `attributeChangedCallback`: Attribute value changed
 
 ### Event Flow
 ```
@@ -343,32 +426,86 @@ User Action → Web Component → Core Engine → Module → State Update → Ev
 ### 1. Rendering Optimization
 
 #### Canvas Optimization
-- Efficient canvas clearing
-- Minimal redraw operations
+- Efficient canvas clearing and redraw operations
 - Hardware acceleration utilization
+- Viewport culling for off-screen elements
+- Render optimization with dirty region tracking
 
 #### Memory Management
-- Image resource cleanup
-- Event listener cleanup
-- Canvas context management
+- Image resource cleanup and disposal
+- Event listener cleanup on component destruction
+- Canvas context management and optimization
+- Memory leak prevention with proper cleanup
 
 ### 2. Event Optimization
 
 #### Event Debouncing
-- Mouse move events
-- Resize events
-- Scroll events
+- Mouse move events (16ms for 60fps)
+- Resize events (100ms debounce)
+- Scroll events (16ms for smooth scrolling)
 
 #### Event Delegation
-- Efficient event handling
-- Reduced memory usage
-- Better performance
+- Efficient event handling with delegation
+- Reduced memory usage through shared handlers
+- Better performance with fewer event listeners
+
+### 3. Performance Monitoring
+
+#### Built-in Performance Tools
+- `PerformanceMonitor`: Real-time performance metrics
+- `RenderOptimizer`: Automatic rendering optimizations
+- `ViewportCulling`: Only render visible elements
+- Memory usage tracking and cleanup
+
+#### Performance Metrics
+- Frame rate monitoring
+- Memory usage tracking
+- Rendering time measurement
+- User interaction latency
 
 ## Extensibility
 
-### 1. Plugin System (Planned)
+### 1. Modular Architecture
 
-#### Plugin Interface
+The current architecture supports extensibility through:
+
+#### Module System
+- Each major feature is a separate module
+- Modules can be extended or replaced
+- Clear interfaces between modules
+- Dependency injection for testability
+
+#### Utility System
+- Comprehensive utility functions
+- Performance monitoring tools
+- Error handling utilities
+- Memory management helpers
+
+### 2. Custom Tools (Current)
+
+#### Tool Implementation
+```typescript
+interface CustomTool {
+  name: string;
+  type: string;
+  icon?: string;
+  activate(): boolean;
+  deactivate(): boolean;
+  onMouseDown(event: MouseEvent): void;
+  onMouseMove(event: MouseEvent): void;
+  onMouseUp(event: MouseEvent): void;
+}
+```
+
+#### Tool Registration
+```typescript
+// Tools are registered through the annotation module
+annotationManager.registerTool(customTool);
+```
+
+### 3. Future Extensibility Plans
+
+#### Plugin System (Planned)
 ```typescript
 interface CanvasLensPlugin {
   name: string;
@@ -378,29 +515,7 @@ interface CanvasLensPlugin {
 }
 ```
 
-#### Plugin Registration
-```typescript
-CanvasLens.registerPlugin(plugin: CanvasLensPlugin): void;
-```
-
-### 2. Custom Tools
-
-#### Tool Interface
-```typescript
-interface CustomTool {
-  name: string;
-  icon: string;
-  activate(): void;
-  deactivate(): void;
-  onMouseDown(event: MouseEvent): void;
-  onMouseMove(event: MouseEvent): void;
-  onMouseUp(event: MouseEvent): void;
-}
-```
-
-### 3. Custom Renderers
-
-#### Renderer Interface
+#### Custom Renderers (Planned)
 ```typescript
 interface CustomRenderer {
   render(ctx: CanvasRenderingContext2D, data: any): void;
@@ -408,19 +523,26 @@ interface CustomRenderer {
 }
 ```
 
+#### Event System Extensions
+- Custom event types
+- Event middleware
+- Event transformation
+
 ## Security Considerations
 
 ### 1. Input Validation
 
 #### Image Sources
-- URL validation
-- CORS handling
+- URL validation and sanitization
+- CORS handling and configuration
 - Content type verification
+- File size and dimension limits
 
 #### User Input
 - Tool configuration validation
-- Annotation data validation
+- Annotation data validation and sanitization
 - Attribute value sanitization
+- File upload validation
 
 ### 2. XSS Prevention
 
@@ -428,32 +550,51 @@ interface CustomRenderer {
 - Text annotation sanitization
 - Attribute value escaping
 - Event handler validation
+- HTML content filtering
+
+### 3. Security Utilities
+
+#### ValidationHelper
+- Input validation functions
+- Data sanitization methods
+- Type checking utilities
+- Security-focused validation
+
+#### Error Handling
+- Secure error messages
+- No sensitive data exposure
+- Proper error logging
+- User-friendly error display
 
 ## Testing Strategy
 
 ### 1. Unit Testing
 
 #### Component Testing
-- Individual module testing
-- Utility function testing
+- Individual module testing (Engine, ImageViewer, Annotation, etc.)
+- Utility function testing (Logger, ErrorHandler, PerformanceMonitor)
 - Type validation testing
+- Error handling testing
 
 #### Mocking Strategy
-- Canvas API mocking
+- Canvas API mocking with jsdom
 - Event system mocking
 - Image loading mocking
+- Performance monitoring mocking
 
 ### 2. Integration Testing
 
 #### Module Integration
-- Cross-module communication
+- Cross-module communication testing
 - Event flow testing
 - State synchronization testing
+- API integration testing
 
 #### Browser Testing
-- Cross-browser compatibility
+- Cross-browser compatibility testing
 - Performance testing
 - Visual regression testing
+- Touch and mobile testing
 
 ### 3. End-to-End Testing
 
@@ -461,14 +602,35 @@ interface CustomRenderer {
 - Complete user workflows
 - Error handling scenarios
 - Performance scenarios
+- Framework integration testing
+
+### 4. Test Structure
+
+#### Test Organization
+```
+src/__tests__/
+├── unit/           # Unit tests
+├── integration/    # Integration tests
+├── performance/    # Performance tests
+├── visual/         # Visual regression tests
+└── api/           # API tests
+```
+
+#### Test Types
+- **Unit Tests**: Individual function and class testing
+- **Integration Tests**: Module interaction testing
+- **Performance Tests**: Rendering and interaction performance
+- **Visual Tests**: Canvas output verification
+- **API Tests**: Public API functionality
 
 ## Build System
 
 ### 1. Development Build
 
 #### Features
-- Source maps
-- Development logging
+- Source maps for debugging
+- Development logging enabled
+- TypeScript compilation
 - Hot reloading support
 
 #### Configuration
@@ -483,7 +645,9 @@ export default {
   },
   plugins: [
     typescript(),
-    // No minification
+    nodeResolve(),
+    commonjs(),
+    // No minification for development
   ]
 };
 ```
@@ -491,10 +655,11 @@ export default {
 ### 2. Production Build
 
 #### Features
-- Code minification
-- Log removal
-- Tree shaking
+- Code minification with Terser
+- Development log removal
+- Tree shaking for smaller bundles
 - Bundle optimization
+- TypeScript declaration files
 
 #### Configuration
 ```javascript
@@ -508,6 +673,8 @@ export default {
   },
   plugins: [
     typescript(),
+    nodeResolve(),
+    commonjs(),
     terser({
       compress: {
         drop_console: true,
@@ -518,24 +685,42 @@ export default {
 };
 ```
 
+### 3. Build Scripts
+
+#### Available Scripts
+- `npm run build`: Development build with linting
+- `npm run build:prod`: Production build with optimization
+- `npm run clean`: Clean build artifacts
+- `npm run lint`: ESLint code checking
+- `npm run test`: Run test suite
+
 ## Future Architecture Considerations
 
 ### 1. Micro-Frontend Architecture
-- Module federation
-- Independent deployment
+- Module federation for independent deployment
 - Shared component library
+- Plugin system for extensibility
 
 ### 2. WebAssembly Integration
 - Performance-critical operations
-- Image processing
-- Complex calculations
+- Image processing and manipulation
+- Complex mathematical calculations
+- Canvas rendering optimization
 
 ### 3. Service Worker Integration
 - Offline functionality
-- Image caching
+- Image caching and preloading
 - Background processing
+- Progressive loading
 
 ### 4. WebGL Rendering
-- Hardware acceleration
-- Complex visual effects
+- Hardware acceleration for complex operations
+- Advanced visual effects
 - 3D transformations
+- Shader-based rendering
+
+### 5. Advanced Features
+- Real-time collaboration
+- Version control for annotations
+- Advanced image filters
+- Machine learning integration

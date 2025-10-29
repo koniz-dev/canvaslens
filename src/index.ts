@@ -15,6 +15,10 @@ export type {
   ViewState,
 } from './types';
 
+// Error types (enum, not type)
+export { ErrorType } from './types';
+export type { CanvasLensError } from './types';
+
 // Core engine and rendering
 export { Engine, Renderer } from './core';
 
