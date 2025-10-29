@@ -7,6 +7,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export default {
   input: 'src/index.ts',
+  cache: true,
   output: [
     {
       file: 'dist/index.js',
@@ -33,13 +34,23 @@ export default {
         compress: {
           drop_console: true,
           drop_debugger: true,
-          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn']
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+          passes: 2,
+          unsafe: false,
+          unsafe_comps: false,
+          unsafe_math: false,
+          unsafe_methods: false,
+          unsafe_proto: false,
+          unsafe_regexp: false,
+          unsafe_undefined: false
         },
         mangle: {
-          toplevel: true
+          toplevel: true,
+          properties: false
         },
         format: {
-          comments: false
+          comments: false,
+          preserve_annotations: false
         }
       })
     ] : [])

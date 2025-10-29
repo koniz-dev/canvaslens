@@ -39,6 +39,8 @@ export class AnnotationToolsManager {
       onActivateTool: (toolType: string) => {
         const result = this.controller.activateTool(toolType);
         this.controller.setToolActivatedByKeyboard(true);
+        // Update options synchronously to ensure flag is set immediately
+        // This is critical for the first click to work properly
         this.updateEventHandlerOptions();
         return result;
       },

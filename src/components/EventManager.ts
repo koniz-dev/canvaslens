@@ -2,52 +2,69 @@ import type { Point, Annotation, CustomImageData } from '../types';
 
 export class EventManager {
   private element: HTMLElement;
+  private eventHandlers: Map<string, Set<(event: CustomEvent) => void>> = new Map();
+  private resizeHandler: () => void;
+  private boundHandlers: Map<string, (e: Event) => void> = new Map();
 
   constructor(element: HTMLElement) {
     this.element = element;
+    this.resizeHandler = () => {
+      this.dispatchEvent('resize');
+    };
   }
 
   /**
    * Set up event listeners for the Web Component
    */
   setupEventListeners(): void {
-    // Listen for custom events and forward them with lowercase names for external listeners
-    this.addEventListener('imageLoad', (e: Event) => {
+    // Create bound handlers for custom events
+    const imageLoadHandler = (e: Event) => {
       this.dispatchEvent('imageload', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('imageLoadError', (e: Event) => {
+    };
+    const imageLoadErrorHandler = (e: Event) => {
       this.dispatchEvent('imageloaderror', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('zoomChange', (e: Event) => {
+    };
+    const zoomChangeHandler = (e: Event) => {
       this.dispatchEvent('zoomchange', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('panChange', (e: Event) => {
+    };
+    const panChangeHandler = (e: Event) => {
       this.dispatchEvent('panchange', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('annotationAdd', (e: Event) => {
+    };
+    const annotationAddHandler = (e: Event) => {
       this.dispatchEvent('annotationadd', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('annotationRemove', (e: Event) => {
+    };
+    const annotationRemoveHandler = (e: Event) => {
       this.dispatchEvent('annotationremove', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('toolChange', (e: Event) => {
+    };
+    const toolChangeHandler = (e: Event) => {
       this.dispatchEvent('toolchange', (e as CustomEvent).detail);
-    });
-
-    this.addEventListener('comparisonChange', (e: Event) => {
+    };
+    const comparisonChangeHandler = (e: Event) => {
       this.dispatchEvent('comparisonchange', (e as CustomEvent).detail);
-    });
+    };
+
+    // Store handlers for cleanup
+    this.boundHandlers.set('imageLoad', imageLoadHandler);
+    this.boundHandlers.set('imageLoadError', imageLoadErrorHandler);
+    this.boundHandlers.set('zoomChange', zoomChangeHandler);
+    this.boundHandlers.set('panChange', panChangeHandler);
+    this.boundHandlers.set('annotationAdd', annotationAddHandler);
+    this.boundHandlers.set('annotationRemove', annotationRemoveHandler);
+    this.boundHandlers.set('toolChange', toolChangeHandler);
+    this.boundHandlers.set('comparisonChange', comparisonChangeHandler);
+
+    // Listen for custom events and forward them with lowercase names for external listeners
+    this.addEventListener('imageLoad', imageLoadHandler);
+    this.addEventListener('imageLoadError', imageLoadErrorHandler);
+    this.addEventListener('zoomChange', zoomChangeHandler);
+    this.addEventListener('panChange', panChangeHandler);
+    this.addEventListener('annotationAdd', annotationAddHandler);
+    this.addEventListener('annotationRemove', annotationRemoveHandler);
+    this.addEventListener('toolChange', toolChangeHandler);
+    this.addEventListener('comparisonChange', comparisonChangeHandler);
 
     // Listen for window resize to recalculate canvas size
-    window.addEventListener('resize', () => {
-      this.dispatchEvent('resize');
-    });
+    window.addEventListener('resize', this.resizeHandler);
   }
 
   /**
@@ -101,8 +118,15 @@ export class EventManager {
    */
   destroy(): void {
     // Remove window resize listener
-    window.removeEventListener('resize', () => {
-      this.dispatchEvent('resize');
+    window.removeEventListener('resize', this.resizeHandler);
+    
+    // Remove all custom event listeners
+    this.boundHandlers.forEach((handler, eventName) => {
+      this.element.removeEventListener(eventName, handler);
     });
+    this.boundHandlers.clear();
+    
+    // Clear all event handlers
+    this.eventHandlers.clear();
   }
 }

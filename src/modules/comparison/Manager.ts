@@ -13,6 +13,7 @@ export class ComparisonManager {
     handleMouseMove: (event: MouseEvent) => void;
     handleMouseUp: (event: MouseEvent) => void;
   };
+  private isCursorNearSlider = false; // Track cursor state to prevent flickering
 
   constructor(canvas: Renderer, options: ComparisonOptions = {}) {
     this.canvas = canvas;
@@ -75,13 +76,14 @@ export class ComparisonManager {
 
     // Calculate slider position relative to image bounds
     const sliderX = imageBounds.x + (imageBounds.width * this.state.sliderPosition) / 100;
-    const tolerance = 30; // Increased tolerance for easier interaction
+    const tolerance = 50; // Increased tolerance for easier interaction
 
     // Check if click is near the slider and within image bounds
     if (Math.abs(mousePos.x - sliderX) <= tolerance &&
       mousePos.y >= imageBounds.y &&
       mousePos.y <= imageBounds.y + imageBounds.height) {
       this.state.isDragging = true;
+      this.isCursorNearSlider = true;
       this.canvas.getElement().style.cursor = 'ew-resize';
       event.preventDefault();
       event.stopPropagation(); // Prevent zoom/pan from handling this event
@@ -103,20 +105,43 @@ export class ComparisonManager {
 
     // Check if mouse is near slider for cursor change
     const sliderX = imageBounds.x + (imageBounds.width * this.state.sliderPosition) / 100;
-    const tolerance = 30;
+    const tolerance = 50; // Tolerance for entering resize area
+    const exitTolerance = 60; // Slightly larger tolerance for exiting (hysteresis to prevent flickering)
+    
     const isNearSlider = Math.abs(mousePos.x - sliderX) <= tolerance &&
       mousePos.y >= imageBounds.y &&
       mousePos.y <= imageBounds.y + imageBounds.height;
+    
+    const isStillNearSlider = Math.abs(mousePos.x - sliderX) <= exitTolerance &&
+      mousePos.y >= imageBounds.y &&
+      mousePos.y <= imageBounds.y + imageBounds.height;
 
-    // Update cursor based on proximity to slider
-    if (isNearSlider && !this.state.isDragging) {
-      this.canvas.getElement().style.cursor = 'ew-resize';
-    } else if (!this.state.isDragging) {
-      this.canvas.getElement().style.cursor = 'default';
+    // Update cursor based on proximity to slider with hysteresis to prevent flickering
+    if (!this.state.isDragging) {
+      const wasNearSlider = this.isCursorNearSlider;
+      if (isNearSlider || (this.isCursorNearSlider && isStillNearSlider)) {
+        if (!this.isCursorNearSlider) {
+          this.canvas.getElement().style.cursor = 'ew-resize';
+        }
+        this.isCursorNearSlider = true;
+      } else {
+        if (this.isCursorNearSlider) {
+          this.canvas.getElement().style.cursor = 'default';
+        }
+        this.isCursorNearSlider = false;
+      }
+      
+      // Trigger re-render if cursor state changed to update highlight
+      if (wasNearSlider !== this.isCursorNearSlider && this.canvas.imageViewer) {
+        this.canvas.imageViewer.render();
+      }
     }
 
     // Handle dragging
     if (this.state.isDragging) {
+      // Keep cursor near slider state true while dragging
+      this.isCursorNearSlider = true;
+      
       // Get image bounds to limit slider movement
       const imageBounds = this.getImageBounds();
       if (imageBounds) {
@@ -146,7 +171,8 @@ export class ComparisonManager {
   private handleMouseUp(event: MouseEvent): void {
     if (this.state.isDragging) {
       this.state.isDragging = false;
-      this.canvas.getElement().style.cursor = 'default';
+      // Reset cursor state - will be updated by mousemove handler
+      this.isCursorNearSlider = false;
       event.preventDefault();
       event.stopPropagation(); // Prevent zoom/pan from handling this event
     }
@@ -266,6 +292,8 @@ export class ComparisonManager {
     // Clear any selected annotations when entering comparison mode
     if (this.state.comparisonMode && this.canvas.annotationManager) {
       (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
+      // Deactivate any active drawing tool when entering comparison mode
+      (this.canvas.annotationManager as unknown as { deactivateTool: () => void }).deactivateTool();
     }
 
     // Handle cursor state
@@ -291,6 +319,8 @@ export class ComparisonManager {
     // Clear any selected annotations when entering comparison mode
     if (enabled && this.canvas.annotationManager) {
       (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
+      // Deactivate any active drawing tool when entering comparison mode
+      (this.canvas.annotationManager as unknown as { deactivateTool: () => void }).deactivateTool();
     }
 
     // Handle cursor state
@@ -325,6 +355,13 @@ export class ComparisonManager {
    */
   isReady(): boolean {
     return this.state.beforeImage !== null && this.state.afterImage !== null;
+  }
+
+  /**
+   * Check if cursor is near slider (for rendering highlight)
+   */
+  isCursorNearSliderArea(): boolean {
+    return this.isCursorNearSlider;
   }
 
   /**
@@ -491,5 +528,11 @@ export class ComparisonManager {
       isDragging: false,
       comparisonMode: false
     };
+    
+    // Reset cursor state
+    this.isCursorNearSlider = false;
+    
+    // Clear event handlers
+    this.eventHandlers = {};
   }
 }

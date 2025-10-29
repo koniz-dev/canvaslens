@@ -100,6 +100,11 @@ export class ZoomPanHandler {
    * Update cursor based on current state
    */
   private updateCursor(): void {
+    // Don't update cursor if annotation tool is active
+    if (this.canvas.annotationManager && this.canvas.annotationManager.isToolActive()) {
+      return;
+    }
+
     if (!this.isImageLoaded()) {
       this.canvas.getElement().style.cursor = 'default';
     } else if (this.isPanning && this.options.enablePan) {

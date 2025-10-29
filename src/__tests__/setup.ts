@@ -10,8 +10,8 @@ HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation(() => ({
   strokeRect: jest.fn(),
   clearRect: jest.fn(),
   getImageData: jest.fn(() => ({ data: new Array(4) })),
-  putCustomCustomImageData: jest.fn(),
-  createCustomCustomImageData: jest.fn(() => ({ data: new Array(4) })),
+  putImageData: jest.fn(),
+  createImageData: jest.fn(() => ({ data: new Array(4) })),
   createLinearGradient: jest.fn(() => ({
     addColorStop: jest.fn()
   })),

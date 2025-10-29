@@ -15,7 +15,7 @@ const createLargeCanvas = (width: number, height: number): HTMLCanvasElement => 
   return canvas;
 };
 
-const generateTestCustomImageData = (width: number, height: number): CustomImageData => {
+const generateTestImageData = (width: number, height: number): ImageData => {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -53,10 +53,10 @@ describe('Canvas Performance Tests', () => {
 
   describe('Image Rendering Performance', () => {
     it('should render large image within acceptable time', async () => {
-      const CustomImageData = generateTestCustomImageData(1920, 1080);
+      const imageData = generateTestImageData(1920, 1080);
       
       const renderTime = await measurePerformance(() => {
-        ctx.putCustomImageData(CustomImageData, 0, 0);
+        ctx.putImageData(imageData, 0, 0);
       });
       
       // Should render in less than 100ms
@@ -64,11 +64,11 @@ describe('Canvas Performance Tests', () => {
     });
 
     it('should handle multiple image operations efficiently', async () => {
-      const CustomImageData = generateTestCustomImageData(800, 600);
+      const imageData = generateTestImageData(800, 600);
       
       const renderTime = await measurePerformance(async () => {
         for (let i = 0; i < 10; i++) {
-          ctx.putCustomImageData(CustomImageData, i * 10, i * 10);
+          ctx.putImageData(imageData, i * 10, i * 10);
         }
       });
       
@@ -77,8 +77,8 @@ describe('Canvas Performance Tests', () => {
     });
 
     it('should handle zoom operations efficiently', async () => {
-      const CustomImageData = generateTestCustomImageData(800, 600);
-      ctx.putCustomImageData(CustomImageData, 0, 0);
+      const imageData = generateTestImageData(800, 600);
+      ctx.putImageData(imageData, 0, 0);
       
       const zoomTime = await measurePerformance(() => {
         ctx.save();
@@ -139,8 +139,8 @@ describe('Canvas Performance Tests', () => {
       
       // Perform many operations
       for (let i = 0; i < 100; i++) {
-        const CustomImageData = generateTestCustomImageData(400, 300);
-        ctx.putCustomImageData(CustomImageData, 0, 0);
+        const imageData = generateTestImageData(400, 300);
+        ctx.putImageData(imageData, 0, 0);
         
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -200,8 +200,8 @@ describe('Canvas Performance Tests', () => {
       const largeCtx = largeCanvas.getContext('2d')!;
       
       const renderTime = await measurePerformance(() => {
-        const CustomImageData = generateTestCustomImageData(3840, 2160);
-        largeCtx.putCustomImageData(CustomImageData, 0, 0);
+        const imageData = generateTestImageData(3840, 2160);
+        largeCtx.putImageData(imageData, 0, 0);
       });
       
       // 4K rendering should complete in less than 500ms
@@ -226,8 +226,8 @@ describe('Canvas Performance Tests', () => {
       
       const renderTime = await measurePerformance(() => {
         highDPICtx.scale(devicePixelRatio, devicePixelRatio);
-        const CustomImageData = generateTestCustomImageData(baseWidth, baseHeight);
-        highDPICtx.putCustomImageData(CustomImageData, 0, 0);
+        const imageData = generateTestImageData(baseWidth, baseHeight);
+        highDPICtx.putImageData(imageData, 0, 0);
       });
       
       // High DPI rendering should complete in less than 300ms

@@ -205,6 +205,11 @@ export class AnnotationManager {
   }
 
   private updateCursorStyle(hoveredAnnotation: Annotation | null): void {
+    // Don't update cursor if annotation tool is active
+    if (this.toolManager.isToolActive()) {
+      return;
+    }
+
     const cursor = hoveredAnnotation ? 'move' : 'default';
     this.canvas.getElement().style.cursor = cursor;
   }

@@ -10,6 +10,7 @@ export class AnnotationToolsEventHandler {
   private boundMouseUp: (event: MouseEvent) => void;
   private boundMouseLeave: (event: MouseEvent) => void;
   private boundKeyDown: (event: KeyboardEvent) => void;
+  private boundAnnotationCreated: (event: CustomEvent) => void;
 
   constructor(options: EventHandlerOptions) {
     this.options = options;
@@ -19,6 +20,7 @@ export class AnnotationToolsEventHandler {
     this.boundMouseUp = this.handleMouseUp.bind(this);
     this.boundMouseLeave = this.handleMouseLeave.bind(this);
     this.boundKeyDown = this.handleKeyDown.bind(this);
+    this.boundAnnotationCreated = this.handleAnnotationCreated.bind(this);
   }
 
   /**
@@ -34,9 +36,12 @@ export class AnnotationToolsEventHandler {
     document.addEventListener('mousemove', this.boundMouseMove as EventListener);
     document.addEventListener('mouseup', this.boundMouseUp as EventListener);
 
-    canvas.getElement().addEventListener('annotationCreated', this.handleAnnotationCreated.bind(this) as EventListener);
+    canvas.getElement().addEventListener('annotationCreated', this.boundAnnotationCreated as EventListener);
 
     document.addEventListener('keydown', this.boundKeyDown, true);
+
+    // Set initial cursor
+    this.updateCursor();
   }
 
   /**
@@ -52,15 +57,28 @@ export class AnnotationToolsEventHandler {
       return;
     }
 
+    // Check flag - if false, tool might not be ready yet (race condition)
     if (!this.options.toolActivatedByKeyboard) {
+      // Give it a moment for the flag to be set if tool was just activated
       return;
     }
 
-    event.preventDefault();
+    // Don't allow drawing when comparison mode is active
+    const canvas = this.options.canvas as unknown as Renderer;
+    if (canvas.imageViewer && 'isComparisonMode' in canvas.imageViewer && typeof (canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
+      const isComparisonMode = ((canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
+      if (isComparisonMode) {
+        return; // Block drawing when comparison mode is active
+      }
+    }
+
+    // Don't prevent default for text tool to allow proper focus
+    if (this.options.activeToolType !== 'text') {
+      event.preventDefault();
+    }
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const canvas = this.options.canvas as unknown as Renderer;
     const point = canvas.getMousePosition(event);
     const worldPoint = this.options.onScreenToWorld(point);
 
@@ -188,6 +206,7 @@ export class AnnotationToolsEventHandler {
         currentTool.cancelDrawing();
       } else if (this.options.activeToolType) {
         this.options.onDeactivateTool();
+        this.updateCursor();
       } else if (this.options.annotationManager) {
         (this.options.annotationManager as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
       }
@@ -195,6 +214,15 @@ export class AnnotationToolsEventHandler {
     }
 
     if (event.altKey) {
+      // Don't allow tool activation when comparison mode is active
+      const canvas = this.options.canvas as unknown as Renderer;
+      if (canvas.imageViewer && 'isComparisonMode' in canvas.imageViewer && typeof (canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
+        const isComparisonMode = ((canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
+        if (isComparisonMode) {
+          return; // Block tool activation when comparison mode is active
+        }
+      }
+
       const keyToToolMap: Record<string, string> = {
         'r': 'rect',
         'a': 'arrow',
@@ -208,10 +236,51 @@ export class AnnotationToolsEventHandler {
         event.preventDefault();
         if (this.options.activeToolType === toolType) {
           this.options.onDeactivateTool();
+          this.updateCursor();
         } else {
           this.options.onActivateTool(toolType);
+          // Options will be updated by Manager's updateEventHandlerOptions callback
+          // But we need to ensure flag is set immediately for the next click
+          // So we read it directly from the controller if possible
+          this.updateCursor();
         }
       }
+    }
+  }
+
+  /**
+   * Update cursor based on active tool
+   */
+  private updateCursor(): void {
+    const canvas = this.options.canvas as unknown as Renderer;
+    if (!canvas) return;
+
+    // Don't set tool cursor when comparison mode is active and no tool is active
+    if (!this.options.activeToolType) {
+      if (canvas.imageViewer && 'isComparisonMode' in canvas.imageViewer && typeof (canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
+        const isComparisonMode = ((canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
+        if (isComparisonMode) {
+          // Let comparison manager handle cursor when no tool is active
+          return;
+        }
+      }
+      // Reset cursor when no tool is active
+      canvas.getElement().style.cursor = '';
+      return;
+    }
+
+    if (this.options.activeToolType) {
+      // Set cursor based on tool type
+      const cursorMap: Record<string, string> = {
+        'text': 'text',
+        'rect': 'crosshair',
+        'arrow': 'crosshair',
+        'circle': 'crosshair',
+        'line': 'crosshair'
+      };
+
+      const cursor = cursorMap[this.options.activeToolType] || 'crosshair';
+      canvas.getElement().style.cursor = cursor;
     }
   }
 
@@ -220,7 +289,14 @@ export class AnnotationToolsEventHandler {
    * Update options (for dynamic updates)
    */
   updateOptions(newOptions: Partial<EventHandlerOptions>): void {
+    const wasActive = !!this.options.activeToolType;
     this.options = { ...this.options, ...newOptions };
+    const isActive = !!this.options.activeToolType;
+    
+    // Update cursor if tool activation state changed
+    if (wasActive !== isActive || (isActive && this.options.activeToolType !== newOptions.activeToolType)) {
+      this.updateCursor();
+    }
   }
 
   /**
@@ -238,6 +314,6 @@ export class AnnotationToolsEventHandler {
 
     document.removeEventListener('keydown', this.boundKeyDown, true);
 
-    canvas.getElement().removeEventListener('annotationCreated', this.handleAnnotationCreated.bind(this) as EventListener);
+    canvas.getElement().removeEventListener('annotationCreated', this.boundAnnotationCreated as EventListener);
   }
 }

@@ -341,7 +341,8 @@ export class ImageViewer {
     ctx.restore();
 
     // Draw slider
-    this.drawComparisonSlider(ctx, sliderX);
+    const isNearSlider = this.comparisonManager.isCursorNearSliderArea();
+    this.drawComparisonSlider(ctx, sliderX, isNearSlider);
 
     // Restore transformations after drawing everything
     this.canvas.restoreViewTransform();
@@ -350,15 +351,29 @@ export class ImageViewer {
   /**
    * Draw the comparison slider
    */
-  private drawComparisonSlider(ctx: CanvasRenderingContext2D, x: number): void {
+  private drawComparisonSlider(ctx: CanvasRenderingContext2D, x: number, isNearSlider: boolean = false): void {
     const sliderWidth = 4;
     const sliderColor = '#ffffff';
+    const tolerance = 35; // Tolerance for highlight area
 
     // Get image bounds to limit slider drawing
     const imageBounds = this.getImageBounds();
 
     if (!imageBounds) {
       return; // Don't draw slider if no image bounds
+    }
+
+    // Draw highlight area when cursor is near slider
+    if (isNearSlider) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Light white overlay
+      ctx.fillRect(
+        x - tolerance,
+        imageBounds.y,
+        tolerance * 2,
+        imageBounds.height
+      );
+      ctx.restore();
     }
 
     // Draw slider line

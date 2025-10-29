@@ -56,6 +56,9 @@ jspm_packages/
 .rts2_cache_es/
 .rts2_cache_umd/
 
+# Rollup cache
+.rollup.cache/
+
 # Optional REPL history
 .node_repl_history
 
