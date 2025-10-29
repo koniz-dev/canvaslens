@@ -734,9 +734,9 @@ viewer.addEventListener('click', (event) => {
   const clickedAnnotation = getAnnotationAtPoint(event.clientX, event.clientY);
   if (clickedAnnotation) {
     viewer.selectAnnotation(clickedAnnotation.id);
-  } else {
-    viewer.deselectAnnotation();
   }
+  // Click outside to deselect - currently not supported via API
+  // You can click Escape key to deselect
 });
 
 function getAnnotationAtPoint(x, y) {

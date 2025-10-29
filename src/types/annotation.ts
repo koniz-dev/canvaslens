@@ -17,6 +17,14 @@ export interface AnnotationStyle {
   fontSize?: number;
   /** Font family for text annotations */
   fontFamily?: string;
+  /** Shadow color (hex, rgb, or rgba) - for depth effect */
+  shadowColor?: string;
+  /** Shadow blur radius in pixels */
+  shadowBlur?: number;
+  /** Shadow horizontal offset in pixels */
+  shadowOffsetX?: number;
+  /** Shadow vertical offset in pixels */
+  shadowOffsetY?: number;
 }
 
 /**

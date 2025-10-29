@@ -418,6 +418,9 @@ export class AnnotationManager {
         this.eventHandlers.onAnnotationRemove!(id);
       });
     }
+
+    // Trigger view state change to re-render canvas and clear annotations visually
+    this.triggerViewStateChange();
   }
 
   /**

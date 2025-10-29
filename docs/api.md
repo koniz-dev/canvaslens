@@ -291,15 +291,6 @@ Selects an annotation by its ID.
 viewer.selectAnnotation('rect-1');
 ```
 
-##### `deselectAnnotation(): void`
-
-Deselects the currently selected annotation.
-
-**Example:**
-```javascript
-viewer.deselectAnnotation();
-```
-
 #### Comparison Mode
 
 ##### `toggleComparisonMode(): void`

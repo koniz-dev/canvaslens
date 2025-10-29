@@ -43,17 +43,49 @@ export class AnnotationRenderer {
     const startTime = performanceMonitor.startRender();
 
     const viewport = this.getViewportBounds();
-    const visibleAnnotations = annotations.filter(annotation =>
-      this.isAnnotationInViewport(annotation, viewport)
+    const viewState = this.canvas.getViewState();
+    
+    // Expand viewport with margin to ensure text annotations are not culled incorrectly
+    // when zooming in. The margin is calculated based on zoom level:
+    // - Higher zoom (smaller viewport in world coords) needs larger margin in world coords
+    // - Convert a fixed screen pixel margin (e.g., 200px) to world coordinates
+    const screenMargin = 200; // Increased margin in screen pixels
+    const worldMargin = screenMargin / viewState.scale; // Convert to world coordinates
+    
+    // Also add proportional margin based on viewport size for safety
+    const proportionalMargin = Math.max(viewport.width * 0.2, viewport.height * 0.2);
+    const margin = Math.max(worldMargin, proportionalMargin);
+    
+    const expandedViewport: Rectangle = {
+      x: viewport.x - margin,
+      y: viewport.y - margin,
+      width: viewport.width + (margin * 2),
+      height: viewport.height + (margin * 2)
+    };
+    
+    // Separate text annotations from other annotations
+    const textAnnotations = annotations.filter(annotation => annotation.type === 'text');
+    const otherAnnotations = annotations.filter(annotation => annotation.type !== 'text');
+    
+    // For text annotations, disable culling entirely to prevent flickering/disappearing
+    // when zooming. Text bounds calculation can be inaccurate especially at high zoom levels.
+    const visibleTextAnnotations = textAnnotations;
+    
+    // For other annotations, use normal culling with expanded viewport
+    const visibleOtherAnnotations = otherAnnotations.filter(annotation =>
+      this.isAnnotationInViewport(annotation, expandedViewport)
     );
 
-    visibleAnnotations.forEach(annotation => this.render(annotation));
+    // Render all visible annotations
+    [...visibleTextAnnotations, ...visibleOtherAnnotations].forEach(annotation => 
+      this.render(annotation)
+    );
 
     // Record performance metrics
     performanceMonitor.endRender(
       startTime,
       annotations.length,
-      visibleAnnotations.length
+      visibleTextAnnotations.length + visibleOtherAnnotations.length
     );
   }
 
@@ -133,13 +165,25 @@ export class AnnotationRenderer {
           height: Math.abs(end.y - start.y)
         };
       case 'text': {
-        // Estimate text bounds (approximate)
-        const textWidth = ((annotation.data as Record<string, unknown>)?.text as string)?.length || 0;
+        // Calculate text bounds accurately using text metrics
+        const text = ((annotation.data as Record<string, unknown>)?.text as string) || '';
+        const fontSize = annotation.style?.fontSize || 16;
+        const fontFamily = annotation.style?.fontFamily || 'Arial, sans-serif';
+        
+        // Set font to measure text accurately
+        const savedFont = this.ctx.font;
+        this.ctx.font = `${fontSize}px ${fontFamily}`;
+        const textMetrics = this.ctx.measureText(text);
+        this.ctx.font = savedFont; // Restore original font
+        
+        // Text is rendered at position.y, so bounds should start from there
+        // Add some padding to ensure text is not clipped when zooming
+        const padding = fontSize * 0.2; // 20% padding
         return {
-          x: start.x,
-          y: start.y - (annotation.style?.fontSize || 16),
-          width: textWidth * 8, // Rough estimate
-          height: annotation.style?.fontSize || 16
+          x: start.x - padding,
+          y: start.y - fontSize - padding, // Text baseline is at y, but text extends upward
+          width: textMetrics.width + (padding * 2),
+          height: fontSize + (padding * 2)
         };
       }
       default:
@@ -207,12 +251,41 @@ export class AnnotationRenderer {
     const width = end.x - start.x;
     const height = end.y - start.y;
 
-    // Fill if fillColor is specified
-    if (annotation.style.fillColor) {
+    // Add shadow effect only if user explicitly provides shadow properties
+    const hasShadow = annotation.style.shadowColor || annotation.style.shadowBlur !== undefined;
+    
+    if (annotation.style.fillColor && hasShadow) {
+      const viewState = this.getViewState();
+      const scale = viewState?.scale || 1;
+      
+      // Save context state
+      this.ctx.save();
+      
+      // Apply shadow from style (user-provided values only)
+      if (annotation.style.shadowColor) {
+        this.ctx.shadowColor = annotation.style.shadowColor;
+      }
+      if (annotation.style.shadowBlur !== undefined) {
+        this.ctx.shadowBlur = annotation.style.shadowBlur / scale;
+      }
+      if (annotation.style.shadowOffsetX !== undefined) {
+        this.ctx.shadowOffsetX = annotation.style.shadowOffsetX / scale;
+      }
+      if (annotation.style.shadowOffsetY !== undefined) {
+        this.ctx.shadowOffsetY = annotation.style.shadowOffsetY / scale;
+      }
+      
+      // Fill with shadow
+      this.ctx.fillRect(start.x, start.y, width, height);
+      
+      // Restore context (remove shadow for stroke)
+      this.ctx.restore();
+    } else if (annotation.style.fillColor) {
+      // Fill without shadow if no shadow specified
       this.ctx.fillRect(start.x, start.y, width, height);
     }
 
-    // Stroke
+    // Stroke without shadow for crisp edges
     this.ctx.strokeRect(start.x, start.y, width, height);
   }
 

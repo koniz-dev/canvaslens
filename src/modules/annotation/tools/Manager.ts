@@ -84,7 +84,16 @@ export class AnnotationToolsManager {
    * Activate a tool
    */
   activateTool(toolType: string): boolean {
-    return this.controller.activateTool(toolType);
+    const result = this.controller.activateTool(toolType);
+    if (result) {
+      // Set flag to allow drawing immediately after activation
+      // This is critical for programmatic tool activation (not just keyboard shortcuts)
+      this.controller.setToolActivatedByKeyboard(true);
+      // Update event handler options synchronously to ensure flag is set immediately
+      // This is critical for the first click to work properly
+      this.updateEventHandlerOptions();
+    }
+    return result;
   }
 
   /**
@@ -92,6 +101,8 @@ export class AnnotationToolsManager {
    */
   deactivateTool(): void {
     this.controller.deactivateTool();
+    // Update event handler options to ensure flag is reset and drawing is disabled
+    this.updateEventHandlerOptions();
   }
 
   /**
