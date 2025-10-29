@@ -156,13 +156,13 @@ export class ImageLoader {
       }
 
       img.onload = () => {
-        const CustomImageData: CustomImageData = {
+        const customImageData: CustomImageData = {
           element: img,
           naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
           displaySize: { width: img.width, height: img.height },
           position: { x: 0, y: 0 }
         };
-        resolve(CustomImageData);
+        resolve(customImageData);
       };
 
       img.onerror = () => {
@@ -218,13 +218,13 @@ export class ImageLoader {
       }
 
       img.onload = () => {
-        const CustomImageData: CustomImageData = {
+        const customImageData: CustomImageData = {
           element: img,
           naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
           displaySize: { width: img.width, height: img.height },
           position: { x: 0, y: 0 }
         };
-        resolve(CustomImageData);
+        resolve(customImageData);
       };
 
       img.onerror = () => {
@@ -271,7 +271,7 @@ export class ImageLoader {
           // Create new image from compressed data
           const compressedImg = new Image();
           compressedImg.onload = () => {
-            const CustomImageData: CustomImageData = {
+            const customImageData: CustomImageData = {
               element: compressedImg,
               naturalSize: { width: compressedImg.naturalWidth, height: compressedImg.naturalHeight },
               displaySize: { width: compressedImg.width, height: compressedImg.height },
@@ -279,7 +279,7 @@ export class ImageLoader {
               type: outputFormat,
               fileName: file.name
             };
-            resolve(CustomImageData);
+            resolve(customImageData);
           };
           compressedImg.onerror = () => reject(new Error('Failed to load compressed image'));
           compressedImg.src = compressedDataUrl;
@@ -305,7 +305,7 @@ export class ImageLoader {
         const img = new Image();
         
         img.onload = () => {
-          const CustomImageData: CustomImageData = {
+          const customImageData: CustomImageData = {
             element: img,
             naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
             displaySize: { width: img.width, height: img.height },
@@ -313,7 +313,7 @@ export class ImageLoader {
             type: file.type,
             fileName: file.name
           };
-          resolve(CustomImageData);
+          resolve(customImageData);
         };
 
         img.onerror = () => reject(new Error('Failed to load image from file'));
@@ -380,7 +380,7 @@ export class ImageLoader {
    * Create image thumbnail
    */
   static async createThumbnail(
-    CustomImageData: CustomImageData,
+    customImageData: CustomImageData,
     maxSize: number = 200
   ): Promise<string> {
     const canvas = document.createElement('canvas');
@@ -390,7 +390,7 @@ export class ImageLoader {
       throw new Error('Failed to get canvas context');
     }
 
-    const { naturalSize } = CustomImageData;
+    const { naturalSize } = customImageData;
     const aspectRatio = naturalSize.width / naturalSize.height;
     
     let thumbnailWidth = maxSize;
@@ -405,7 +405,7 @@ export class ImageLoader {
     canvas.width = thumbnailWidth;
     canvas.height = thumbnailHeight;
 
-    ctx.drawImage(CustomImageData.element, 0, 0, thumbnailWidth, thumbnailHeight);
+    ctx.drawImage(customImageData.element, 0, 0, thumbnailWidth, thumbnailHeight);
     
     return canvas.toDataURL('image/jpeg', 0.8);
   }

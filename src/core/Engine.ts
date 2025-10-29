@@ -14,13 +14,11 @@ import type {
 import { warn } from '../utils/core/logger';
 
 export class Engine {
-  private container: HTMLElement;
   private imageViewer: ImageViewer;
   private options: CanvasLensOptions;
   private eventHandlers: EventHandlers;
 
   constructor(options: CanvasLensOptions) {
-    this.container = options.container;
     this.options = {
       width: DEFAULT_CONFIG.WIDTH,
       height: DEFAULT_CONFIG.HEIGHT,
@@ -34,8 +32,8 @@ export class Engine {
     this.eventHandlers = {};
 
     const size: Size = {
-      width: this.options.width!,
-      height: this.options.height!
+      width: this.options.width ?? DEFAULT_CONFIG.WIDTH,
+      height: this.options.height ?? DEFAULT_CONFIG.HEIGHT
     };
 
     const tools = this.options.tools || AnnotationToolsConfig.DEFAULT_CONFIG;
@@ -50,7 +48,8 @@ export class Engine {
 
     const annotationOptions: AnnotationManagerOptions | undefined =
       AnnotationToolsConfig.hasAnnotations(tools) ? {
-        enabled: true
+        enabled: true,
+        ...(tools.annotation?.style && { defaultStyle: tools.annotation.style })
       } : undefined;
 
     const comparisonOptions: ComparisonOptions | undefined =
@@ -59,7 +58,7 @@ export class Engine {
       } : undefined;
 
     this.imageViewer = new ImageViewer(
-      this.container,
+      options.container,
       size,
       this.eventHandlers,
       zoomPanOptions,
@@ -67,11 +66,6 @@ export class Engine {
       comparisonOptions,
       this.options.backgroundColor
     );
-
-    this.setupEventForwarding();
-  }
-
-  private setupEventForwarding() {
   }
 
   loadImage(src: string, imageType?: string, fileName?: string): Promise<void> {
@@ -93,12 +87,8 @@ export class Engine {
     }
   }
 
-  getZoom(): number {
-    return this.imageViewer.getZoomLevel();
-  }
-
   getZoomLevel(): number {
-    return this.getZoom();
+    return this.imageViewer.getZoomLevel();
   }
 
   zoomIn(factor: number = 1.2): void {
@@ -119,13 +109,6 @@ export class Engine {
     this.setZoom(scale);
   }
 
-  resetZoom(): void {
-    const handler = this.imageViewer.getZoomPanHandler();
-    if (handler) {
-      handler.reset();
-    }
-  }
-
   fitToView(): void {
     this.imageViewer.fitToView();
   }
@@ -134,26 +117,8 @@ export class Engine {
     this.imageViewer.fitToViewOverlay();
   }
 
-  setPan(x: number, y: number): void {
-    const handler = this.imageViewer.getZoomPanHandler();
-    if (handler) {
-      handler.zoomTo(handler.getZoomLevel(), { x, y });
-    }
-  }
-
-  getPan(): { x: number; y: number } {
-    return this.imageViewer.getPanOffset();
-  }
-
   getPanOffset(): { x: number; y: number } {
-    return this.getPan();
-  }
-
-  resetPan(): void {
-    const handler = this.imageViewer.getZoomPanHandler();
-    if (handler) {
-      handler.reset();
-    }
+    return this.imageViewer.getPanOffset();
   }
 
   resetView(): void {
@@ -194,8 +159,6 @@ export class Engine {
     }
   }
 
-
-
   getImageData(): CustomImageData | null {
     return this.imageViewer.getImageData();
   }
@@ -220,48 +183,12 @@ export class Engine {
     }
   }
 
-  on(event: string, handler: Function): void {
-    const eventMap: { [key: string]: keyof EventHandlers } = {
-      'imageLoaded': 'onImageLoad',
-      'imageLoadError': 'onImageLoadError',
-      'zoomChanged': 'onZoomChange',
-      'panChanged': 'onPanChange',
-      'annotationAdded': 'onAnnotationAdd',
-      'annotationRemoved': 'onAnnotationRemove',
-      'toolChanged': 'onToolChange',
-      'comparisonChanged': 'onComparisonChange'
-    };
-
-    const handlerKey = eventMap[event];
-    if (handlerKey) {
-      (this.eventHandlers as Record<string, unknown>)[handlerKey] = handler;
-    }
-  }
-
-  off(event: string, handler: Function): void {
-    const eventMap: { [key: string]: keyof EventHandlers } = {
-      'imageLoaded': 'onImageLoad',
-      'imageLoadError': 'onImageLoadError',
-      'zoomChanged': 'onZoomChange',
-      'panChanged': 'onPanChange',
-      'annotationAdded': 'onAnnotationAdd',
-      'annotationRemoved': 'onAnnotationRemove',
-      'toolChanged': 'onToolChange',
-      'comparisonChanged': 'onComparisonChange'
-    };
-
-    const handlerKey = eventMap[event];
-    if (handlerKey && (this.eventHandlers as Record<string, unknown>)[handlerKey] === handler) {
-      (this.eventHandlers as Record<string, unknown>)[handlerKey] = undefined;
-    }
-  }
-
   updateOptions(options: Partial<CanvasLensOptions>): void {
     this.options = { ...this.options, ...options };
     if (options.width || options.height) {
       this.imageViewer.resize({
-        width: this.options.width!,
-        height: this.options.height!
+        width: this.options.width ?? DEFAULT_CONFIG.WIDTH,
+        height: this.options.height ?? DEFAULT_CONFIG.HEIGHT
       });
     }
 
@@ -294,7 +221,6 @@ export class Engine {
       warn('Failed to import annotations:', error);
     }
   }
-
 
   isImageLoaded(): boolean {
     return this.imageViewer.isImageLoaded();

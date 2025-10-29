@@ -13,6 +13,7 @@ export class CanvasLensCore {
   private eventManager: EventManager;
   private overlayManager: OverlayManager;
   private isDestroyed = false;
+  private isInitialized = false;
   private hasUnsavedChanges = false;
 
   constructor(element: HTMLElement) {
@@ -25,12 +26,21 @@ export class CanvasLensCore {
    * Initialize the CanvasLens component
    */
   initialize(): void {
+    // Guard: Prevent multiple initializations unless reinitializing
+    if (this.isInitialized && !this.isDestroyed) {
+      warn('CanvasLens is already initialized. Use reinitialize() to force reinitialization.');
+      return;
+    }
+
     if (this.shadowRoot) {
+      // Reset destroyed flag if reinitializing
+      this.isDestroyed = false;
       this.createContainer();
       this.initializeCanvasLens();
       this.setupEventHandlers();
       this.ensureCanvasSize();
       this.loadInitialImage();
+      this.isInitialized = true;
     } else {
       throw ErrorHandler.createError(
         ErrorType.INITIALIZATION,
@@ -47,6 +57,7 @@ export class CanvasLensCore {
     if (this.isDestroyed) return;
 
     this.isDestroyed = true;
+    this.isInitialized = false;
 
     if (this.canvasLens) {
       this.canvasLens.destroy();
@@ -106,9 +117,17 @@ export class CanvasLensCore {
       );
     }
 
+    const canvasLens = this.canvasLens;
     return safeAsync(
       async () => {
-        await this.canvasLens!.loadImage(src, type, fileName);
+        if (!canvasLens) {
+          throw ErrorHandler.createError(
+            ErrorType.INITIALIZATION,
+            'CanvasLens is not initialized',
+            { src, type, fileName }
+          );
+        }
+        await canvasLens.loadImage(src, type, fileName);
         this.resetChanges();
       },
       ErrorType.IMAGE_LOAD,
@@ -358,6 +377,11 @@ export class CanvasLensCore {
    */
   private createContainer(): void {
     if (!this.shadowRoot) return;
+
+    // Clear existing container if reinitializing
+    while (this.shadowRoot.firstChild) {
+      this.shadowRoot.removeChild(this.shadowRoot.firstChild);
+    }
 
     const container = document.createElement('div');
     container.style.cssText = `

@@ -68,16 +68,16 @@ export abstract class BaseTool {
 
   /**
    * Create annotation object
+   * Style is already merged and comes from options.style (which is AnnotationManager.defaultStyle)
    */
   protected createAnnotation(points: Point[], data?: Record<string, unknown>): Annotation {
     return {
       id: this.generateId(),
       type: this.getType(),
       points: [...points],
-      style: {
+      style: this.options.style || {
         strokeColor: '#000000',
-        strokeWidth: 2,
-        ...this.options.style
+        strokeWidth: 2
       },
       data: data || {}
     };

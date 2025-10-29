@@ -1,9 +1,26 @@
 import { Renderer } from '../../../core/Renderer';
 import type { Annotation, AnnotationStyle, ControllerOptions, EventHandlerOptions, Point, Tool, ToolManagerOptions } from '../../../types';
+import type { AnnotationManager } from '../Manager';
 import { AnnotationRenderer } from '../Renderer';
 import { AnnotationToolsController } from './Controller';
 import { AnnotationToolsEventHandler } from './EventHandler';
 import { AnnotationToolsUtils } from './Utils';
+
+// Type-safe aliases với proper types để tránh circular dependency
+type TypedControllerOptions = ControllerOptions<
+  Renderer,
+  AnnotationRenderer,
+  AnnotationManager | undefined
+>;
+
+type TypedEventHandlerOptions = EventHandlerOptions<
+  Renderer,
+  AnnotationRenderer,
+  ReturnType<AnnotationToolsController['getCurrentTool']>,
+  AnnotationManager | undefined
+>;
+
+type TypedToolManagerOptions = ToolManagerOptions<AnnotationManager | undefined>;
 
 export class AnnotationToolsManager {
   private eventHandler: AnnotationToolsEventHandler;
@@ -15,11 +32,11 @@ export class AnnotationToolsManager {
   constructor(
     canvas: Renderer,
     renderer: AnnotationRenderer,
-    options: ToolManagerOptions
+    options: TypedToolManagerOptions
   ) {
     this.utils = new AnnotationToolsUtils(canvas);
 
-    const controllerOptions: ControllerOptions = {
+    const controllerOptions: TypedControllerOptions = {
       canvas,
       renderer,
       defaultStyle: options.defaultStyle,
@@ -28,7 +45,7 @@ export class AnnotationToolsManager {
     };
     this.controller = new AnnotationToolsController(controllerOptions);
 
-    const eventHandlerOptions: EventHandlerOptions = {
+    const eventHandlerOptions: TypedEventHandlerOptions = {
       canvas,
       renderer,
       currentTool: this.controller.getCurrentTool(),
@@ -66,7 +83,7 @@ export class AnnotationToolsManager {
    * Update event handler options when internal state changes
    */
   private updateEventHandlerOptions(): void {
-    const updateOptions: Partial<EventHandlerOptions> = {
+    const updateOptions: Partial<TypedEventHandlerOptions> = {
       currentTool: this.controller.getCurrentTool(),
       activeToolType: this.controller.getActiveToolType(),
       toolActivatedByKeyboard: this.controller.getToolActivatedByKeyboard(),

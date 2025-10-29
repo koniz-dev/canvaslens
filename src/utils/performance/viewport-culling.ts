@@ -153,7 +153,10 @@ export class ViewportCulling {
         if (!index.has(cellKey)) {
           index.set(cellKey, []);
         }
-        index.get(cellKey)!.push(object);
+        const cellObjects = index.get(cellKey);
+        if (cellObjects) {
+          cellObjects.push(object);
+        }
       });
     });
 

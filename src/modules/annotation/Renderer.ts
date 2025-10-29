@@ -251,42 +251,51 @@ export class AnnotationRenderer {
     const width = end.x - start.x;
     const height = end.y - start.y;
 
-    // Add shadow effect only if user explicitly provides shadow properties
-    const hasShadow = annotation.style.shadowColor || annotation.style.shadowBlur !== undefined;
-    
-    if (annotation.style.fillColor && hasShadow) {
-      const viewState = this.getViewState();
-      const scale = viewState?.scale || 1;
-      
-      // Save context state
-      this.ctx.save();
-      
-      // Apply shadow from style (user-provided values only)
-      if (annotation.style.shadowColor) {
-        this.ctx.shadowColor = annotation.style.shadowColor;
-      }
-      if (annotation.style.shadowBlur !== undefined) {
-        this.ctx.shadowBlur = annotation.style.shadowBlur / scale;
-      }
-      if (annotation.style.shadowOffsetX !== undefined) {
-        this.ctx.shadowOffsetX = annotation.style.shadowOffsetX / scale;
-      }
-      if (annotation.style.shadowOffsetY !== undefined) {
-        this.ctx.shadowOffsetY = annotation.style.shadowOffsetY / scale;
-      }
-      
-      // Fill with shadow
-      this.ctx.fillRect(start.x, start.y, width, height);
-      
-      // Restore context (remove shadow for stroke)
-      this.ctx.restore();
-    } else if (annotation.style.fillColor) {
-      // Fill without shadow if no shadow specified
-      this.ctx.fillRect(start.x, start.y, width, height);
+    // Fill if fillColor is specified
+    if (annotation.style.fillColor) {
+      this.fillRectangleWithShadow(start.x, start.y, width, height, annotation.style);
     }
 
-    // Stroke without shadow for crisp edges
+    // Stroke without shadow for crisp edges (lineDash is already set by applyStyle)
     this.ctx.strokeRect(start.x, start.y, width, height);
+  }
+
+  /**
+   * Fill rectangle with optional shadow effect
+   */
+  private fillRectangleWithShadow(x: number, y: number, width: number, height: number, style: AnnotationStyle): void {
+    const hasShadow = style.shadowColor || style.shadowBlur !== undefined;
+
+    if (hasShadow) {
+      const viewState = this.getViewState();
+      const scale = viewState?.scale || 1;
+      const savedFillStyle = this.ctx.fillStyle;
+
+      this.ctx.save();
+
+      // Apply shadow properties (only if provided)
+      if (style.shadowColor) {
+        this.ctx.shadowColor = style.shadowColor;
+      }
+      if (style.shadowBlur !== undefined) {
+        this.ctx.shadowBlur = style.shadowBlur / scale;
+      }
+      if (style.shadowOffsetX !== undefined) {
+        this.ctx.shadowOffsetX = style.shadowOffsetX / scale;
+      }
+      if (style.shadowOffsetY !== undefined) {
+        this.ctx.shadowOffsetY = style.shadowOffsetY / scale;
+      }
+
+      this.ctx.fillStyle = style.fillColor!;
+      this.ctx.fillRect(x, y, width, height);
+
+      this.ctx.restore();
+      this.ctx.fillStyle = savedFillStyle;
+    } else {
+      // Fill without shadow (fillStyle is already set by applyStyle)
+      this.ctx.fillRect(x, y, width, height);
+    }
   }
 
   /**
@@ -352,11 +361,17 @@ export class AnnotationRenderer {
   private renderLine(annotation: Annotation): void {
     if (annotation.points.length < 2) return;
 
+    const firstPoint = annotation.points[0];
+    if (!firstPoint) return;
+
     this.ctx.beginPath();
-    this.ctx.moveTo(annotation.points[0]!.x, annotation.points[0]!.y);
+    this.ctx.moveTo(firstPoint.x, firstPoint.y);
 
     for (let i = 1; i < annotation.points.length; i++) {
-      this.ctx.lineTo(annotation.points[i]!.x, annotation.points[i]!.y);
+      const point = annotation.points[i];
+      if (point) {
+        this.ctx.lineTo(point.x, point.y);
+      }
     }
 
     this.ctx.stroke();

@@ -184,7 +184,7 @@ export class ZoomPanHandler {
     if (this.canvas.annotationManager) {
       if (this.canvas.annotationManager.isToolActive() ||
         this.canvas.annotationManager.isDrawing() ||
-        (this.canvas.annotationManager as unknown as { hasSelectedAnnotation: () => boolean }).hasSelectedAnnotation()) {
+        this.canvas.annotationManager.hasSelectedAnnotation()) {
         return;
       }
     }

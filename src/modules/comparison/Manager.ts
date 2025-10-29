@@ -291,9 +291,12 @@ export class ComparisonManager {
 
     // Clear any selected annotations when entering comparison mode
     if (this.state.comparisonMode && this.canvas.annotationManager) {
-      (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
+      this.canvas.annotationManager.selectAnnotation(null);
       // Deactivate any active drawing tool when entering comparison mode
-      (this.canvas.annotationManager as unknown as { deactivateTool: () => void }).deactivateTool();
+      const toolManager = this.canvas.annotationManager.getToolManager();
+      if (toolManager) {
+        toolManager.deactivateTool();
+      }
     }
 
     // Handle cursor state
@@ -318,9 +321,9 @@ export class ComparisonManager {
 
     // Clear any selected annotations when entering comparison mode
     if (enabled && this.canvas.annotationManager) {
-      (this.canvas.annotationManager as unknown as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
+      this.canvas.annotationManager.selectAnnotation(null);
       // Deactivate any active drawing tool when entering comparison mode
-      (this.canvas.annotationManager as unknown as { deactivateTool: () => void }).deactivateTool();
+      this.canvas.annotationManager.deactivateTool();
     }
 
     // Handle cursor state
@@ -384,7 +387,9 @@ export class ComparisonManager {
     if (this.state.comparisonMode) {
       // Comparison mode: Left = current image with annotations, Right = original image
       // Draw original image (right side)
-      this.drawImage(ctx, this.state.beforeImage!);
+      if (this.state.beforeImage) {
+        this.drawImage(ctx, this.state.beforeImage);
+      }
 
       // Create clipping region for current image with annotations (left side)
       ctx.save();
@@ -393,13 +398,17 @@ export class ComparisonManager {
       ctx.clip();
 
       // Draw current image with annotations (only in clipped region)
-      this.drawImage(ctx, this.state.afterImage!);
+      if (this.state.afterImage) {
+        this.drawImage(ctx, this.state.afterImage);
+      }
 
       ctx.restore();
     } else {
       // Normal mode: Left = before image, Right = after image
       // Draw before image (full canvas)
-      this.drawImage(ctx, this.state.beforeImage!);
+      if (this.state.beforeImage) {
+        this.drawImage(ctx, this.state.beforeImage);
+      }
 
       // Create clipping region for after image
       ctx.save();
@@ -408,7 +417,9 @@ export class ComparisonManager {
       ctx.clip();
 
       // Draw after image (only in clipped region)
-      this.drawImage(ctx, this.state.afterImage!);
+      if (this.state.afterImage) {
+        this.drawImage(ctx, this.state.afterImage);
+      }
 
       ctx.restore();
     }
@@ -423,13 +434,13 @@ export class ComparisonManager {
   /**
    * Draw image with proper positioning
    */
-  private drawImage(ctx: CanvasRenderingContext2D, CustomImageData: CustomImageData): void {
+  private drawImage(ctx: CanvasRenderingContext2D, customImageData: CustomImageData): void {
     ctx.drawImage(
-      CustomImageData.element,
-      CustomImageData.position.x,
-      CustomImageData.position.y,
-      CustomImageData.displaySize.width,
-      CustomImageData.displaySize.height
+      customImageData.element,
+      customImageData.position.x,
+      customImageData.position.y,
+      customImageData.displaySize.width,
+      customImageData.displaySize.height
     );
   }
 

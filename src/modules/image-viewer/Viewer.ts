@@ -8,7 +8,7 @@ import { ZoomPanHandler } from '../zoom-pan';
 
 export class ImageViewer {
   private canvas: Renderer;
-  private CustomImageData: CustomImageData | null = null;
+  private customImageData: CustomImageData | null = null;
   private originalCustomImageData: CustomImageData | null = null; // Store original image for comparison
   private eventHandlers: EventHandlers;
   private zoomPanHandler: ZoomPanHandler | null = null;
@@ -89,20 +89,20 @@ export class ImageViewer {
 
       const image = await loadImage(url);
       const canvasSize = this.canvas.getSize();
-      this.CustomImageData = getImageData(image, canvasSize, type, fileName);
+      this.customImageData = getImageData(image, canvasSize, type, fileName);
 
       // Store original image data for comparison mode (shallow copy to avoid memory issues)
       this.originalCustomImageData = {
-        element: this.CustomImageData.element,
-        position: { ...this.CustomImageData.position },
-        displaySize: { ...this.CustomImageData.displaySize },
-        naturalSize: { ...this.CustomImageData.naturalSize },
-        type: this.CustomImageData.type || '',
-        fileName: this.CustomImageData.fileName || ''
+        element: this.customImageData.element,
+        position: { ...this.customImageData.position },
+        displaySize: { ...this.customImageData.displaySize },
+        naturalSize: { ...this.customImageData.naturalSize },
+        type: this.customImageData.type || '',
+        fileName: this.customImageData.fileName || ''
       };
 
       // Store reference to previous image for disposal
-      this.previousImage = this.CustomImageData.element;
+      this.previousImage = this.customImageData.element;
 
       this.render();
 
@@ -116,7 +116,7 @@ export class ImageViewer {
       }
 
       if (this.eventHandlers.onImageLoad) {
-        this.eventHandlers.onImageLoad(this.CustomImageData);
+        this.eventHandlers.onImageLoad(this.customImageData);
       }
     } catch (err) {
       error('Failed to load image:', err);
@@ -131,7 +131,7 @@ export class ImageViewer {
    * Dispose previous image to free memory
    */
   private disposePreviousImage(): void {
-    if (this.previousImage && this.previousImage !== this.CustomImageData?.element) {
+    if (this.previousImage && this.previousImage !== this.customImageData?.element) {
       // Clear image source to free memory
       this.previousImage.src = '';
       this.previousImage = null;
@@ -149,12 +149,12 @@ export class ImageViewer {
 
       const canvasSize = this.canvas.getSize();
 
-      this.CustomImageData = getImageData(image, canvasSize, type, fileName);
+      this.customImageData = getImageData(image, canvasSize, type, fileName);
 
       this.render();
 
       // Reset zoom/pan to initial state if zoom/pan is enabled
-      if (this.zoomPanHandler && this.CustomImageData) {
+      if (this.zoomPanHandler && this.customImageData) {
         // Reset to initial state (scale=1, offset=0,0) since getImageData already calculated proper fit
         this.zoomPanHandler.reset();
         // Update initial view state after reset
@@ -163,7 +163,7 @@ export class ImageViewer {
       }
 
       if (this.eventHandlers.onImageLoad) {
-        this.eventHandlers.onImageLoad(this.CustomImageData);
+        this.eventHandlers.onImageLoad(this.customImageData);
       }
     } catch (err) {
       error('Failed to load image element:', err);
@@ -190,19 +190,19 @@ export class ImageViewer {
         height: (window.innerHeight * 0.9) - 60
       };
 
-      this.CustomImageData = getCustomImageDataOverlay(image, overlaySize, type, fileName);
+      this.customImageData = getCustomImageDataOverlay(image, overlaySize, type, fileName);
 
       this.render();
 
       // For overlay mode, don't reset zoom/pan - keep the calculated position
       // The image position is already calculated by getCustomImageDataOverlay
-      if (this.zoomPanHandler && this.CustomImageData) {
+      if (this.zoomPanHandler && this.customImageData) {
         // Just update cursor state without resetting position
         this.zoomPanHandler.updateCursorState();
       }
 
       if (this.eventHandlers.onImageLoad) {
-        this.eventHandlers.onImageLoad(this.CustomImageData);
+        this.eventHandlers.onImageLoad(this.customImageData);
       }
     } catch (err) {
       error('Failed to load image element for overlay:', err);
@@ -224,7 +224,7 @@ export class ImageViewer {
    * Render the image on canvas
    */
   render(): void {
-    if (!this.CustomImageData) {
+    if (!this.customImageData) {
       // Render background even when no image is loaded
       this.renderBackground();
       return;
@@ -247,11 +247,11 @@ export class ImageViewer {
     // Draw image
     try {
       ctx.drawImage(
-        this.CustomImageData.element,
-        this.CustomImageData.position.x,
-        this.CustomImageData.position.y,
-        this.CustomImageData.displaySize.width,
-        this.CustomImageData.displaySize.height
+        this.customImageData.element,
+        this.customImageData.position.x,
+        this.customImageData.position.y,
+        this.customImageData.displaySize.width,
+        this.customImageData.displaySize.height
       );
     } catch (err) {
       error('Error drawing image:', err);
@@ -273,7 +273,7 @@ export class ImageViewer {
    */
   private renderComparison(): void {
     // Early returns for performance
-    if (!this.comparisonManager || !this.CustomImageData || !this.originalCustomImageData) {
+    if (!this.comparisonManager || !this.customImageData || !this.originalCustomImageData) {
       return;
     }
 
@@ -326,11 +326,11 @@ export class ImageViewer {
 
     // Draw current image with annotations (only in clipped region)
     ctx.drawImage(
-      this.CustomImageData.element,
-      this.CustomImageData.position.x,
-      this.CustomImageData.position.y,
-      this.CustomImageData.displaySize.width,
-      this.CustomImageData.displaySize.height
+      this.customImageData.element,
+      this.customImageData.position.x,
+      this.customImageData.position.y,
+      this.customImageData.displaySize.width,
+      this.customImageData.displaySize.height
     );
 
     // Draw annotations if annotation manager is available
@@ -411,8 +411,8 @@ export class ImageViewer {
     this.canvas.resize(size);
 
     // Recalculate image dimensions if image is loaded
-    if (this.CustomImageData) {
-      this.CustomImageData = getImageData(this.CustomImageData.element, size, this.CustomImageData.type, this.CustomImageData.fileName);
+    if (this.customImageData) {
+      this.customImageData = getImageData(this.customImageData.element, size, this.customImageData.type, this.customImageData.fileName);
 
       // Reset zoom/pan to initial state after resize since getImageData already calculated proper fit
       if (this.zoomPanHandler) {
@@ -429,7 +429,7 @@ export class ImageViewer {
    * Get current image data
    */
   getImageData(): CustomImageData | null {
-    return this.CustomImageData;
+    return this.customImageData;
   }
 
   /**
@@ -464,22 +464,22 @@ export class ImageViewer {
    * Check if image is loaded
    */
   isImageLoaded(): boolean {
-    return this.CustomImageData !== null;
+    return this.customImageData !== null;
   }
 
   /**
    * Get image bounds in world coordinates
    */
   getImageBounds(): Rectangle | null {
-    if (!this.CustomImageData) {
+    if (!this.customImageData) {
       return null;
     }
 
     return {
-      x: this.CustomImageData.position.x,
-      y: this.CustomImageData.position.y,
-      width: this.CustomImageData.displaySize.width,
-      height: this.CustomImageData.displaySize.height
+      x: this.customImageData.position.x,
+      y: this.customImageData.position.y,
+      width: this.customImageData.displaySize.width,
+      height: this.customImageData.displaySize.height
     };
   }
 
@@ -487,7 +487,7 @@ export class ImageViewer {
    * Zoom to fit image in view
    */
   fitToView(): void {
-    if (this.zoomPanHandler && this.CustomImageData) {
+    if (this.zoomPanHandler && this.customImageData) {
       const bounds = this.getImageBounds();
       if (bounds) {
         this.zoomPanHandler.fitToView(bounds);
@@ -499,7 +499,7 @@ export class ImageViewer {
    * Zoom to fit image in view for overlay mode (allows scaling up)
    */
   fitToViewOverlay(): void {
-    if (this.zoomPanHandler && this.CustomImageData) {
+    if (this.zoomPanHandler && this.customImageData) {
       const bounds = this.getImageBounds();
       if (bounds) {
         this.zoomPanHandler.fitToViewOverlay(bounds);

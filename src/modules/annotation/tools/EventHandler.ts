@@ -1,9 +1,31 @@
 import type { Renderer } from '../../../core/Renderer';
 import type { EventHandlerOptions } from '../../../types';
+import type { ImageViewer } from '../../image-viewer/Viewer';
+import type { AnnotationManager } from '../Manager';
+import type { AnnotationRenderer } from '../Renderer';
 import type { BaseTool } from './components/BaseTool';
 
+// Type-safe alias với proper types để tránh circular dependency
+type TypedEventHandlerOptions = EventHandlerOptions<
+  Renderer,
+  AnnotationRenderer,
+  BaseTool | null,
+  AnnotationManager | undefined
+>;
+
+// Helper function để check comparison mode với type safety
+function isComparisonModeActive(imageViewer: unknown): boolean {
+  if (imageViewer && typeof imageViewer === 'object' && 'isComparisonMode' in imageViewer) {
+    const mode = (imageViewer as ImageViewer).isComparisonMode();
+    if (typeof mode === 'boolean') {
+      return mode;
+    }
+  }
+  return false;
+}
+
 export class AnnotationToolsEventHandler {
-  private options: EventHandlerOptions;
+  private options: TypedEventHandlerOptions;
 
   private boundMouseDown: (event: MouseEvent) => void;
   private boundMouseMove: (event: MouseEvent) => void;
@@ -12,7 +34,7 @@ export class AnnotationToolsEventHandler {
   private boundKeyDown: (event: KeyboardEvent) => void;
   private boundAnnotationCreated: (event: CustomEvent) => void;
 
-  constructor(options: EventHandlerOptions) {
+  constructor(options: TypedEventHandlerOptions) {
     this.options = options;
 
     this.boundMouseDown = this.handleMouseDown.bind(this);
@@ -27,7 +49,7 @@ export class AnnotationToolsEventHandler {
    * Setup event listeners for drawing interactions
    */
   setupEventListeners(): void {
-    const canvas = this.options.canvas as unknown as Renderer;
+    const canvas = this.options.canvas;
     canvas.addEventListener('mousedown', this.boundMouseDown as EventListener, true);
     canvas.addEventListener('mousemove', this.boundMouseMove as EventListener);
     canvas.addEventListener('mouseup', this.boundMouseUp as EventListener);
@@ -48,7 +70,7 @@ export class AnnotationToolsEventHandler {
    * Handle mouse down event
    */
   private handleMouseDown(event: MouseEvent): void {
-    const currentTool = this.options.currentTool as unknown as BaseTool | null;
+    const currentTool = this.options.currentTool;
     if (!currentTool || event.button !== 0) {
       return; // Only left mouse button
     }
@@ -64,12 +86,9 @@ export class AnnotationToolsEventHandler {
     }
 
     // Don't allow drawing when comparison mode is active
-    const canvas = this.options.canvas as unknown as Renderer;
-    if (canvas.imageViewer && 'isComparisonMode' in canvas.imageViewer && typeof (canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
-      const isComparisonMode = ((canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
-      if (isComparisonMode) {
-        return; // Block drawing when comparison mode is active
-      }
+    const canvas = this.options.canvas;
+    if (canvas.imageViewer && isComparisonModeActive(canvas.imageViewer)) {
+      return; // Block drawing when comparison mode is active
     }
 
     // Don't prevent default for text tool to allow proper focus
@@ -88,8 +107,8 @@ export class AnnotationToolsEventHandler {
 
     const annotation = currentTool.startDrawing(worldPoint);
 
-    if (canvas.annotationManager && 'selectAnnotation' in canvas.annotationManager) {
-      (canvas.annotationManager as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
+    if (canvas.annotationManager) {
+      canvas.annotationManager.selectAnnotation(null);
     }
 
     if (annotation) {
@@ -99,7 +118,7 @@ export class AnnotationToolsEventHandler {
         }
 
         if (this.options.annotationManager) {
-          (this.options.annotationManager as { selectAnnotation: (annotation: unknown) => void }).selectAnnotation(annotation);
+          this.options.annotationManager.selectAnnotation(annotation);
         }
       } else {
         // Annotation doesn't meet minimum size requirements
@@ -111,14 +130,14 @@ export class AnnotationToolsEventHandler {
    * Handle mouse move event
    */
   private handleMouseMove(event: MouseEvent): void {
-    const currentTool = this.options.currentTool as unknown as BaseTool | null;
+    const currentTool = this.options.currentTool;
     if (!currentTool || !currentTool.isCurrentlyDrawing()) return;
 
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const canvas = this.options.canvas as unknown as Renderer;
+    const canvas = this.options.canvas;
     const point = canvas.getMousePosition(event);
     const worldPoint = this.options.onScreenToWorld(point);
 
@@ -133,14 +152,14 @@ export class AnnotationToolsEventHandler {
    * Handle mouse up event
    */
   private handleMouseUp(event: MouseEvent): void {
-    const currentTool = this.options.currentTool as unknown as BaseTool | null;
+    const currentTool = this.options.currentTool;
     if (!currentTool || !currentTool.isCurrentlyDrawing()) return;
 
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const canvas = this.options.canvas as unknown as Renderer;
+    const canvas = this.options.canvas;
     const point = canvas.getMousePosition(event);
     const worldPoint = this.options.onScreenToWorld(point);
 
@@ -155,7 +174,7 @@ export class AnnotationToolsEventHandler {
         }
 
         if (this.options.annotationManager) {
-          (this.options.annotationManager as { selectAnnotation: (annotation: unknown) => void }).selectAnnotation(annotation);
+          this.options.annotationManager.selectAnnotation(annotation);
         }
       } else {
         // Annotation doesn't meet minimum size requirements
@@ -167,7 +186,7 @@ export class AnnotationToolsEventHandler {
    * Handle mouse leave event
    */
   private handleMouseLeave(_event: MouseEvent): void {
-    const currentTool = this.options.currentTool as unknown as BaseTool | null;
+    const currentTool = this.options.currentTool;
     if (!currentTool) return;
 
     currentTool.cancelDrawing();
@@ -189,9 +208,9 @@ export class AnnotationToolsEventHandler {
   private handleKeyDown(event: KeyboardEvent): void {
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
-      const annotationManager = this.options.annotationManager as { getSelectedAnnotation: () => unknown; removeAnnotation: (id: string) => void } | null;
-      if (annotationManager && annotationManager.getSelectedAnnotation()) {
-        const selectedAnnotation = annotationManager.getSelectedAnnotation() as { id: string } | null;
+      const annotationManager = this.options.annotationManager;
+      if (annotationManager) {
+        const selectedAnnotation = annotationManager.getSelectedAnnotation();
         if (selectedAnnotation) {
           annotationManager.removeAnnotation(selectedAnnotation.id);
         }
@@ -201,26 +220,23 @@ export class AnnotationToolsEventHandler {
     }
 
     if (event.key === 'Escape') {
-      const currentTool = this.options.currentTool as unknown as BaseTool | null;
+      const currentTool = this.options.currentTool;
       if (currentTool && this.options.toolManagerDrawing) {
         currentTool.cancelDrawing();
       } else if (this.options.activeToolType) {
         this.options.onDeactivateTool();
         this.updateCursor();
       } else if (this.options.annotationManager) {
-        (this.options.annotationManager as { selectAnnotation: (id: string | null) => void }).selectAnnotation(null);
+        this.options.annotationManager.selectAnnotation(null);
       }
       return;
     }
 
     if (event.altKey) {
       // Don't allow tool activation when comparison mode is active
-      const canvas = this.options.canvas as unknown as Renderer;
-      if (canvas.imageViewer && 'isComparisonMode' in canvas.imageViewer && typeof (canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
-        const isComparisonMode = ((canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
-        if (isComparisonMode) {
-          return; // Block tool activation when comparison mode is active
-        }
+      const canvas = this.options.canvas;
+      if (canvas.imageViewer && isComparisonModeActive(canvas.imageViewer)) {
+        return; // Block tool activation when comparison mode is active
       }
 
       const keyToToolMap: Record<string, string> = {
@@ -252,17 +268,14 @@ export class AnnotationToolsEventHandler {
    * Update cursor based on active tool
    */
   private updateCursor(): void {
-    const canvas = this.options.canvas as unknown as Renderer;
+    const canvas = this.options.canvas;
     if (!canvas) return;
 
     // Don't set tool cursor when comparison mode is active and no tool is active
     if (!this.options.activeToolType) {
-      if (canvas.imageViewer && 'isComparisonMode' in canvas.imageViewer && typeof (canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
-        const isComparisonMode = ((canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
-        if (isComparisonMode) {
-          // Let comparison manager handle cursor when no tool is active
-          return;
-        }
+      if (canvas.imageViewer && isComparisonModeActive(canvas.imageViewer)) {
+        // Let comparison manager handle cursor when no tool is active
+        return;
       }
       // Reset cursor when no tool is active
       canvas.getElement().style.cursor = '';
@@ -288,7 +301,7 @@ export class AnnotationToolsEventHandler {
   /**
    * Update options (for dynamic updates)
    */
-  updateOptions(newOptions: Partial<EventHandlerOptions>): void {
+  updateOptions(newOptions: Partial<TypedEventHandlerOptions>): void {
     const wasActive = !!this.options.activeToolType;
     this.options = { ...this.options, ...newOptions };
     const isActive = !!this.options.activeToolType;
@@ -303,7 +316,7 @@ export class AnnotationToolsEventHandler {
    * Destroy event handler and clean up
    */
   destroy(): void {
-    const canvas = this.options.canvas as unknown as Renderer;
+    const canvas = this.options.canvas;
     canvas.removeEventListener('mousedown', this.boundMouseDown as EventListener, true);
     canvas.removeEventListener('mousemove', this.boundMouseMove as EventListener);
     canvas.removeEventListener('mouseup', this.boundMouseUp as EventListener);

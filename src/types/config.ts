@@ -1,3 +1,5 @@
+import type { AnnotationStyle } from './annotation';
+
 /**
  * Configuration for available tools and features
  * @interface ToolConfig
@@ -19,6 +21,8 @@ export interface ToolConfig {
     circle?: boolean;
     /** Enable line annotation tool */
     line?: boolean;
+    /** Default annotation style */
+    style?: AnnotationStyle;
   };
   /** Enable image comparison functionality */
   comparison?: boolean;

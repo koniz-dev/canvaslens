@@ -49,6 +49,7 @@ HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation(() => ({
   lineJoin: 'miter',
   miterLimit: 10,
   lineDashOffset: 0,
+  setLineDash: jest.fn(),
   shadowBlur: 0,
   shadowColor: 'rgba(0, 0, 0, 0)',
   shadowOffsetX: 0,

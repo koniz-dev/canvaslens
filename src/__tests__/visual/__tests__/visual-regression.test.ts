@@ -216,6 +216,127 @@ describe('Visual Regression Tests', () => {
       const snapshot = captureCanvasSnapshot(canvas);
       expect(snapshot).toBeTruthy();
     });
+
+    it('should render annotations with different line styles consistently', () => {
+      drawTestPattern(ctx, 800, 600);
+      
+      // Solid line
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.strokeRect(50, 50, 100, 80);
+      
+      // Dashed line
+      ctx.strokeStyle = '#00ff00';
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(200, 50, 100, 80);
+      
+      // Dotted line
+      ctx.strokeStyle = '#0000ff';
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(350, 50, 100, 80);
+      
+      const snapshot1 = captureCanvasSnapshot(canvas);
+      
+      // Re-render with same styles
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawTestPattern(ctx, 800, 600);
+      
+      ctx.strokeStyle = '#ff0000';
+      ctx.setLineDash([]);
+      ctx.strokeRect(50, 50, 100, 80);
+      
+      ctx.strokeStyle = '#00ff00';
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(200, 50, 100, 80);
+      
+      ctx.strokeStyle = '#0000ff';
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(350, 50, 100, 80);
+      
+      const snapshot2 = captureCanvasSnapshot(canvas);
+      
+      expect(compareImages(snapshot1, snapshot2)).toBe(true);
+    });
+
+    it('should render annotations with fill colors consistently', () => {
+      drawTestPattern(ctx, 800, 600);
+      
+      // Rectangle with fill
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+      ctx.fillRect(100, 100, 150, 100);
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(100, 100, 150, 100);
+      
+      // Circle with fill
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+      ctx.beginPath();
+      ctx.arc(400, 250, 60, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeStyle = '#00ff00';
+      ctx.stroke();
+      
+      const snapshot1 = captureCanvasSnapshot(canvas);
+      
+      // Re-render
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawTestPattern(ctx, 800, 600);
+      
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+      ctx.fillRect(100, 100, 150, 100);
+      ctx.strokeStyle = '#ff0000';
+      ctx.strokeRect(100, 100, 150, 100);
+      
+      ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+      ctx.beginPath();
+      ctx.arc(400, 250, 60, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.strokeStyle = '#00ff00';
+      ctx.stroke();
+      
+      const snapshot2 = captureCanvasSnapshot(canvas);
+      
+      expect(compareImages(snapshot1, snapshot2)).toBe(true);
+    });
+
+    it('should render annotations with shadows consistently', () => {
+      drawTestPattern(ctx, 800, 600);
+      
+      // Rectangle with shadow
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 5;
+      ctx.shadowOffsetY = 5;
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+      ctx.fillRect(150, 150, 100, 80);
+      ctx.restore();
+      ctx.strokeStyle = '#ff0000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(150, 150, 100, 80);
+      
+      const snapshot1 = captureCanvasSnapshot(canvas);
+      
+      // Re-render with same shadow
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawTestPattern(ctx, 800, 600);
+      
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+      ctx.shadowBlur = 10;
+      ctx.shadowOffsetX = 5;
+      ctx.shadowOffsetY = 5;
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+      ctx.fillRect(150, 150, 100, 80);
+      ctx.restore();
+      ctx.strokeStyle = '#ff0000';
+      ctx.strokeRect(150, 150, 100, 80);
+      
+      const snapshot2 = captureCanvasSnapshot(canvas);
+      
+      expect(compareImages(snapshot1, snapshot2)).toBe(true);
+    });
   });
 
   describe('Image Comparison Mode', () => {

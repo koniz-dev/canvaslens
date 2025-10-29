@@ -5,6 +5,7 @@ export class EventManager {
   private eventHandlers: Map<string, Set<(event: CustomEvent) => void>> = new Map();
   private resizeHandler: () => void;
   private boundHandlers: Map<string, (e: Event) => void> = new Map();
+  private isSetup = false;
 
   constructor(element: HTMLElement) {
     this.element = element;
@@ -17,6 +18,10 @@ export class EventManager {
    * Set up event listeners for the Web Component
    */
   setupEventListeners(): void {
+    // Guard: Prevent duplicate listeners if already set up
+    if (this.isSetup) {
+      return;
+    }
     // Create bound handlers for custom events
     const imageLoadHandler = (e: Event) => {
       this.dispatchEvent('imageload', (e as CustomEvent).detail);
@@ -65,6 +70,9 @@ export class EventManager {
 
     // Listen for window resize to recalculate canvas size
     window.addEventListener('resize', this.resizeHandler);
+
+    // Mark as set up to prevent duplicates
+    this.isSetup = true;
   }
 
   /**
@@ -128,5 +136,8 @@ export class EventManager {
     
     // Clear all event handlers
     this.eventHandlers.clear();
+    
+    // Reset setup flag to allow re-initialization
+    this.isSetup = false;
   }
 }

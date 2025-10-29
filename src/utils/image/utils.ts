@@ -102,7 +102,7 @@ export function getImageData(
     containerSize
   );
 
-  const CustomImageData: CustomImageData = {
+  const customImageData: CustomImageData = {
     element: image,
     naturalSize,
     displaySize,
@@ -110,14 +110,14 @@ export function getImageData(
   };
 
   if (type) {
-    CustomImageData.type = type;
+    customImageData.type = type;
   }
 
   if (fileName) {
-    CustomImageData.fileName = fileName;
+    customImageData.fileName = fileName;
   }
 
-  return CustomImageData;
+  return customImageData;
 }
 
 /**
@@ -139,7 +139,7 @@ export function getCustomImageDataOverlay(
     containerSize
   );
 
-  const CustomImageData: CustomImageData = {
+  const customImageData: CustomImageData = {
     element: image,
     naturalSize,
     displaySize,
@@ -147,14 +147,14 @@ export function getCustomImageDataOverlay(
   };
 
   if (type) {
-    CustomImageData.type = type;
+    customImageData.type = type;
   }
 
   if (fileName) {
-    CustomImageData.fileName = fileName;
+    customImageData.fileName = fileName;
   }
 
-  return CustomImageData;
+  return customImageData;
 }
 
 /**

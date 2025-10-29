@@ -207,17 +207,3 @@ export class PerformanceMonitor {
 
 export const performanceMonitor = new PerformanceMonitor();
 
-/**
- * Performance decorator for methods
- */
-export function measurePerformance(_target: unknown, _propertyName: string, descriptor: PropertyDescriptor) {
-  const method = descriptor.value;
-
-  descriptor.value = function (...args: unknown[]) {
-    const result = method.apply(this, args);
-    
-    return result;
-  };
-
-  return descriptor;
-}

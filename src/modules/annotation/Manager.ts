@@ -53,7 +53,7 @@ export class AnnotationManager {
       { name: 'Line', type: 'line', icon: '📏' }
     ];
 
-    const toolManagerOptions: ToolManagerOptions = {
+    const toolManagerOptions: ToolManagerOptions<AnnotationManager> = {
       defaultStyle,
       availableTools,
       annotationManager: this
@@ -80,7 +80,7 @@ export class AnnotationManager {
     this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
 
     this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
-    this.canvas.addEventListener('mousemove', this.throttledMouseMove as unknown as EventListener);
+    this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
     this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
 
   }
@@ -178,8 +178,10 @@ export class AnnotationManager {
   }
 
   private handleDragging(worldPoint: Point, event: MouseEvent): void {
+    if (!this.selectedAnnotation) return;
+    
     const newCenter = this.calculateNewCenter(worldPoint);
-    this.moveAnnotation(this.selectedAnnotation!, newCenter);
+    this.moveAnnotation(this.selectedAnnotation, newCenter);
     this.triggerViewStateChange();
 
     event.preventDefault();
@@ -187,9 +189,12 @@ export class AnnotationManager {
   }
 
   private calculateNewCenter(worldPoint: Point): Point {
+    if (!this.dragOffset) {
+      return worldPoint;
+    }
     return {
-      x: worldPoint.x - this.dragOffset!.x,
-      y: worldPoint.y - this.dragOffset!.y
+      x: worldPoint.x - this.dragOffset.x,
+      y: worldPoint.y - this.dragOffset.y
     };
   }
 
@@ -602,10 +607,13 @@ export class AnnotationManager {
   private getAnnotationBounds(annotation: Annotation): Rectangle | null {
     if (annotation.points.length === 0) return null;
 
-    let minX = annotation.points[0]!.x;
-    let maxX = annotation.points[0]!.x;
-    let minY = annotation.points[0]!.y;
-    let maxY = annotation.points[0]!.y;
+    const firstPoint = annotation.points[0];
+    if (!firstPoint) return null;
+
+    let minX = firstPoint.x;
+    let maxX = firstPoint.x;
+    let minY = firstPoint.y;
+    let maxY = firstPoint.y;
 
     annotation.points.forEach(point => {
       minX = Math.min(minX, point.x);
@@ -832,8 +840,8 @@ export class AnnotationManager {
    * Check if comparison mode is active
    */
   private isComparisonModeActive(): boolean {
-    if (this.canvas.imageViewer && 'isComparisonMode' in this.canvas.imageViewer && typeof (this.canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode === 'function') {
-      return ((this.canvas.imageViewer as unknown as Record<string, unknown>).isComparisonMode as () => boolean)();
+    if (this.canvas.imageViewer && typeof this.canvas.imageViewer.isComparisonMode === 'function') {
+      return this.canvas.imageViewer.isComparisonMode();
     }
     return false;
   }

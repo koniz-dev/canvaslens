@@ -15,27 +15,36 @@ export interface AnnotationManagerOptions {
  * Options for configuring the annotation tools controller
  * @interface ControllerOptions
  */
-export interface ControllerOptions {
-  canvas: unknown; // Renderer type
-  renderer: unknown; // AnnotationRenderer type
+export interface ControllerOptions<
+  TCanvas = unknown,
+  TRenderer = unknown,
+  TAnnotationManager = unknown
+> {
+  canvas: TCanvas; // Renderer type
+  renderer: TRenderer; // AnnotationRenderer type
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
-  annotationManager?: unknown;
+  annotationManager?: TAnnotationManager;
 }
 
 /**
  * Options for configuring the annotation tools event handler
  * @interface EventHandlerOptions
  */
-export interface EventHandlerOptions {
-  canvas: unknown; // Renderer type
-  renderer: unknown; // AnnotationRenderer type
-  currentTool: unknown; // BaseTool type
+export interface EventHandlerOptions<
+  TCanvas = unknown,
+  TRenderer = unknown,
+  TTool = unknown,
+  TAnnotationManager = unknown
+> {
+  canvas: TCanvas; // Renderer type
+  renderer: TRenderer; // AnnotationRenderer type
+  currentTool: TTool; // BaseTool type
   activeToolType: string | null;
   toolActivatedByKeyboard: boolean;
   toolManagerDrawing: boolean;
   onAnnotationCreate?: (annotation: Annotation) => void;
-  annotationManager?: unknown;
+  annotationManager?: TAnnotationManager;
   onActivateTool: (toolType: string) => boolean;
   onDeactivateTool: () => void;
   onScreenToWorld: (screenPoint: Point) => Point;
@@ -48,10 +57,10 @@ export interface EventHandlerOptions {
  * Options for configuring the tool manager
  * @interface ToolManagerOptions
  */
-export interface ToolManagerOptions {
+export interface ToolManagerOptions<TAnnotationManager = unknown> {
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
-  annotationManager?: unknown;
+  annotationManager?: TAnnotationManager;
 }
 
 /**

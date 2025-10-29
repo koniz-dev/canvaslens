@@ -38,7 +38,13 @@ const tools = {
     arrow: true,
     text: true,
     circle: true,
-    line: true
+    line: true,
+    style: {
+      lineStyle: 'dashed', // Options: 'solid' | 'dashed' | 'dotted'
+      fillColor: 'rgba(0, 150, 255, 0.3)', // Blue background with 30% opacity
+      strokeColor: '#0096ff',
+      strokeWidth: 3
+    }
   },
   comparison: true
 };
