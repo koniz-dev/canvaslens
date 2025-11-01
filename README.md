@@ -11,6 +11,7 @@ A powerful HTML5 Canvas-based image viewing and annotation library built with Ty
 - 🖼️ **Image Viewer**: Load images with automatic aspect ratio preservation
 - 🔍 **Zoom & Pan**: Mouse wheel zoom with cursor-centered zooming, smooth drag to pan
 - ✏️ **Annotations**: Rectangle, arrow, text, circle, and line annotation tools
+- 🎨 **Custom Styles**: Fully customizable annotation styles (colors, line styles, shadows, fonts)
 - 🔄 **Image Comparison**: Interactive slider-based before/after comparison
 - 🖼️ **Overlay Mode**: Full-screen professional editing interface
 - 🎯 **Web Component**: Standard HTML element that works with any framework
@@ -96,10 +97,63 @@ const CanvasLensViewer = ({ src }) => {
     "arrow": true,
     "text": true,
     "circle": true,
-    "line": true
+    "line": true,
+    "style": {
+      "strokeColor": "#0096ff",
+      "strokeWidth": 3,
+      "lineStyle": "dashed",
+      "fillColor": "rgba(0, 150, 255, 0.3)",
+      "shadowColor": "rgba(0, 0, 0, 0.3)",
+      "shadowBlur": 10,
+      "fontSize": 16,
+      "fontFamily": "Arial, sans-serif"
+    }
   },
   "comparison": true
 }
+```
+
+#### Annotation Style Configuration
+
+You can customize the appearance of all annotations by providing a `style` object within the `annotation` configuration:
+
+```json
+{
+  "annotation": {
+    "style": {
+      "strokeColor": "#ff0000",      // Border color (required)
+      "strokeWidth": 2,              // Border width in pixels (required)
+      "lineStyle": "dashed",          // "solid" | "dashed" | "dotted" (optional)
+      "fillColor": "rgba(255, 0, 0, 0.2)", // Fill color with transparency (optional)
+      "shadowColor": "rgba(0, 0, 0, 0.5)", // Shadow color (optional)
+      "shadowBlur": 10,               // Shadow blur radius (optional)
+      "shadowOffsetX": 5,             // Shadow horizontal offset (optional)
+      "shadowOffsetY": 5,             // Shadow vertical offset (optional)
+      "fontSize": 18,                 // Font size for text annotations (optional)
+      "fontFamily": "Arial, sans-serif" // Font family for text annotations (optional)
+    }
+  }
+}
+```
+
+**Example with Custom Styles:**
+```html
+<canvas-lens 
+    src="https://example.com/image.jpg"
+    width="800px" 
+    height="600px"
+    tools='{
+        "annotation": {
+            "rect": true,
+            "style": {
+                "strokeColor": "#0096ff",
+                "strokeWidth": 3,
+                "lineStyle": "dashed",
+                "fillColor": "rgba(0, 150, 255, 0.3)"
+            }
+        }
+    }'>
+</canvas-lens>
 ```
 
 ### Methods
@@ -150,6 +204,7 @@ Chrome 60+, Firefox 55+, Safari 12+, Edge 79+
 ## 📚 Documentation
 
 - **[Complete API Reference](https://github.com/koniz-dev/canvaslens/blob/main/docs/api.md)**
+- **[Annotation Styles Guide](https://github.com/koniz-dev/canvaslens/blob/main/docs/annotation-styles.md)** - Customize annotation appearance
 - **[Examples & Use Cases](https://github.com/koniz-dev/canvaslens/blob/main/docs/examples.md)**
 - **[Framework Integration](https://github.com/koniz-dev/canvaslens/blob/main/docs/examples.md#framework-integration)**
 

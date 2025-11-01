@@ -81,6 +81,34 @@
 </canvas-lens>
 ```
 
+### 3.1. Annotation Tools with Custom Styles
+
+```html
+<canvas-lens 
+    src="https://example.com/document.jpg"
+    width="800px" 
+    height="600px"
+    tools='{
+        "zoom": true, 
+        "pan": true, 
+        "annotation": {
+            "rect": true, 
+            "arrow": true, 
+            "style": {
+                "strokeColor": "#0096ff",
+                "strokeWidth": 3,
+                "lineStyle": "dashed",
+                "fillColor": "rgba(0, 150, 255, 0.3)",
+                "shadowColor": "rgba(0, 0, 0, 0.3)",
+                "shadowBlur": 10
+            }
+        }
+    }'>
+</canvas-lens>
+```
+
+See [Annotation Styles Guide](./annotation-styles.md) for complete styling options.
+
 ### 4. Before/After Comparison
 
 ```html

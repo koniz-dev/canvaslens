@@ -226,21 +226,49 @@ console.log(`Active tool: ${activeTool || 'none'}`);
 Adds an annotation to the canvas.
 
 **Parameters:**
-- `annotation` (Annotation): Annotation object
+- `annotation` (Annotation): Annotation object with the following structure:
+  ```typescript
+  {
+    id: string;
+    type: 'rect' | 'arrow' | 'text' | 'circle' | 'line';
+    points: Array<{ x: number; y: number }>;
+    style: AnnotationStyle;
+    data?: Record<string, unknown>;
+  }
+  ```
+
+**Annotation Style Object:**
+```typescript
+{
+  strokeColor: string;        // Required: Border color (hex, rgb, or named color)
+  strokeWidth: number;        // Required: Border width in pixels
+  lineStyle?: 'solid' | 'dashed' | 'dotted'; // Optional: Line style
+  fillColor?: string;         // Optional: Fill color with transparency
+  shadowColor?: string;       // Optional: Shadow color
+  shadowBlur?: number;       // Optional: Shadow blur radius in pixels
+  shadowOffsetX?: number;    // Optional: Shadow horizontal offset
+  shadowOffsetY?: number;    // Optional: Shadow vertical offset
+  fontSize?: number;         // Optional: Font size for text annotations
+  fontFamily?: string;       // Optional: Font family for text annotations
+}
+```
 
 **Example:**
 ```javascript
 const annotation = {
   id: 'rect-1',
   type: 'rect',
-  x: 100,
-  y: 100,
-  width: 200,
-  height: 150,
+  points: [
+    { x: 100, y: 100 },
+    { x: 300, y: 250 }
+  ],
   style: {
     strokeColor: '#ff0000',
-    strokeWidth: 2,
-    fillColor: 'rgba(255, 0, 0, 0.1)'
+    strokeWidth: 3,
+    lineStyle: 'dashed',
+    fillColor: 'rgba(255, 0, 0, 0.2)',
+    shadowColor: 'rgba(0, 0, 0, 0.3)',
+    shadowBlur: 10
   }
 };
 viewer.addAnnotation(annotation);
@@ -369,7 +397,13 @@ const newTools = {
   annotation: {
     rect: true,
     arrow: false,
-    text: true
+    text: true,
+    style: {
+      strokeColor: '#0096ff',
+      strokeWidth: 3,
+      lineStyle: 'dashed',
+      fillColor: 'rgba(0, 150, 255, 0.3)'
+    }
   }
 };
 viewer.updateTools(newTools);
@@ -556,6 +590,7 @@ interface ToolConfig {
     text?: boolean;
     circle?: boolean;
     line?: boolean;
+    style?: AnnotationStyle;  // Default annotation style
   };
   comparison?: boolean;
 }
@@ -582,20 +617,30 @@ interface Annotation {
 
 ```typescript
 interface AnnotationStyle {
-  /** Stroke color (hex, rgb, or named color) */
+  /** Stroke color (hex, rgb, or named color) - Required */
   strokeColor: string;
-  /** Fill color (optional) */
-  fillColor?: string;
-  /** Stroke width in pixels */
+  /** Stroke width in pixels - Required */
   strokeWidth: number;
+  /** Fill color (optional, use rgba for transparency) */
+  fillColor?: string;
   /** Line style for strokes */
   lineStyle?: 'solid' | 'dashed' | 'dotted';
   /** Font size for text annotations */
   fontSize?: number;
   /** Font family for text annotations */
   fontFamily?: string;
+  /** Shadow color (optional, use rgba for transparency) */
+  shadowColor?: string;
+  /** Shadow blur radius in pixels (optional) */
+  shadowBlur?: number;
+  /** Shadow horizontal offset in pixels (optional) */
+  shadowOffsetX?: number;
+  /** Shadow vertical offset in pixels (optional) */
+  shadowOffsetY?: number;
 }
 ```
+
+**See [Annotation Styles Guide](./annotation-styles.md) for detailed documentation on all style properties and examples.**
 
 ### Tool
 
