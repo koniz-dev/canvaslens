@@ -14,7 +14,8 @@
   },
   "scripts": {
     "build": "npm run lint && npm run clean && rollup -c",
-    "build:prod": "npm run lint && NODE_ENV=production rollup -c",
+    "build:prod": "npm run lint && npm run clean && NODE_ENV=production rollup -c && npm run clean:cache",
+    "clean:cache": "rm -f dist/.tsbuildinfo",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "test": "jest",

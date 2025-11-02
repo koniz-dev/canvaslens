@@ -38,6 +38,8 @@ tsconfig.json
 # docs/
 playground/
 
-# Build artifacts
+# Build artifacts - source maps (defense in depth, though production build doesn't generate them)
 *.map
-!dist/*.d.ts
+
+# TypeScript build cache (defense in depth, cleaned by build:prod script)
+*.tsbuildinfo

@@ -26,7 +26,10 @@ export default {
       declaration: true,
       declarationDir: './dist',
       sourceMap: !isProduction,
-      outputToFilesystem: true
+      declarationMap: !isProduction, // Don't generate .d.ts.map in production
+      outputToFilesystem: true,
+      // Disable incremental builds in production to avoid .tsbuildinfo
+      incremental: !isProduction
     }),
     // Minify for production builds
     ...(isProduction ? [
@@ -35,7 +38,15 @@ export default {
           drop_console: true,
           drop_debugger: true,
           pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-          passes: 2,
+          passes: 2, // Keep at 2 - 3 passes takes much longer for minimal gain
+          // Safe optimizations that don't break code
+          collapse_vars: true,
+          dead_code: true,
+          evaluate: true,
+          inline: true,
+          reduce_vars: true,
+          unused: true,
+          // Keep unsafe options false for reliability
           unsafe: false,
           unsafe_comps: false,
           unsafe_math: false,
@@ -46,7 +57,7 @@ export default {
         },
         mangle: {
           toplevel: true,
-          properties: false
+          properties: false // Keep false to preserve API compatibility
         },
         format: {
           comments: false,
