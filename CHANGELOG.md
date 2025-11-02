@@ -1,3 +1,9 @@
+## [1.2.2](https://github.com/koniz-dev/canvaslens/compare/v1.2.1...v1.2.2) (2025-11-02)
+
+### Performance Improvements
+
+* optimize package size by excluding build artifacts ([d75c522](https://github.com/koniz-dev/canvaslens/commit/d75c5221cbe1b494e93260872acd2cd44dd34503))
+
 ## [1.2.1](https://github.com/koniz-dev/canvaslens/compare/v1.2.0...v1.2.1) (2025-11-01)
 
 ## [1.2.0](https://github.com/koniz-dev/canvaslens/compare/v1.1.0...v1.2.0) (2025-10-29)
