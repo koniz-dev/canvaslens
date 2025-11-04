@@ -272,7 +272,7 @@ Chrome 60+, Firefox 55+, Safari 12+, Edge 79+
 ## Documentation
 
 - **[Complete API Reference](docs/api.md)**
-- **[Annotation Styles Guide](docs/annotation-styles.md)** - Customize annotation appearance
+- **[Annotation Styles Guide](docs/annotation-styles.md)**
 - **[Examples & Use Cases](docs/examples.md)**
 - **[Framework Integration](docs/examples.md#framework-integration)**
 
