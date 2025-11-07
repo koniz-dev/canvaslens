@@ -329,14 +329,21 @@ export function withErrorHandling(
  */
 export async function safeAsync<T>(
   asyncFn: () => Promise<T>,
-  _errorType: ErrorType,
+  errorType: ErrorType,
   context?: Record<string, unknown>,
   fallback?: () => T
 ): Promise<T | undefined> {
   try {
     return await asyncFn();
   } catch (error) {
-    ErrorHandler.handleError(error as Error, context, fallback);
+    // Create typed error with proper error type
+    const canvasLensError = ErrorHandler.createError(
+      errorType,
+      error instanceof Error ? error.message : String(error),
+      context,
+      !!fallback
+    );
+    ErrorHandler.handleError(canvasLensError, context, fallback);
     return fallback ? fallback() : undefined;
   }
 }

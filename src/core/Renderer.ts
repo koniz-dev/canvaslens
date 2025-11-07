@@ -35,6 +35,7 @@ export class Renderer {
 
   /**
    * Resize canvas to new dimensions with debouncing
+   * Uses 100ms debounce for better stability during window resizing
    */
   resize(size: Size): void {
     // Clear existing timeout
@@ -42,10 +43,10 @@ export class Renderer {
       clearTimeout(this.resizeTimeout);
     }
 
-    // Debounce resize operations
+    // Debounce resize operations (100ms is standard for resize events)
     this.resizeTimeout = window.setTimeout(() => {
       this.performResize(size);
-    }, 16); // ~60fps
+    }, 100);
   }
 
   /**

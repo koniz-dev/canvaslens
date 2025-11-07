@@ -11,7 +11,9 @@ import type {
   ToolConfig,
   ZoomPanOptions
 } from '../types';
-import { warn } from '../utils/core/logger';
+import { ErrorType } from '../types';
+import { ErrorHandler } from '../utils/core/error-handler';
+import { SecureJsonParser } from '../utils/security/secure-json-parser';
 
 export class Engine {
   private imageViewer: ImageViewer;
@@ -211,15 +213,29 @@ export class Engine {
   }
 
   importAnnotations(annotationsJson: string): void {
-    try {
-      const annotations = JSON.parse(annotationsJson);
-      this.clearAnnotations();
-      annotations.forEach((annotation: Annotation) => {
-        this.addAnnotation(annotation);
-      });
-    } catch (error) {
-      warn('Failed to import annotations:', error);
+    // Use secure JSON parser with validation
+    const annotationsArray = SecureJsonParser.parseAnnotations(annotationsJson);
+    
+    if (!annotationsArray) {
+      ErrorHandler.handleError(
+        ErrorHandler.createError(
+          ErrorType.ANNOTATION,
+          'Failed to parse annotations: invalid or unsafe JSON',
+          { annotationsJson: annotationsJson.substring(0, 100) }
+        )
+      );
+      return;
     }
+
+    this.clearAnnotations();
+    
+    // Validate each annotation before adding
+    annotationsArray.forEach((annotation: unknown) => {
+      // AnnotationManager will validate, but we can add basic check here
+      if (annotation && typeof annotation === 'object') {
+        this.addAnnotation(annotation as Annotation);
+      }
+    });
   }
 
   isImageLoaded(): boolean {

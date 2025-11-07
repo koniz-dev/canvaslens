@@ -12,6 +12,7 @@ import type {
 import { error } from '../../utils/core/logger';
 import { MemoryManager } from '../../utils/core/memory-manager';
 import { ValidationHelper } from '../../utils/core/validation-helper';
+import { SecureJsonParser } from '../../utils/security/secure-json-parser';
 import { AnnotationRenderer } from './Renderer';
 import { AnnotationToolsManager } from './tools/Manager';
 
@@ -711,29 +712,27 @@ export class AnnotationManager {
 
   /**
    * Import annotations from JSON
+   * Uses secure JSON parser with validation
    */
   importAnnotations(jsonData: string): boolean {
-    try {
-      const annotations: Annotation[] = JSON.parse(jsonData);
+    // Use secure JSON parser with validation
+    const annotationsArray = SecureJsonParser.parseAnnotations(jsonData);
 
-      // Validate annotations
-      if (!Array.isArray(annotations)) {
-        throw new Error('Invalid annotation data format');
-      }
-
-      this.clearAll();
-
-      annotations.forEach(annotation => {
-        if (this.isValidAnnotation(annotation)) {
-          this.addAnnotation(annotation);
-        }
-      });
-
-      return true;
-    } catch (err) {
-      error('Failed to import annotations:', err);
+    if (!annotationsArray) {
+      error('Failed to import annotations: invalid or unsafe JSON');
       return false;
     }
+
+    this.clearAll();
+
+    // Validate each annotation before adding
+    annotationsArray.forEach(annotation => {
+      if (this.isValidAnnotation(annotation)) {
+        this.addAnnotation(annotation);
+      }
+    });
+
+    return true;
   }
 
   /**

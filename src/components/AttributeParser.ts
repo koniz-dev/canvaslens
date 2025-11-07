@@ -31,16 +31,33 @@ export class AttributeParser {
 
   /**
    * Parse size attribute (supports px, %, or raw numbers)
+   * Validates input to prevent NaN, negative, or unrealistic values
    */
   static parseSize(size: string | null, defaultSize: number): number {
     if (!size) return defaultSize;
-    if (size.endsWith('px')) return parseInt(size);
-    if (size.endsWith('%')) {
-      const percentage = parseInt(size);
-      // Use the provided defaultSize which should be the actual container size
-      return (defaultSize * percentage) / 100;
+
+    let value: number;
+    const MAX_SIZE = 100000; // Prevent unrealistic values
+
+    if (size.endsWith('px')) {
+      value = parseInt(size, 10);
+    } else if (size.endsWith('%')) {
+      const percentage = parseInt(size, 10);
+      // Validate percentage (0-100)
+      if (isNaN(percentage) || percentage < 0 || percentage > 100) {
+        return defaultSize;
+      }
+      value = (defaultSize * percentage) / 100;
+    } else {
+      value = parseInt(size, 10);
     }
-    return parseInt(size) || defaultSize;
+
+    // Validate result: must be a number, non-negative, and within reasonable bounds
+    if (isNaN(value) || value < 0 || value > MAX_SIZE) {
+      return defaultSize;
+    }
+
+    return value;
   }
 
   /**

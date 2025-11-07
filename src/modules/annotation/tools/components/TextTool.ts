@@ -1,5 +1,6 @@
 import type { Annotation, Point } from '../../../../types';
 import { worldToScreen } from '../../../../utils/geometry/coordinate';
+import { TextSanitizer } from '../../../../utils/security/text-sanitizer';
 import { BaseTool } from './BaseTool';
 
 export class TextTool extends BaseTool {
@@ -146,7 +147,9 @@ export class TextTool extends BaseTool {
   private completeTextInput(): void {
     if (!this.textInput) return;
 
-    const text = this.textInput.value.trim();
+    // Sanitize text input to prevent XSS attacks
+    const rawText = this.textInput.value.trim();
+    const text = TextSanitizer.sanitize(rawText);
     let annotation: Annotation | null = null;
 
     if (text && this.startPoint) {

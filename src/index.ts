@@ -51,6 +51,13 @@ export { MemoryManager } from './utils/core/memory-manager';
 // Utilities - Validation
 export { ValidationHelper } from './utils/core/validation-helper';
 
+// Utilities - Security
+export {
+  SecureJsonParser,
+  TextSanitizer,
+  UrlValidator,
+} from './utils/security';
+
 // Utilities - Performance
 export {
   PerformanceMonitor,

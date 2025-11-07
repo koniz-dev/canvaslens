@@ -6,13 +6,15 @@ export class ImageLoader {
   private static readonly DEFAULT_MAX_SIZE = 2 * 1024 * 1024; // 2MB
   private static readonly DEFAULT_COMPRESSION_QUALITY = 0.8;
   private static readonly SUPPORTED_FORMATS = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
+  private static activeLoaders: Map<string, AbortController> = new Map();
 
   /**
    * Load image with optimization and lazy loading support
+   * Supports AbortController for cancellation
    */
   static async loadImage(
     src: string,
-    options: ImageLoadOptions = {},
+    options: ImageLoadOptions & { signal?: AbortSignal } = {},
     lazyOptions: LazyLoadOptions = {}
   ): Promise<CustomImageData> {
     const {
@@ -21,15 +23,29 @@ export class ImageLoader {
       enableCompression = true,
       compressionQuality = this.DEFAULT_COMPRESSION_QUALITY,
       preferWebP = true,
-      preferAVIF = true
+      preferAVIF = true,
+      signal
     } = options;
+
+    // Check for cancellation
+    if (signal?.aborted) {
+      throw new DOMException('Image loading aborted', 'AbortError');
+    }
+
+    // Store signal for cancellation tracking
+    if (signal) {
+      const abortHandler = () => {
+        this.activeLoaders.delete(src);
+      };
+      signal.addEventListener('abort', abortHandler, { once: true });
+    }
 
     try {
       // Check if image should be lazy loaded
-      const shouldLazyLoad = await this.shouldLazyLoad(src, maxSizeForEagerLoad);
+      const shouldLazyLoad = await this.shouldLazyLoad(src, maxSizeForEagerLoad, signal);
       
       if (shouldLazyLoad) {
-        return this.loadImageLazy(src, lazyOptions);
+        return this.loadImageLazy(src, lazyOptions, signal);
       }
 
       // Load image normally with optimizations
@@ -39,11 +55,24 @@ export class ImageLoader {
         compressionQuality,
         preferWebP,
         preferAVIF
-      });
+      }, signal);
     } catch (error) {
+      this.activeLoaders.delete(src);
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error;
+      }
       ErrorHandler.handleImageLoadError(error as Error, src);
       throw error;
     }
+  }
+
+  /**
+   * Cancel image loading
+   * Note: This method is deprecated. Use AbortController signal instead.
+   */
+  static cancelImageLoad(src: string): void {
+    // Remove from active loaders (actual cancellation handled by signal)
+    this.activeLoaders.delete(src);
   }
 
   /**
@@ -103,9 +132,18 @@ export class ImageLoader {
   /**
    * Check if image should be lazy loaded
    */
-  private static async shouldLazyLoad(src: string, maxSize: number): Promise<boolean> {
+  private static async shouldLazyLoad(src: string, maxSize: number, signal?: AbortSignal): Promise<boolean> {
     try {
-      const response = await fetch(src, { method: 'HEAD' });
+      const fetchOptions: RequestInit = { method: 'HEAD' };
+      if (signal) {
+        fetchOptions.signal = signal;
+      }
+      const response = await fetch(src, fetchOptions);
+      
+      if (signal?.aborted) {
+        throw new DOMException('Request aborted', 'AbortError');
+      }
+      
       const contentLength = response.headers.get('content-length');
       
       if (contentLength) {
@@ -114,7 +152,10 @@ export class ImageLoader {
       
       // If we can't determine size, assume it's large
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        throw error;
+      }
       // If we can't check size, load normally
       return false;
     }
@@ -125,7 +166,8 @@ export class ImageLoader {
    */
   private static async loadImageLazy(
     src: string,
-    options: LazyLoadOptions
+    options: LazyLoadOptions,
+    signal?: AbortSignal
   ): Promise<CustomImageData> {
     const {
       rootMargin = '50px',
@@ -135,7 +177,24 @@ export class ImageLoader {
     } = options;
 
     return new Promise((resolve, reject) => {
+      // Check for cancellation
+      if (signal?.aborted) {
+        reject(new DOMException('Image loading aborted', 'AbortError'));
+        return;
+      }
+
       const img = new Image();
+      
+      // Handle abort signal
+      const abortHandler = () => {
+        observer.disconnect();
+        img.src = ''; // Cancel image loading
+        reject(new DOMException('Image loading aborted', 'AbortError'));
+      };
+      
+      if (signal) {
+        signal.addEventListener('abort', abortHandler);
+      }
       
       // Set up intersection observer for lazy loading
       const observer = new IntersectionObserver(
@@ -143,7 +202,10 @@ export class ImageLoader {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               observer.unobserve(img);
-              this.loadImageOptimized(src).then(resolve).catch(reject);
+              if (signal) {
+                signal.removeEventListener('abort', abortHandler);
+              }
+              this.loadImageOptimized(src, {}, signal).then(resolve).catch(reject);
             }
           });
         },
@@ -180,7 +242,8 @@ export class ImageLoader {
    */
   private static async loadImageOptimized(
     src: string,
-    options: Partial<ImageLoadOptions> = {}
+    options: Partial<ImageLoadOptions> = {},
+    signal?: AbortSignal
   ): Promise<CustomImageData> {
     const {
       progressiveLoading = true,
@@ -191,7 +254,23 @@ export class ImageLoader {
     } = options;
 
     return new Promise((resolve, reject) => {
+      // Check for cancellation
+      if (signal?.aborted) {
+        reject(new DOMException('Image loading aborted', 'AbortError'));
+        return;
+      }
+
       const img = new Image();
+      
+      // Handle abort signal
+      const abortHandler = () => {
+        img.src = ''; // Cancel image loading
+        reject(new DOMException('Image loading aborted', 'AbortError'));
+      };
+      
+      if (signal) {
+        signal.addEventListener('abort', abortHandler);
+      }
       
       // Enable progressive loading
       if (progressiveLoading) {
@@ -218,6 +297,9 @@ export class ImageLoader {
       }
 
       img.onload = () => {
+        if (signal) {
+          signal.removeEventListener('abort', abortHandler);
+        }
         const customImageData: CustomImageData = {
           element: img,
           naturalSize: { width: img.naturalWidth, height: img.naturalHeight },
@@ -228,6 +310,9 @@ export class ImageLoader {
       };
 
       img.onerror = () => {
+        if (signal) {
+          signal.removeEventListener('abort', abortHandler);
+        }
         reject(new Error(`Failed to load image: ${src}`));
       };
     });

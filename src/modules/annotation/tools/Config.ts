@@ -1,5 +1,6 @@
 import type { ToolConfig } from '../../../types';
 import { warn } from '../../../utils/core/logger';
+import { SecureJsonParser } from '../../../utils/security/secure-json-parser';
 
 /**
  * Tool configuration management utilities
@@ -23,6 +24,7 @@ export class AnnotationToolsConfig {
 
   /**
    * Parse tools configuration from HTML attribute
+   * Uses secure JSON parser with validation
    */
   static parseFromAttribute(element: HTMLElement): ToolConfig | undefined {
     const toolsAttr = element.getAttribute('tools');
@@ -31,20 +33,15 @@ export class AnnotationToolsConfig {
       return undefined; // Let Engine use its default
     }
 
-    try {
-      const parsed = JSON.parse(toolsAttr);
-
-      // Validate the parsed configuration
-      if (typeof parsed !== 'object' || parsed === null) {
-        warn('Tools configuration must be an object:', toolsAttr);
-        return undefined;
-      }
-
-      return parsed;
-    } catch (e) {
-      warn('Invalid JSON in tools configuration:', toolsAttr, e);
+    // Use secure JSON parser with validation
+    const parsed = SecureJsonParser.parseToolConfig(toolsAttr);
+    
+    if (!parsed) {
+      warn('Invalid or unsafe tools configuration');
       return undefined;
     }
+
+    return parsed;
   }
 
   /**

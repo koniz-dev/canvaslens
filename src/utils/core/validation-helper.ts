@@ -1,4 +1,5 @@
 import type { Annotation, Point, ToolConfig, Rectangle } from '../../types';
+import { UrlValidator } from '../security/url-validator';
 
 export class ValidationHelper {
   static isValidAnnotation(annotation: unknown): annotation is Annotation {
@@ -46,12 +47,8 @@ export class ValidationHelper {
   }
 
   static isValidImageUrl(url: string): boolean {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
+    // Delegate to UrlValidator for comprehensive validation
+    return UrlValidator.isValidImageUrl(url);
   }
 
   static hasMinimumLength(points: Point[], minLength: number = 5): boolean {

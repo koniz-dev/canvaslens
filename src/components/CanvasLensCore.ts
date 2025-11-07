@@ -3,6 +3,7 @@ import type { Annotation, CustomImageData, Point, ToolConfig } from '../types';
 import { ErrorType } from '../types';
 import { ErrorHandler, safeAsync } from '../utils/core/error-handler';
 import { error, warn } from '../utils/core/logger';
+import { SecureJsonParser } from '../utils/security/secure-json-parser';
 import { AttributeParser } from './AttributeParser';
 import { EventManager } from './EventManager';
 import { OverlayManager } from './OverlayManager';
@@ -447,16 +448,20 @@ export class CanvasLensCore {
 
   /**
    * Update tool configuration
+   * Uses secure JSON parser with validation
    */
   private updateToolConfig(value: string): void {
     if (!this.canvasLens) return;
 
-    try {
-      const toolConfig = JSON.parse(value);
-      this.canvasLens.updateToolConfig(toolConfig);
-    } catch (error) {
-      warn('Invalid tools configuration:', error);
+    // Use secure JSON parser with validation
+    const toolConfig = SecureJsonParser.parseToolConfig(value);
+    
+    if (!toolConfig) {
+      warn('Invalid or unsafe tools configuration');
+      return;
     }
+
+    this.canvasLens.updateToolConfig(toolConfig);
   }
 
   /**

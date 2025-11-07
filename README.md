@@ -275,6 +275,41 @@ Chrome 60+, Firefox 55+, Safari 12+, Edge 79+
 - **[Annotation Styles Guide](docs/annotation-styles.md)**
 - **[Examples & Use Cases](docs/examples.md)**
 - **[Framework Integration](docs/examples.md#framework-integration)**
+- **[Security Documentation](docs/security.md)**
+
+## Error Handling
+
+CanvasLens provides comprehensive error handling:
+
+```typescript
+// Listen for errors
+viewer.addEventListener('error', (e) => {
+  const error = e.detail;
+  console.error(`[${error.type}] ${error.message}`, error.context);
+  
+  // Handle recoverable errors
+  if (error.recoverable) {
+    // Attempt recovery
+  }
+});
+
+// Use try-catch for async operations
+try {
+  await viewer.loadImage('https://example.com/image.jpg');
+} catch (error) {
+  // Handle error
+}
+```
+
+### Error Types
+
+- `INITIALIZATION`: Component initialization failed
+- `IMAGE_LOAD`: Image loading failed
+- `RENDERING`: Canvas rendering error
+- `ANNOTATION`: Annotation operation error
+- `TOOL_ACTIVATION`: Tool activation failed
+- `OVERLAY`: Overlay mode error
+- `ATTRIBUTE_PARSING`: Configuration parsing error
 
 ## License
 
