@@ -17,6 +17,7 @@ export default {
     '!src/__tests__/**',
     '!src/**/index.ts'
   ],
+  coverageProvider: 'v8',
   coverageDirectory: 'coverage',
   coverageReporters: [
     'text',
