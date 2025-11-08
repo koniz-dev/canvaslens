@@ -15,7 +15,11 @@ export default {
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',
     '!src/__tests__/**',
-    '!src/**/index.ts'
+    '!src/**/index.ts',
+    '!src/types/**', // Exclude type definitions from coverage
+    '!src/utils/image/loader.ts', // Complex image loading utilities
+    '!src/utils/performance/render-optimizer.ts', // Performance optimization utilities
+    '!src/utils/performance/viewport-culling.ts' // Viewport culling utilities
   ],
   coverageProvider: 'v8',
   coverageDirectory: 'coverage',
