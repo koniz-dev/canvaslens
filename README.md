@@ -3,8 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 [![npm](https://img.shields.io/npm/v/@koniz-dev/canvaslens.svg)](https://www.npmjs.com/package/@koniz-dev/canvaslens)
-[![Tests](https://github.com/koniz-dev/canvaslens/workflows/CI/badge.svg)](https://github.com/koniz-dev/canvaslens/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-56%25-yellow)](https://github.com/koniz-dev/canvaslens)
 
 A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a unified Web Component for image viewing, zooming, panning, annotation, and before/after image comparison.
 
