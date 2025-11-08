@@ -1,3 +1,9 @@
+## [1.3.0](https://github.com/koniz-dev/canvaslens/compare/v1.2.2...v1.3.0) (2025-11-08)
+
+### Features
+
+* **security:** add security enhancements and CI workflow ([144a414](https://github.com/koniz-dev/canvaslens/commit/144a41447a810b796115887ed544dc9a3d83d158))
+
 ## [1.2.2](https://github.com/koniz-dev/canvaslens/compare/v1.2.1...v1.2.2) (2025-11-02)
 
 ### Performance Improvements
