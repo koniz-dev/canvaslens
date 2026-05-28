@@ -4,13 +4,15 @@ import type { AnnotationManager } from '../Manager';
 import { AnnotationRenderer } from '../Renderer';
 import { AnnotationToolsController } from './Controller';
 import { AnnotationToolsEventHandler } from './EventHandler';
+import { ToolRegistry } from './ToolRegistry';
 import { AnnotationToolsUtils } from './Utils';
 
 // Type-safe aliases với proper types để tránh circular dependency
 type TypedControllerOptions = ControllerOptions<
   Renderer,
   AnnotationRenderer,
-  AnnotationManager | undefined
+  AnnotationManager | undefined,
+  ToolRegistry
 >;
 
 type TypedEventHandlerOptions = EventHandlerOptions<
@@ -20,7 +22,7 @@ type TypedEventHandlerOptions = EventHandlerOptions<
   AnnotationManager | undefined
 >;
 
-type TypedToolManagerOptions = ToolManagerOptions<AnnotationManager | undefined>;
+type TypedToolManagerOptions = ToolManagerOptions<AnnotationManager | undefined, ToolRegistry>;
 
 export class AnnotationToolsManager {
   private eventHandler: AnnotationToolsEventHandler;
@@ -41,7 +43,8 @@ export class AnnotationToolsManager {
       renderer,
       defaultStyle: options.defaultStyle,
       availableTools: options.availableTools,
-      ...(options.annotationManager && typeof options.annotationManager === 'object' ? { annotationManager: options.annotationManager } : {})
+      ...(options.annotationManager && typeof options.annotationManager === 'object' ? { annotationManager: options.annotationManager } : {}),
+      ...(options.registry ? { registry: options.registry } : {})
     };
     this.controller = new AnnotationToolsController(controllerOptions);
 
@@ -209,10 +212,24 @@ export class AnnotationToolsManager {
   }
 
   /**
-   * Get current tool configuration
+   * Get current tool configuration. Keys are tool types; the five built-in
+   * keys (rect, arrow, text, circle, line) are always present, and any
+   * plugin-registered types appear alongside them.
    */
-  getToolConfig(): { rect: boolean; arrow: boolean; text: boolean; circle: boolean; line: boolean } {
-    return this.controller.getToolConfig();
+  getToolConfig(): Record<string, boolean> & {
+    rect: boolean;
+    arrow: boolean;
+    text: boolean;
+    circle: boolean;
+    line: boolean;
+  } {
+    return this.controller.getToolConfig() as Record<string, boolean> & {
+      rect: boolean;
+      arrow: boolean;
+      text: boolean;
+      circle: boolean;
+      line: boolean;
+    };
   }
 
   /**

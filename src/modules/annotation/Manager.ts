@@ -16,6 +16,7 @@ import { ValidationHelper } from '../../utils/core/validation-helper';
 import { SecureJsonParser } from '../../utils/security/secure-json-parser';
 import { AnnotationRenderer } from './Renderer';
 import { AnnotationToolsManager } from './tools/Manager';
+import type { ToolRegistry } from './tools/ToolRegistry';
 
 export class AnnotationManager {
   private canvas: Renderer;
@@ -63,10 +64,11 @@ export class AnnotationManager {
       { name: 'Line', type: 'line', icon: '📏' }
     ];
 
-    const toolManagerOptions: ToolManagerOptions<AnnotationManager> = {
+    const toolManagerOptions: ToolManagerOptions<AnnotationManager, ToolRegistry> = {
       defaultStyle,
       availableTools,
-      annotationManager: this
+      annotationManager: this,
+      ...(options.registry ? { registry: options.registry } : {})
     };
 
     this.toolManager = new AnnotationToolsManager(canvas, this.renderer, toolManagerOptions);

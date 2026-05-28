@@ -2,22 +2,21 @@ import type { Renderer } from '../../../core/Renderer';
 import type { AnnotationStyle, Tool, ToolOptions, Point, ControllerOptions } from '../../../types';
 import type { AnnotationManager } from '../Manager';
 import type { AnnotationRenderer } from '../Renderer';
-import { ArrowTool } from './components/ArrowTool';
+import { createDefaultToolRegistry } from './built-in-plugins';
 import { BaseTool } from './components/BaseTool';
-import { CircleTool } from './components/CircleTool';
-import { LineTool } from './components/LineTool';
-import { RectangleTool } from './components/RectangleTool';
-import { TextTool } from './components/TextTool';
+import { ToolRegistry } from './ToolRegistry';
 
 // Type-safe alias với proper types
 type TypedControllerOptions = ControllerOptions<
   Renderer,
   AnnotationRenderer,
-  AnnotationManager | undefined
+  AnnotationManager | undefined,
+  ToolRegistry
 >;
 
 export class AnnotationToolsController {
   private options: TypedControllerOptions;
+  private registry: ToolRegistry;
   private tools: Map<string, BaseTool> = new Map();
   private currentTool: BaseTool | null = null;
   private activeToolType: string | null = null;
@@ -25,26 +24,33 @@ export class AnnotationToolsController {
 
   constructor(options: TypedControllerOptions) {
     this.options = options;
+    this.registry = options.registry ?? createDefaultToolRegistry();
     this.initializeTools();
   }
 
   /**
-   * Initialize all available tools
+   * Construct tool instances from the registry. Each plugin produces one
+   * BaseTool keyed by `plugin.type`.
    */
   private initializeTools(): void {
     const toolOptions: ToolOptions = {
       style: this.options.defaultStyle
     };
 
-    // Create tool instances
-    this.tools.set('rect', new RectangleTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('arrow', new ArrowTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('text', new TextTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('circle', new CircleTool(this.options.canvas, this.options.renderer, toolOptions));
-    this.tools.set('line', new LineTool(this.options.canvas, this.options.renderer, toolOptions));
+    for (const plugin of this.registry.list()) {
+      this.tools.set(
+        plugin.type,
+        plugin.create(this.options.canvas, this.options.renderer, toolOptions)
+      );
+    }
 
-    // Set default tool to rectangle
-    this.currentTool = this.tools.get('rect') || null;
+    // Default active tool: prefer 'rect' if available, else the first registered tool.
+    this.currentTool = this.tools.get('rect') ?? this.tools.values().next().value ?? null;
+  }
+
+  /** The registry currently driving this controller's tool set. */
+  getRegistry(): ToolRegistry {
+    return this.registry;
   }
 
   /**
@@ -134,16 +140,17 @@ export class AnnotationToolsController {
   }
 
   /**
-   * Get current tool configuration
+   * Get current tool configuration. Returns a record keyed by registered tool
+   * types so plugin-provided tools are surfaced just like built-ins.
    */
-  getToolConfig(): { rect: boolean; arrow: boolean; text: boolean; circle: boolean; line: boolean } {
-    return {
-      rect: this.tools.has('rect'),
-      arrow: this.tools.has('arrow'),
-      text: this.tools.has('text'),
-      circle: this.tools.has('circle'),
-      line: this.tools.has('line')
-    };
+  getToolConfig(): Record<string, boolean> {
+    const cfg: Record<string, boolean> = {};
+    for (const type of this.tools.keys()) cfg[type] = true;
+    // Preserve the legacy keys so callers that destructure rect/arrow/… still work.
+    for (const k of ['rect', 'arrow', 'text', 'circle', 'line'] as const) {
+      if (!(k in cfg)) cfg[k] = false;
+    }
+    return cfg;
   }
 
   /**

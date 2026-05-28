@@ -1,6 +1,9 @@
 import { DEFAULT_CONFIG } from '../constants';
 import { AnnotationManager } from '../modules/annotation';
 import { AnnotationToolsConfig } from '../modules/annotation/tools';
+import { createDefaultToolRegistry } from '../modules/annotation/tools/built-in-plugins';
+import type { ToolPlugin } from '../modules/annotation/tools/ToolPlugin';
+import { ToolRegistry } from '../modules/annotation/tools/ToolRegistry';
 import { ComparisonManager } from '../modules/comparison';
 import { ZoomPanHandler } from '../modules/zoom-pan';
 import type {
@@ -30,6 +33,15 @@ import { Store } from './Store';
 export interface AppOptions extends CanvasLensOptions {
   container: HTMLElement;
   eventHandlers?: EventHandlers;
+  /**
+   * Extra ToolPlugins to register on top of the five built-ins. Use this to
+   * add custom annotation tools without modifying the library:
+   *
+   * ```ts
+   * new App({ container, plugins: [myStarTool] });
+   * ```
+   */
+  plugins?: ToolPlugin[];
 }
 
 /**
@@ -46,6 +58,9 @@ export class App {
   private options: CanvasLensOptions;
   private backgroundColor: string;
   private eventHandlers: EventHandlers;
+
+  /** Plugin registry shared with the AnnotationManager when it exists. */
+  readonly toolRegistry: ToolRegistry;
 
   private zoomPan: ZoomPanHandler | null = null;
   private annotation: AnnotationManager | null = null;
@@ -88,6 +103,11 @@ export class App {
       appReducer
     );
     this.bus = new EventBus();
+
+    this.toolRegistry = createDefaultToolRegistry();
+    if (options.plugins) {
+      for (const plugin of options.plugins) this.toolRegistry.register(plugin);
+    }
 
     this.canvas = new Renderer(options.container, { width, height });
     this.canvas.imageViewer = this;
@@ -140,6 +160,7 @@ export class App {
         enabled: true,
         eventHandlers: this.eventHandlers,
         ctx,
+        registry: this.toolRegistry,
         ...(tools.annotation?.style && { defaultStyle: tools.annotation.style })
       });
       this.canvas.annotationManager = this.annotation;

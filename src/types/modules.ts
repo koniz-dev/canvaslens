@@ -1,4 +1,5 @@
 import type { ModuleContext } from '../core/ModuleContext';
+import type { ToolRegistry } from '../modules/annotation/tools/ToolRegistry';
 import type { EventHandlers, AnnotationStyle, Tool, CustomImageData, Annotation, Point } from './index';
 
 /**
@@ -11,6 +12,8 @@ export interface AnnotationManagerOptions {
   availableTools?: Tool[];
   eventHandlers?: EventHandlers;
   ctx?: ModuleContext;
+  /** Custom tool plugin registry. Defaults to the five built-in tools. */
+  registry?: ToolRegistry;
 }
 
 /**
@@ -20,13 +23,17 @@ export interface AnnotationManagerOptions {
 export interface ControllerOptions<
   TCanvas = unknown,
   TRenderer = unknown,
-  TAnnotationManager = unknown
+  TAnnotationManager = unknown,
+  TRegistry = unknown
 > {
   canvas: TCanvas; // Renderer type
   renderer: TRenderer; // AnnotationRenderer type
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
   annotationManager?: TAnnotationManager;
+  /** Optional plugin registry; if omitted, a default registry with the
+   * five built-in tools is used. */
+  registry?: TRegistry;
 }
 
 /**
@@ -59,10 +66,11 @@ export interface EventHandlerOptions<
  * Options for configuring the tool manager
  * @interface ToolManagerOptions
  */
-export interface ToolManagerOptions<TAnnotationManager = unknown> {
+export interface ToolManagerOptions<TAnnotationManager = unknown, TRegistry = unknown> {
   defaultStyle: AnnotationStyle;
   availableTools: Tool[];
   annotationManager?: TAnnotationManager;
+  registry?: TRegistry;
 }
 
 /**

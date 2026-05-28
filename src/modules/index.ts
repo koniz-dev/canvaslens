@@ -10,6 +10,14 @@ export {
   AnnotationToolsController,
   AnnotationToolsUtils,
   AnnotationToolsConfig,
+  ToolRegistry,
+  RECTANGLE_TOOL_PLUGIN,
+  ARROW_TOOL_PLUGIN,
+  TEXT_TOOL_PLUGIN,
+  CIRCLE_TOOL_PLUGIN,
+  LINE_TOOL_PLUGIN,
+  BUILT_IN_TOOL_PLUGINS,
+  createDefaultToolRegistry,
   BaseTool,
   RectangleTool,
   ArrowTool,
@@ -17,6 +25,7 @@ export {
   CircleTool,
   LineTool,
 } from './annotation/tools';
+export type { ToolPlugin } from './annotation/tools';
 
 // Comparison module
 export {
