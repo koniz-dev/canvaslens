@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CanvasLens — full demo</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>🔍 CanvasLens — full demo</h1>
+    <p>Exercise every public feature of the component. All controls below
+       drive the <code>&lt;canvas-lens&gt;</code> instance to the right.</p>
+  </header>
+
+  <main>
+    <aside id="controls">
+      <!-- Image source -->
+      <section class="panel">
+        <h2>1. Image</h2>
+        <div class="row">
+          <input type="text" id="src-url"
+                 value="https://picsum.photos/seed/cl/800/600"
+                 placeholder="Image URL" />
+          <button id="btn-load-url">Load URL</button>
+        </div>
+        <div class="row">
+          <button id="btn-random" title="Picsum random">🎲 Random</button>
+          <label class="file-pick">
+            <input type="file" id="file-pick" accept="image/*" hidden />
+            <span class="btn">📁 Pick file…</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Tools -->
+      <section class="panel">
+        <h2>2. Annotation tools</h2>
+        <div class="tools-grid">
+          <button class="tool" data-tool="rect">⬜ Rect</button>
+          <button class="tool" data-tool="arrow">↗ Arrow</button>
+          <button class="tool" data-tool="text">T Text</button>
+          <button class="tool" data-tool="circle">⭕ Circle</button>
+          <button class="tool" data-tool="line">📏 Line</button>
+          <button id="btn-deactivate-tool">✕ Off</button>
+        </div>
+        <p class="hint">
+          Drag inside the image to draw. Right-click an annotation to delete.
+          Alt+R/A/T/C/L are keyboard shortcuts. Esc clears the tool.
+        </p>
+      </section>
+
+      <!-- Style -->
+      <section class="panel">
+        <h2>3. Style (applied to new annotations)</h2>
+        <div class="row">
+          <label>Stroke
+            <input type="color" id="stroke-color" value="#e63946" />
+          </label>
+          <label>Width
+            <input type="number" id="stroke-width" value="3" min="1" max="20" />
+          </label>
+        </div>
+        <div class="row">
+          <label>Line
+            <select id="line-style">
+              <option value="solid">solid</option>
+              <option value="dashed">dashed</option>
+              <option value="dotted">dotted</option>
+            </select>
+          </label>
+          <label>Fill
+            <input type="color" id="fill-color" value="#e63946" />
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" id="fill-enabled" />
+            fill?
+          </label>
+        </div>
+        <button id="btn-apply-style">Apply</button>
+      </section>
+
+      <!-- View -->
+      <section class="panel">
+        <h2>4. View</h2>
+        <div class="row">
+          <button id="btn-zoom-in">+ Zoom</button>
+          <button id="btn-zoom-out">− Zoom</button>
+          <button id="btn-fit">Fit</button>
+          <button id="btn-reset">Reset</button>
+        </div>
+        <div class="row">
+          <label>Zoom to:
+            <input type="number" id="zoom-to" value="1" min="0.1" max="10" step="0.1" />
+          </label>
+          <button id="btn-zoom-to">Go</button>
+        </div>
+        <div class="row">
+          <span id="status-zoom">zoom 1.000×</span>
+          <span id="status-pan">pan (0,0)</span>
+        </div>
+      </section>
+
+      <!-- Modes -->
+      <section class="panel">
+        <h2>5. Modes</h2>
+        <div class="row">
+          <button id="btn-comparison">🔄 Toggle Comparison</button>
+          <span id="status-comparison">off</span>
+        </div>
+        <div class="row">
+          <button id="btn-overlay-open">⤢ Open overlay</button>
+          <button id="btn-overlay-close">⤡ Close</button>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="panel">
+        <h2>6. Annotations</h2>
+        <div class="row">
+          <button id="btn-clear">🗑 Clear all</button>
+          <button id="btn-export">⬇ Export JSON</button>
+          <button id="btn-import">⬆ Import JSON</button>
+        </div>
+        <div id="annotation-list" class="list" aria-label="Annotation list"></div>
+      </section>
+    </aside>
+
+    <section id="stage">
+      <canvas-lens
+        id="cl"
+        width="100%"
+        height="100%"
+        background-color="#f0f3f5"
+        src="https://picsum.photos/seed/cl/800/600"
+        tools='{
+          "zoom": true,
+          "pan": true,
+          "annotation": {
+            "rect": true,
+            "arrow": true,
+            "text": true,
+            "circle": true,
+            "line": true,
+            "style": {
+              "strokeColor": "#e63946",
+              "strokeWidth": 3,
+              "lineStyle": "solid"
+            }
+          },
+          "comparison": true
+        }'>
+      </canvas-lens>
+    </section>
+
+    <aside id="event-log">
+      <div class="log-header">
+        <h2>Event log</h2>
+        <button id="btn-clear-log">Clear</button>
+      </div>
+      <div id="events" class="events"></div>
+    </aside>
+  </main>
+
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

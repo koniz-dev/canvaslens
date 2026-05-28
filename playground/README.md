@@ -1,11 +1,14 @@
 # CanvasLens Playground
 
-This playground contains test applications for different frameworks to ensure CanvasLens library compatibility.
+This playground contains a full feature demo plus framework smoke tests.
 
 ## Structure
 
-- `react/` - React test application
-- `vue/` - Vue test application
+- `vanilla/` — **Full feature demo** (no framework). Drive every public
+  feature of `<canvas-lens>` from a single page. Recommended starting
+  point.
+- `react/` — minimal React integration smoke test
+- `vue/` — minimal Vue integration smoke test
 
 ## Usage
 
@@ -14,25 +17,51 @@ This playground contains test applications for different frameworks to ensure Ca
    npm run build
    ```
 
-2. Test with React:
+2. Run the full vanilla demo:
+   ```bash
+   cd playground/vanilla
+   npm install
+   npm run dev
+   ```
+   Opens at <http://localhost:3003/>.
+
+3. (Optional) Smoke tests with React:
    ```bash
    cd playground/react
    npm install
    npm run dev
    ```
 
-3. Test with Vue:
+4. (Optional) Smoke tests with Vue:
    ```bash
    cd playground/vue
    npm install
    npm run dev
    ```
 
-## Import Method
+## What the vanilla demo covers
 
-Both playgrounds import CanvasLens directly from the built dist files:
+- Image loading: URL, random Picsum, file picker
+- All 5 annotation tools (Rectangle, Arrow, Text, Circle, Line) with
+  toggle-on-second-click + an explicit Off button
+- Live style editor: strokeColor, strokeWidth, lineStyle, fillColor
+  (applied to subsequent annotations via `updateTools`)
+- View controls: zoom in/out, zoom to a specific scale, fit, reset
+- Comparison-mode toggle with status indicator
+- Overlay open/close
+- Annotation list with per-item delete buttons
+- Clear all / export JSON / import JSON
+- Live event log surfacing every DOM CustomEvent the component
+  dispatches: `imageLoad`, `zoomChange`, `panChange`, `toolChange`,
+  `annotationAdd`, `annotationRemove`, `comparisonChange`,
+  `comparisonModeChange`, `imageLoadError`.
+
+## Import method
+
+All playgrounds import CanvasLens directly from the built dist:
 ```javascript
-import { CanvasLens } from '../../../dist/index.js';
+import { CanvasLens } from '../../dist/index.js';
 ```
 
-This ensures we test the actual built library, not a development version.
+This ensures we exercise the actual built library, not the TypeScript
+source.
