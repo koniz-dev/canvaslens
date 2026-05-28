@@ -928,10 +928,33 @@ export class AnnotationManager {
 
 
   /**
-   * Update annotation style
+   * Update the default style used for *new* annotations.
    */
   updateStyle(style: Partial<AnnotationStyle>): void {
     this.toolManager.updateToolStyle(style);
+  }
+
+  /**
+   * Update the style of an existing annotation in place. Triggers a render
+   * so the change is visible immediately and fires the standard
+   * annotationAdd/remove notifications via the manager events.
+   */
+  updateAnnotationStyle(id: string, partial: Partial<AnnotationStyle>): boolean {
+    const annotation = this.annotations.get(id);
+    if (!annotation) return false;
+    annotation.style = { ...annotation.style, ...partial };
+    this.hasUnsavedChanges = true;
+    this.triggerViewStateChange();
+    return true;
+  }
+
+  /**
+   * Update the currently-selected annotation's style. Returns true if a
+   * selection existed and was updated.
+   */
+  updateSelectedStyle(partial: Partial<AnnotationStyle>): boolean {
+    if (!this.selectedAnnotation) return false;
+    return this.updateAnnotationStyle(this.selectedAnnotation.id, partial);
   }
 
   /**

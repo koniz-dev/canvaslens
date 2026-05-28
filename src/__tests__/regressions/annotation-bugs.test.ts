@@ -221,6 +221,125 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#4 — updateTools(style) propagates to subsequent draws', () => {
+    it('a rect drawn after updateTools uses the new style', () => {
+      app = setupApp();
+      const canvas = app.getCanvas().getElement();
+      app.activateTool('rect');
+      mouseAt(canvas, 'mousedown', 50, 50);
+      document.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 150, clientY: 130 })
+      );
+      document.dispatchEvent(
+        new MouseEvent('mouseup', { bubbles: true, clientX: 150, clientY: 130 })
+      );
+
+      app.updateTools({
+        annotation: {
+          rect: true,
+          style: { strokeColor: '#0066cc', strokeWidth: 8, lineStyle: 'dashed' }
+        }
+      });
+
+      mouseAt(canvas, 'mousedown', 200, 50);
+      document.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 130 })
+      );
+      document.dispatchEvent(
+        new MouseEvent('mouseup', { bubbles: true, clientX: 300, clientY: 130 })
+      );
+
+      const list = app.getAnnotations();
+      expect(list).toHaveLength(2);
+      expect(list[1]!.style.strokeColor).toBe('#0066cc');
+      expect(list[1]!.style.strokeWidth).toBe(8);
+      expect(list[1]!.style.lineStyle).toBe('dashed');
+      // First rect must keep its original style.
+      expect(list[0]!.style.strokeColor).not.toBe('#0066cc');
+    });
+  });
+
+  describe('#5 — updateSelectedAnnotationStyle', () => {
+    it('updates the selected annotation in place, leaves others alone', () => {
+      app = setupApp();
+      const a = ann('a1', 'rect', [
+        { x: 50, y: 50 },
+        { x: 150, y: 150 }
+      ]);
+      const b = ann('b1', 'rect', [
+        { x: 200, y: 50 },
+        { x: 300, y: 150 }
+      ]);
+      app.addAnnotation(a);
+      app.addAnnotation(b);
+      app.getAnnotationManager()!.selectAnnotation(a);
+
+      const ok = app.updateSelectedAnnotationStyle({
+        strokeColor: '#00aa00',
+        strokeWidth: 10,
+        fillColor: 'rgba(0,170,0,0.25)'
+      });
+      expect(ok).toBe(true);
+
+      const list = app.getAnnotations();
+      expect(list.find((x) => x.id === 'a1')!.style.strokeColor).toBe('#00aa00');
+      expect(list.find((x) => x.id === 'a1')!.style.fillColor).toBe('rgba(0,170,0,0.25)');
+      // The other rect retains its original style.
+      expect(list.find((x) => x.id === 'b1')!.style.strokeColor).toBe('#000');
+    });
+
+    it('returns false when no annotation is selected', () => {
+      app = setupApp();
+      app.addAnnotation(
+        ann('x', 'rect', [
+          { x: 0, y: 0 },
+          { x: 10, y: 10 }
+        ])
+      );
+      // No selection.
+      expect(app.updateSelectedAnnotationStyle({ strokeColor: '#0f0' })).toBe(false);
+    });
+  });
+
+  describe('#6 — text tool works for multiple sequential annotations', () => {
+    function typeText(app: App, x: number, y: number, value: string, done: () => void): void {
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', x, y);
+      // The text tool focuses asynchronously via two rAFs.
+      setTimeout(() => {
+        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+        if (!input) {
+          done();
+          return;
+        }
+        input.value = value;
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        // completeTextInput uses setTimeout 0 to dispatch annotationCreated.
+        setTimeout(done, 30);
+      }, 30);
+    }
+
+    it('creates three text annotations in sequence', (done) => {
+      app = setupApp();
+      app.activateTool('text');
+
+      typeText(app, 100, 100, 'one', () => {
+        expect(app.getAnnotations()).toHaveLength(1);
+        typeText(app, 200, 200, 'two', () => {
+          expect(app.getAnnotations()).toHaveLength(2);
+          typeText(app, 300, 300, 'three', () => {
+            expect(app.getAnnotations()).toHaveLength(3);
+            const types = app.getAnnotations().map((a) => a.type);
+            expect(types.every((t) => t === 'text')).toBe(true);
+            const texts = app.getAnnotations().map((a) => a.data?.text);
+            expect(texts).toEqual(['one', 'two', 'three']);
+            done();
+          });
+        });
+      });
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();

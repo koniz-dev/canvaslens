@@ -167,6 +167,21 @@ export class CanvasLens extends HTMLElement {
   getAnnotations(): Annotation[] {
     return this.app?.getAnnotations() ?? [];
   }
+  getSelectedAnnotation(): Annotation | null {
+    return this.app?.getSelectedAnnotation() ?? null;
+  }
+  updateAnnotationStyle(id: string, partial: Record<string, unknown>): boolean {
+    if (!this.app) return false;
+    const ok = this.app.updateAnnotationStyle(id, partial);
+    if (ok) this.hasUnsavedChanges = true;
+    return ok;
+  }
+  updateSelectedAnnotationStyle(partial: Record<string, unknown>): boolean {
+    if (!this.app) return false;
+    const ok = this.app.updateSelectedAnnotationStyle(partial);
+    if (ok) this.hasUnsavedChanges = true;
+    return ok;
+  }
 
   toggleComparisonMode(): void {
     this.app?.toggleComparisonMode();

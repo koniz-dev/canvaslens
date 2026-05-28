@@ -154,19 +154,22 @@ export class AnnotationToolsController {
   }
 
   /**
-   * Update tool configuration
+   * Update tool configuration: deactivate any tool turned off, and forward
+   * the `style` slice (if present) to all tools so subsequent draws use the
+   * new style.
    */
   updateToolConfig(annotationConfig: Record<string, unknown>): void {
-    // Update tool availability based on configuration
     this.tools.forEach((_tool, toolType) => {
       const isEnabled = annotationConfig[toolType];
-      if (isEnabled === false) {
-        // If tool is disabled and currently active, deactivate it
-        if (this.activeToolType === toolType) {
-          this.deactivateTool();
-        }
+      if (isEnabled === false && this.activeToolType === toolType) {
+        this.deactivateTool();
       }
     });
+
+    const style = annotationConfig.style as Partial<AnnotationStyle> | undefined;
+    if (style && typeof style === 'object') {
+      this.updateToolStyle(style);
+    }
   }
 
   /**

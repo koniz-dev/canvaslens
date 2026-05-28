@@ -98,6 +98,9 @@ $('btn-apply-style').addEventListener('click', () => {
     lineStyle: $('line-style').value
   };
   if ($('fill-enabled').checked) style.fillColor = $('fill-color').value;
+  else style.fillColor = undefined;
+
+  // Always update the default style so subsequent drawings inherit it.
   cl.updateTools({
     annotation: {
       rect: true,
@@ -108,7 +111,13 @@ $('btn-apply-style').addEventListener('click', () => {
       style
     }
   });
-  logEvent('updateTools', `style=${JSON.stringify(style)}`);
+
+  // If an annotation is currently selected, also restyle it in place.
+  if (cl.updateSelectedAnnotationStyle(style)) {
+    logEvent('updateSelectedAnnotationStyle', JSON.stringify(style));
+  } else {
+    logEvent('updateTools default style', JSON.stringify(style));
+  }
 });
 
 // ─── View ─────────────────────────────────────────────────────────────────

@@ -502,6 +502,21 @@ export class App {
     this.annotation.addAnnotation(annotation);
   }
 
+  /** Partial style update for one annotation; keeps it selected. */
+  updateAnnotationStyle(id: string, partial: Record<string, unknown>): boolean {
+    return this.annotation?.updateAnnotationStyle(id, partial) ?? false;
+  }
+
+  /** Partial style update for the currently-selected annotation. */
+  updateSelectedAnnotationStyle(partial: Record<string, unknown>): boolean {
+    return this.annotation?.updateSelectedStyle(partial) ?? false;
+  }
+
+  /** Currently-selected annotation, or null. */
+  getSelectedAnnotation(): Annotation | null {
+    return this.annotation?.getSelectedAnnotation() ?? null;
+  }
+
   clearAnnotations(): void {
     this.annotation?.clearAll();
   }
