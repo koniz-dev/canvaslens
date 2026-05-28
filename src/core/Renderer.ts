@@ -1,12 +1,23 @@
-import type { AnnotationManager, ImageViewer } from '../modules';
+import type { AnnotationManager } from '../modules';
 import type { Point, Rectangle, Size, ViewState } from '../types';
+
+/**
+ * Minimal contract the canvas needs from its host (App). Kept structural
+ * so the Renderer file doesn't pull in App and create a circular import.
+ */
+export interface CanvasHost {
+  render(): void;
+  isComparisonMode(): boolean;
+  isImageLoaded(): boolean;
+  getImageBounds(): Rectangle | null;
+}
 
 export class Renderer {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private viewState: ViewState;
   public annotationManager: AnnotationManager | null = null;
-  public imageViewer: ImageViewer | null = null;
+  public imageViewer: CanvasHost | null = null;
   private resizeTimeout: number | null = null;
   private renderRequestId: number | null = null;
   private dirtyRegions: Array<Rectangle> = [];

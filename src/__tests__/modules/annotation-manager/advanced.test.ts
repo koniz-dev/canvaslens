@@ -1,29 +1,29 @@
 import { AnnotationManager } from '../../../modules/annotation/Manager';
 import { Renderer } from '../../../core/Renderer';
-import { ImageViewer } from '../../../modules/image-viewer/Viewer';
+import { App } from '../../../core/App';
 import type { Annotation } from '../../../types';
 
 describe('AnnotationManager Advanced Tests', () => {
   let container: HTMLElement;
   let canvas: Renderer;
   let annotationManager: AnnotationManager;
-  let imageViewer: ImageViewer;
+  let app: App;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     
-    canvas = new Renderer(container, { width: 800, height: 600 });
-    imageViewer = new ImageViewer(container, { width: 800, height: 600 });
-    canvas.imageViewer = imageViewer;
+    app = new App({ container, width: 800, height: 600 });
+    canvas = app.getCanvas();
+    canvas.imageViewer = app;
   });
 
   afterEach(() => {
     if (annotationManager) {
       annotationManager.destroy();
     }
-    if (imageViewer) {
-      imageViewer.getCanvas().getElement().remove();
+    if (app) {
+      app.destroy();
     }
     if (container && container.parentElement) {
       document.body.removeChild(container);
@@ -455,8 +455,8 @@ describe('AnnotationManager Advanced Tests', () => {
       annotationManager.addAnnotation(annotation);
       
       // Enable comparison mode
-      if (imageViewer.getComparisonManager()) {
-        imageViewer.getComparisonManager()!.setComparisonMode(true);
+      if (app.getComparisonManager()) {
+        app.getComparisonManager()!.setComparisonMode(true);
       }
       
       const mouseDownEvent = new MouseEvent('mousedown', {
@@ -563,10 +563,10 @@ describe('AnnotationManager Advanced Tests', () => {
 
       annotationManager.addAnnotation(annotation);
       
-      if (imageViewer.getComparisonManager()) {
-        imageViewer.getComparisonManager()!.setComparisonMode(true);
+      if (app.getComparisonManager()) {
+        app.getComparisonManager()!.setComparisonMode(true);
         // isComparisonModeActive should return true
-        expect(imageViewer.isComparisonMode()).toBe(true);
+        expect(app.isComparisonMode()).toBe(true);
       }
     });
 

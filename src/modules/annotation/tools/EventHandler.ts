@@ -1,6 +1,5 @@
 import type { Renderer } from '../../../core/Renderer';
 import type { EventHandlerOptions } from '../../../types';
-import type { ImageViewer } from '../../image-viewer/Viewer';
 import type { AnnotationManager } from '../Manager';
 import type { AnnotationRenderer } from '../Renderer';
 import type { BaseTool } from './components/BaseTool';
@@ -13,13 +12,14 @@ type TypedEventHandlerOptions = EventHandlerOptions<
   AnnotationManager | undefined
 >;
 
-// Helper function để check comparison mode với type safety
-function isComparisonModeActive(imageViewer: unknown): boolean {
-  if (imageViewer && typeof imageViewer === 'object' && 'isComparisonMode' in imageViewer) {
-    const mode = (imageViewer as ImageViewer).isComparisonMode();
-    if (typeof mode === 'boolean') {
-      return mode;
-    }
+interface ComparisonAware {
+  isComparisonMode: () => boolean;
+}
+
+function isComparisonModeActive(host: unknown): boolean {
+  if (host && typeof host === 'object' && 'isComparisonMode' in host) {
+    const mode = (host as ComparisonAware).isComparisonMode();
+    if (typeof mode === 'boolean') return mode;
   }
   return false;
 }

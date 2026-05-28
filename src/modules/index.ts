@@ -24,8 +24,5 @@ export {
   ComparisonViewer,
 } from './comparison';
 
-// Image viewer module
-export { ImageViewer } from './image-viewer';
-
 // Zoom-pan module
 export { ZoomPanHandler } from './zoom-pan';

@@ -14,7 +14,7 @@ export interface WheelEventPayload {
   original: WheelEvent;
 }
 
-export interface AppEvents {
+export type AppEvents = {
   'image:loaded': CustomImageData;
   'image:load-error': Error;
   'view:zoom-changed': number;
@@ -38,4 +38,4 @@ export interface AppEvents {
   'key:down': KeyboardEvent;
   'render:request': string | undefined;
   destroy: undefined;
-}
+};

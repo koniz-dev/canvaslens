@@ -19,13 +19,14 @@ export type {
 export { ErrorType } from './types';
 export type { CanvasLensError } from './types';
 
-// Core engine and rendering
-export { Engine, Renderer } from './core';
+// Core application
+export { App, Renderer } from './core';
+export type { AppOptions, AppState, AppAction, AppEvents } from './core';
+export { EventBus, Store, RenderScheduler, appReducer, createInitialState } from './core';
 
 // Components
 export {
   AttributeParser,
-  CanvasLensCore,
   EventManager,
   OverlayManager,
 } from './components';

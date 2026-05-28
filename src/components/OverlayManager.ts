@@ -1,11 +1,11 @@
-import { Engine } from '../core/Engine';
+import { App } from '../core/App';
 import type { CanvasLensOptions } from '../types';
 import { error, warn } from '../utils/core/logger';
 
 export class OverlayManager {
   private element: HTMLElement;
   private overlayContainer: HTMLElement | null = null;
-  private overlayCanvasLens: Engine | null = null;
+  private overlayCanvasLens: App | null = null;
   private overlayOpen = false;
   private originalOptions: CanvasLensOptions | null = null;
 
@@ -62,7 +62,7 @@ export class OverlayManager {
   /**
    * Get overlay CanvasLens instance
    */
-  getOverlayCanvasLens(): Engine | null {
+  getOverlayCanvasLens(): App | null {
     return this.overlayCanvasLens;
   }
 
@@ -128,7 +128,7 @@ export class OverlayManager {
 
     this.originalOptions = this.getOriginalOptions();
 
-    this.overlayCanvasLens = new Engine({
+    this.overlayCanvasLens = new App({
       ...this.originalOptions,
       container: canvasContainer,
       width: canvasContainer.clientWidth,

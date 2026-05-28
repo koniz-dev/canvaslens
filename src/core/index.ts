@@ -1,6 +1,8 @@
-// Core engine and rendering exports
-export { Engine } from './Engine';
+// Application root and canvas exports
+export { App } from './App';
+export type { AppOptions } from './App';
 export { Renderer } from './Renderer';
+export type { CanvasHost } from './Renderer';
 
 // Phase 1 foundation modules
 export { EventBus } from './EventBus';

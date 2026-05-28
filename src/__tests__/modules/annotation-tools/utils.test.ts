@@ -1,13 +1,13 @@
 import { AnnotationToolsUtils } from '../../../modules/annotation/tools/Utils';
 import { Renderer } from '../../../core/Renderer';
-import { ImageViewer } from '../../../modules/image-viewer/Viewer';
+import { App } from '../../../core/App';
 import { AnnotationManager } from '../../../modules/annotation/Manager';
 import type { Annotation, Point } from '../../../types';
 
 describe('AnnotationToolsUtils', () => {
   let container: HTMLElement;
   let canvas: Renderer;
-  let imageViewer: ImageViewer;
+  let app: App;
   let annotationManager: AnnotationManager;
   let utils: AnnotationToolsUtils;
 
@@ -15,9 +15,9 @@ describe('AnnotationToolsUtils', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     
-    canvas = new Renderer(container, { width: 800, height: 600 });
-    imageViewer = new ImageViewer(container, { width: 800, height: 600 });
-    canvas.imageViewer = imageViewer;
+    app = new App({ container, width: 800, height: 600 });
+    canvas = app.getCanvas();
+    canvas.imageViewer = app;
     annotationManager = new AnnotationManager(canvas);
     canvas.annotationManager = annotationManager;
     
@@ -28,8 +28,8 @@ describe('AnnotationToolsUtils', () => {
     if (annotationManager) {
       annotationManager.destroy();
     }
-    if (imageViewer) {
-      imageViewer.getCanvas().getElement().remove();
+    if (app) {
+      app.destroy();
     }
     if (container && container.parentElement) {
       document.body.removeChild(container);
@@ -61,7 +61,7 @@ describe('AnnotationToolsUtils', () => {
   describe('getImageBounds', () => {
     it('should return image bounds when annotation manager is available', async () => {
       const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjwvc3ZnPg==';
-      await imageViewer.loadImage(testImageSrc);
+      await app.loadImage(testImageSrc);
       
       const bounds = utils.getImageBounds();
       
@@ -94,7 +94,7 @@ describe('AnnotationToolsUtils', () => {
 
     it('should return true when point is within image bounds', async () => {
       const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjwvc3ZnPg==';
-      await imageViewer.loadImage(testImageSrc);
+      await app.loadImage(testImageSrc);
       
       const bounds = utils.getImageBounds();
       if (bounds) {
@@ -112,7 +112,7 @@ describe('AnnotationToolsUtils', () => {
 
     it('should return false when point is outside image bounds', async () => {
       const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjwvc3ZnPg==';
-      await imageViewer.loadImage(testImageSrc);
+      await app.loadImage(testImageSrc);
       
       const point: Point = { x: 10000, y: 10000 };
       const result = utils.isPointInImageBounds(point);
@@ -297,7 +297,7 @@ describe('AnnotationToolsUtils', () => {
 
     it('should clamp point to image bounds', async () => {
       const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjwvc3ZnPg==';
-      await imageViewer.loadImage(testImageSrc);
+      await app.loadImage(testImageSrc);
       
       const bounds = utils.getImageBounds();
       if (bounds && !isNaN(bounds.x) && !isNaN(bounds.y) && !isNaN(bounds.width) && !isNaN(bounds.height) && bounds.width > 0 && bounds.height > 0) {
@@ -328,7 +328,7 @@ describe('AnnotationToolsUtils', () => {
 
     it('should not change point when it is within bounds', async () => {
       const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjwvc3ZnPg==';
-      await imageViewer.loadImage(testImageSrc);
+      await app.loadImage(testImageSrc);
       
       const bounds = utils.getImageBounds();
       if (bounds) {

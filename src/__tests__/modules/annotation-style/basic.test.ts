@@ -1,4 +1,4 @@
-import { Engine } from '../../../core/Engine';
+import { App } from '../../../core/App';
 import { AnnotationManager } from '../../../modules/annotation/Manager';
 import { Renderer } from '../../../core/Renderer';
 import type { AnnotationStyle, ToolConfig, CanvasLensOptions } from '../../../types';
@@ -38,10 +38,10 @@ describe('Annotation Style Configuration', () => {
         tools
       };
 
-      const engine = new Engine(options);
+      const app = new App(options);
 
       // Verify Engine is created without error
-      expect(engine).toBeDefined();
+      expect(app).toBeDefined();
 
       // The style should be passed through to AnnotationManager
       // This is tested indirectly by checking if annotations use the style
@@ -68,8 +68,8 @@ describe('Annotation Style Configuration', () => {
         tools
       };
 
-      const engine = new Engine(options);
-      expect(engine).toBeDefined();
+      const app = new App(options);
+      expect(app).toBeDefined();
     });
 
     it('should handle undefined style in ToolConfig', () => {
@@ -87,8 +87,8 @@ describe('Annotation Style Configuration', () => {
         tools
       };
 
-      const engine = new Engine(options);
-      expect(engine).toBeDefined();
+      const app = new App(options);
+      expect(app).toBeDefined();
     });
   });
 
@@ -171,8 +171,8 @@ describe('Annotation Style Configuration', () => {
           tools
         };
 
-        const engine = new Engine(options);
-        expect(engine).toBeDefined();
+        const app = new App(options);
+        expect(app).toBeDefined();
       });
     });
 
@@ -205,8 +205,8 @@ describe('Annotation Style Configuration', () => {
           tools
         };
 
-        const engine = new Engine(options);
-        expect(engine).toBeDefined();
+        const app = new App(options);
+        expect(app).toBeDefined();
       });
     });
 
@@ -235,8 +235,8 @@ describe('Annotation Style Configuration', () => {
         tools
       };
 
-      const engine = new Engine(options);
-      expect(engine).toBeDefined();
+      const app = new App(options);
+      expect(app).toBeDefined();
     });
 
     it('should support text-specific style properties', () => {
@@ -261,8 +261,8 @@ describe('Annotation Style Configuration', () => {
         tools
       };
 
-      const engine = new Engine(options);
-      expect(engine).toBeDefined();
+      const app = new App(options);
+      expect(app).toBeDefined();
     });
   });
 });

@@ -1,29 +1,29 @@
 import { ComparisonManager } from '../../../modules/comparison/Manager';
 import { Renderer } from '../../../core/Renderer';
-import { ImageViewer } from '../../../modules/image-viewer/Viewer';
+import { App } from '../../../core/App';
 import type { EventHandlers } from '../../../types';
 
 describe('ComparisonManager', () => {
   let container: HTMLElement;
   let canvas: Renderer;
-  let imageViewer: ImageViewer;
+  let app: App;
   let comparisonManager: ComparisonManager;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
     
-    canvas = new Renderer(container, { width: 800, height: 600 });
-    imageViewer = new ImageViewer(container, { width: 800, height: 600 });
-    canvas.imageViewer = imageViewer;
+    app = new App({ container, width: 800, height: 600 });
+    canvas = app.getCanvas();
+    canvas.imageViewer = app;
   });
 
   afterEach(() => {
     if (comparisonManager) {
       comparisonManager.destroy();
     }
-    if (imageViewer) {
-      imageViewer.getCanvas().getElement().remove();
+    if (app) {
+      app.destroy();
     }
     if (container && container.parentElement) {
       document.body.removeChild(container);

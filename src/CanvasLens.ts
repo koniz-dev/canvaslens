@@ -1,376 +1,268 @@
 /**
- * CanvasLens Web Component - A powerful HTML5 Canvas-based image viewing and annotation library
- * 
+ * CanvasLens Web Component — image viewing & annotation built on HTML5 Canvas.
+ *
  * @example
  * ```html
- * <canvas-lens 
+ * <canvas-lens
  *   src="https://example.com/image.jpg"
- *   width="800px" 
+ *   width="800px"
  *   height="600px"
  *   tools='{"zoom": true, "pan": true, "annotation": {"rect": true}}'>
  * </canvas-lens>
  * ```
  */
-import { CanvasLensCore } from './components/CanvasLensCore';
-import type { Annotation, CustomImageData, ToolConfig } from './types';
+import { AttributeParser } from './components/AttributeParser';
+import { EventManager } from './components/EventManager';
+import { OverlayManager } from './components/OverlayManager';
+import { App } from './core/App';
+import type { Annotation, CustomImageData, Point, ToolConfig } from './types';
 import { ErrorType } from './types';
 import { ErrorHandler } from './utils/core/error-handler';
+import { error, warn } from './utils/core/logger';
+
+const OBSERVED_ATTRIBUTES = [
+  'src',
+  'width',
+  'height',
+  'background-color',
+  'tools',
+  'max-zoom',
+  'min-zoom',
+  'image-type',
+  'file-name'
+] as const;
 
 export class CanvasLens extends HTMLElement {
-  private core: CanvasLensCore | null = null;
+  private app: App | null = null;
+  private eventManager: EventManager;
+  private overlayManager: OverlayManager;
+  private hasUnsavedChanges = false;
 
-  static get observedAttributes() {
-    return [
-      'src', 'width', 'height', 'background-color', 
-      'tools', 'max-zoom', 'min-zoom', 'image-type', 'file-name'
-    ];
+  static get observedAttributes(): readonly string[] {
+    return OBSERVED_ATTRIBUTES;
   }
 
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
+    this.eventManager = new EventManager(this);
+    this.overlayManager = new OverlayManager(this);
   }
 
-  connectedCallback() {
-    this.initialize();
-  }
-
-  disconnectedCallback() {
-    this.destroy();
-  }
-
-  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    if (oldValue !== newValue && this.core) {
-      this.core.handleAttributeChange(name, newValue);
-    }
-  }
-
-  /**
-   * Initialize the CanvasLens component
-   */
-  private initialize(): void {
+  connectedCallback(): void {
+    if (this.app) return;
     try {
-      this.core = new CanvasLensCore(this);
-      this.core.initialize();
-    } catch (error) {
-      ErrorHandler.handleError(
-        error as Error,
-        { element: this, operation: 'initialize' }
-      );
-      // Re-throw to prevent silent failures
-      throw error;
+      const container = this.createContainer();
+      const options = AttributeParser.parseAttributes(this, container);
+      const eventHandlers = this.eventManager.createEventHandlers();
+      this.app = new App({ ...options, container, eventHandlers });
+      this.eventManager.setupEventListeners();
+      this.ensureCanvasSize();
+      this.loadInitialImage();
+    } catch (err) {
+      ErrorHandler.handleError(err as Error, { element: this, operation: 'connectedCallback' });
+      throw err;
     }
   }
 
-  /**
-   * Destroy the component and clean up resources
-   */
-  private destroy(): void {
-    if (this.core) {
-      this.core.destroy();
-      this.core = null;
+  disconnectedCallback(): void {
+    this.app?.destroy();
+    this.app = null;
+    this.eventManager.destroy();
+    this.overlayManager.destroy();
+    this.hasUnsavedChanges = false;
+  }
+
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+    if (oldValue === newValue || !this.app) return;
+    try {
+      switch (name) {
+        case 'src':
+          if (newValue) {
+            void this.app.loadImage(
+              newValue,
+              this.getAttribute('image-type') ?? undefined,
+              this.getAttribute('file-name') ?? undefined
+            );
+            this.hasUnsavedChanges = false;
+          }
+          break;
+        case 'width':
+        case 'height': {
+          const { width, height } = AttributeParser.getContainerDimensions(this);
+          this.app.resize(width, height);
+          break;
+        }
+        case 'tools':
+          if (newValue !== null) this.app.updateToolConfigFromAttribute(newValue);
+          break;
+        case 'max-zoom':
+        case 'min-zoom':
+          this.reinitialize();
+          break;
+      }
+    } catch (err) {
+      error(`Failed to handle attribute change for "${name}":`, err);
     }
   }
 
-  /**
-   * Load image from URL
-   * @param src - Image URL
-   * @param type - Image MIME type (optional)
-   * @param fileName - File name (optional)
-   */
+  // ─── Public API (Web Component instance methods) ───────────────────────────
+
   async loadImage(src: string, type?: string, fileName?: string): Promise<void> {
-    if (this.core) {
-      return this.core.loadImage(src, type, fileName);
-    }
-    throw ErrorHandler.createError(
-      ErrorType.INITIALIZATION,
-      'CanvasLens is not initialized'
-    );
+    return this.requireApp().loadImage(src, type, fileName);
   }
 
-  /**
-   * Load image from File object
-   * @param file - File object
-   */
   loadImageFromFile(file: File): void {
-    if (this.core) {
-      this.core.loadImageFromFile(file);
-    }
+    this.requireApp().loadImageFromFile(file);
   }
 
-  /**
-   * Resize the canvas
-   * @param width - New width
-   * @param height - New height
-   */
   resize(width: number, height: number): void {
-    if (this.core) {
-      this.core.resize(width, height);
-    }
+    this.app?.resize(width, height);
   }
 
-  /**
-   * Zoom in by the specified factor
-   * @param factor - Zoom factor (default: 1.2)
-   */
   zoomIn(factor?: number): void {
-    if (this.core) {
-      this.core.zoomIn(factor);
-    }
+    this.app?.zoomIn(factor);
   }
-
-  /**
-   * Zoom out by the specified factor
-   * @param factor - Zoom factor (default: 1.2)
-   */
   zoomOut(factor?: number): void {
-    if (this.core) {
-      this.core.zoomOut(factor);
-    }
+    this.app?.zoomOut(factor);
   }
-
-  /**
-   * Set zoom level to specific scale
-   * @param scale - Zoom scale (1.0 = 100%)
-   */
   zoomTo(scale: number): void {
-    if (this.core) {
-      this.core.zoomTo(scale);
-    }
+    this.app?.zoomTo(scale);
   }
-
-  /**
-   * Fit image to view
-   */
   fitToView(): void {
-    if (this.core) {
-      this.core.fitToView();
-    }
+    this.app?.fitToView();
   }
-
-  /**
-   * Reset view to original state
-   */
   resetView(): void {
-    if (this.core) {
-      this.core.resetView();
-    }
+    this.app?.resetView();
   }
 
-  /**
-   * Activate a specific annotation or interaction tool
-   * @param toolType - Tool type to activate ('rect', 'arrow', 'text', 'circle', 'line')
-   * @returns true if tool was activated successfully, false if tool type is invalid or unavailable
-   */
   activateTool(toolType: string): boolean {
-    if (this.core) {
-      return this.core.activateTool(toolType);
-    }
-    return false;
+    return this.app?.activateTool(toolType) ?? false;
   }
-
-  /**
-   * Deactivate current tool
-   * @returns true if tool was deactivated successfully
-   */
   deactivateTool(): boolean {
-    if (this.core) {
-      return this.core.deactivateTool();
-    }
-    return false;
+    return this.app?.deactivateTool() ?? false;
   }
-
-  /**
-   * Update tools configuration dynamically
-   * @param toolConfig - Tool configuration object with enabled/disabled tools
-   * @example
-   * ```javascript
-   * viewer.updateTools({
-   *   zoom: true,
-   *   pan: true,
-   *   annotation: { rect: true, arrow: false, text: true }
-   * });
-   * ```
-   */
   updateTools(toolConfig: ToolConfig): void {
-    if (this.core) {
-      this.core.updateTools(toolConfig);
-    }
+    this.app?.updateTools(toolConfig);
   }
-
-  /**
-   * Get currently active tool
-   * @returns Active tool type or null
-   */
   getActiveTool(): string | null {
-    if (this.core) {
-      return this.core.getActiveTool();
-    }
-    return null;
+    return this.app?.getActiveTool() ?? null;
   }
 
-  /**
-   * Add a new annotation to the canvas
-   * @param annotation - Annotation object with type, coordinates, and style properties
-   * @example
-   * ```javascript
-   * viewer.addAnnotation({
-   *   type: 'rect',
-   *   x: 100, y: 100, width: 200, height: 150,
-   *   style: { stroke: '#ff0000', fill: 'rgba(255,0,0,0.2)' }
-   * });
-   * ```
-   */
   addAnnotation(annotation: Annotation): void {
-    if (this.core) {
-      this.core.addAnnotation(annotation);
-    }
+    if (!this.app) return;
+    this.app.addAnnotation(annotation);
+    this.hasUnsavedChanges = true;
   }
-
-  /**
-   * Remove an annotation by ID
-   * @param annotationId - Annotation ID to remove
-   */
-  removeAnnotation(annotationId: string): void {
-    if (this.core) {
-      this.core.removeAnnotation(annotationId);
-    }
+  removeAnnotation(id: string): void {
+    if (!this.app) return;
+    this.app.removeAnnotation(id);
+    this.hasUnsavedChanges = true;
   }
-
-  /**
-   * Clear all annotations
-   */
   clearAnnotations(): void {
-    if (this.core) {
-      this.core.clearAnnotations();
-    }
+    if (!this.app) return;
+    this.app.clearAnnotations();
+    this.hasUnsavedChanges = true;
   }
-
-  /**
-   * Get all annotations
-   * @returns Array of annotations
-   */
   getAnnotations(): Annotation[] {
-    if (this.core) {
-      return this.core.getAnnotations();
-    }
-    return [];
+    return this.app?.getAnnotations() ?? [];
   }
 
-  /**
-   * Toggle comparison mode
-   * Switches between normal view and comparison view with slider
-   */
   toggleComparisonMode(): void {
-    if (this.core) {
-      this.core.toggleComparisonMode();
-    }
+    this.app?.toggleComparisonMode();
   }
-
-  /**
-   * Set comparison mode
-   * @param enabled - true to enable comparison mode, false to disable
-   */
   setComparisonMode(enabled: boolean): void {
-    if (this.core) {
-      this.core.setComparisonMode(enabled);
-    }
+    this.app?.setComparisonMode(enabled);
   }
-
-  /**
-   * Check if comparison mode is enabled
-   * @returns true if comparison mode is enabled
-   */
   isComparisonMode(): boolean {
-    if (this.core) {
-      return this.core.isComparisonMode();
-    }
-    return false;
+    return this.app?.isComparisonMode() ?? false;
   }
 
-  /**
-   * Open overlay mode for full-screen editing experience
-   * Provides a professional editing interface with toolbar and enhanced controls
-   */
   openOverlay(): void {
-    if (this.core) {
-      this.core.openOverlay();
-    }
+    this.overlayManager.openOverlay();
   }
-
-  /**
-   * Close overlay mode
-   */
   closeOverlay(): void {
-    if (this.core) {
-      this.core.closeOverlay();
-    }
+    this.overlayManager.closeOverlay();
   }
-
-  /**
-   * Check if overlay is open
-   * @returns true if overlay is open
-   */
   isOverlayOpen(): boolean {
-    if (this.core) {
-      return this.core.isOverlayOpen();
-    }
-    return false;
+    return this.overlayManager.isOverlayOpen();
   }
 
-  /**
-   * Check if an image is loaded
-   * @returns true if image is loaded
-   */
   isImageLoaded(): boolean {
-    if (this.core) {
-      return this.core.isImageLoaded();
-    }
-    return false;
+    return this.app?.isImageLoaded() ?? false;
   }
-
-  /**
-   * Get current image data
-   * @returns Image data object or null
-   */
   getImageData(): CustomImageData | null {
-    if (this.core) {
-      return this.core.getImageData();
-    }
-    return null;
+    return this.app?.getImageData() ?? null;
   }
-
-  /**
-   * Get current zoom level
-   * @returns Current zoom level
-   */
   getZoomLevel(): number {
-    if (this.core) {
-      return this.core.getZoomLevel();
-    }
-    return 1;
+    return this.app?.getZoomLevel() ?? 1;
   }
-
-  /**
-   * Get current pan offset
-   * @returns Pan offset object
-   */
-  getPanOffset(): { x: number; y: number } {
-    if (this.core) {
-      return this.core.getPanOffset();
-    }
-    return { x: 0, y: 0 };
+  getPanOffset(): Point {
+    return this.app?.getPanOffset() ?? { x: 0, y: 0 };
   }
-
-  /**
-   * Check if there are unsaved changes
-   * @returns true if there are changes
-   */
   hasChanges(): boolean {
-    if (this.core) {
-      return this.core.hasChanges();
+    return this.hasUnsavedChanges;
+  }
+
+  /** Access the underlying App for advanced use (e.g. store/bus subscriptions). */
+  getApp(): App | null {
+    return this.app;
+  }
+
+  // ─── Internals ─────────────────────────────────────────────────────────────
+
+  private requireApp(): App {
+    if (!this.app) {
+      throw ErrorHandler.createError(ErrorType.INITIALIZATION, 'CanvasLens is not connected');
     }
-    return false;
+    return this.app;
+  }
+
+  private createContainer(): HTMLElement {
+    const shadow = this.shadowRoot;
+    if (!shadow) {
+      throw ErrorHandler.createError(ErrorType.INITIALIZATION, 'Shadow root not available');
+    }
+    while (shadow.firstChild) shadow.removeChild(shadow.firstChild);
+
+    const container = document.createElement('div');
+    container.style.cssText = 'width:100%;height:100%;position:relative;overflow:hidden;';
+    shadow.appendChild(container);
+    return container;
+  }
+
+  private ensureCanvasSize(): void {
+    requestAnimationFrame(() => {
+      if (!this.app || this.app.isDestroyed()) return;
+      const { width, height } = AttributeParser.getContainerDimensions(this);
+      if (width > 0 && height > 0) this.app.resize(width, height);
+    });
+  }
+
+  private loadInitialImage(): void {
+    const src = this.getAttribute('src');
+    if (src && this.app) {
+      void this.app
+        .loadImage(
+          src,
+          this.getAttribute('image-type') ?? undefined,
+          this.getAttribute('file-name') ?? undefined
+        )
+        .catch(() => {
+          warn('Initial image load failed');
+        });
+    }
+  }
+
+  private reinitialize(): void {
+    if (!this.app) return;
+    const currentImageData = this.app.getImageData();
+    this.disconnectedCallback();
+    this.connectedCallback();
+    if (currentImageData && this.app) {
+      const app = this.app as App;
+      app.loadImageElement(currentImageData.element, currentImageData.type, currentImageData.fileName);
+    }
   }
 }
 

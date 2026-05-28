@@ -1,32 +1,32 @@
 import { ZoomPanHandler } from '../../../modules/zoom-pan/Handler';
 import { Renderer } from '../../../core/Renderer';
-import { ImageViewer } from '../../../modules/image-viewer/Viewer';
+import { App } from '../../../core/App';
 import type { ZoomPanOptions, EventHandlers } from '../../../types';
 
 describe('ZoomPanHandler Comprehensive Tests', () => {
   let container: HTMLElement;
   let canvas: Renderer;
-  let imageViewer: ImageViewer;
+  let app: App;
   let zoomPanHandler: ZoomPanHandler;
 
   beforeEach(async () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     
-    canvas = new Renderer(container, { width: 800, height: 600 });
-    imageViewer = new ImageViewer(container, { width: 800, height: 600 });
-    canvas.imageViewer = imageViewer;
+    app = new App({ container, width: 800, height: 600 });
+    canvas = app.getCanvas();
+    canvas.imageViewer = app;
     
     const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iIzAwMCIvPjwvc3ZnPg==';
-    await imageViewer.loadImage(testImageSrc);
+    await app.loadImage(testImageSrc);
   });
 
   afterEach(() => {
     if (zoomPanHandler) {
       zoomPanHandler.destroy();
     }
-    if (imageViewer) {
-      imageViewer.getCanvas().getElement().remove();
+    if (app) {
+      app.destroy();
     }
     if (container && container.parentElement) {
       document.body.removeChild(container);
@@ -179,7 +179,7 @@ describe('ZoomPanHandler Comprehensive Tests', () => {
     });
 
     it('should not pan when annotation tool is active', () => {
-      const annotationManager = imageViewer.getAnnotationManager();
+      const annotationManager = app.getAnnotationManager();
       if (annotationManager) {
         annotationManager.activateTool('rect');
         
@@ -197,7 +197,7 @@ describe('ZoomPanHandler Comprehensive Tests', () => {
     });
 
     it('should not pan when annotation is selected', () => {
-      const annotationManager = imageViewer.getAnnotationManager();
+      const annotationManager = app.getAnnotationManager();
       if (annotationManager) {
         const annotation = {
           id: 'test',
@@ -325,7 +325,7 @@ describe('ZoomPanHandler Comprehensive Tests', () => {
     });
 
     it('should fit image to view', () => {
-      const bounds = imageViewer.getImageBounds();
+      const bounds = app.getImageBounds();
       if (bounds && bounds.width > 0 && bounds.height > 0) {
         zoomPanHandler.fitToView(bounds);
         
@@ -343,7 +343,7 @@ describe('ZoomPanHandler Comprehensive Tests', () => {
     });
 
     it('should fit to view overlay mode (allows scaling up)', () => {
-      const bounds = imageViewer.getImageBounds();
+      const bounds = app.getImageBounds();
       if (bounds && bounds.width > 0 && bounds.height > 0) {
         zoomPanHandler.fitToViewOverlay(bounds);
         
@@ -487,7 +487,7 @@ describe('ZoomPanHandler Comprehensive Tests', () => {
     });
 
     it('should not update cursor when annotation tool is active', () => {
-      const annotationManager = imageViewer.getAnnotationManager();
+      const annotationManager = app.getAnnotationManager();
       if (annotationManager) {
         annotationManager.activateTool('rect');
         zoomPanHandler.updateCursorState();

@@ -1,13 +1,11 @@
-import { Engine } from '../../../core/Engine';
-import { ImageViewer } from '../../../modules/image-viewer/Viewer';
+import { App } from '../../../core/App';
 import { AnnotationManager } from '../../../modules/annotation/Manager';
 import { Renderer } from '../../../core/Renderer';
 import type { Annotation, AnnotationStyle, CanvasLensOptions, ToolConfig } from '../../../types';
 
 describe('Image Annotation Integration (Actual Code)', () => {
   let container: HTMLElement;
-  let engine: Engine;
-  let imageViewer: ImageViewer;
+  let app: App;
 
   beforeEach(() => {
     container = document.createElement('div');
@@ -39,14 +37,14 @@ describe('Image Annotation Integration (Actual Code)', () => {
         tools
       };
 
-      engine = new Engine(options);
-      expect(engine).toBeDefined();
+      app = new App(options);
+      expect(app).toBeDefined();
 
       // Load a test image
       const testImageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgZmlsbD0iI2YwZjBmMCIvPjwvc3ZnPg==';
       
-      return engine.loadImage(testImageSrc).then(() => {
-        expect(engine).toBeDefined();
+      return app.loadImage(testImageSrc).then(() => {
+        expect(app).toBeDefined();
       });
     });
 
@@ -72,8 +70,8 @@ describe('Image Annotation Integration (Actual Code)', () => {
         tools
       };
 
-      engine = new Engine(options);
-      expect(engine).toBeDefined();
+      app = new App(options);
+      expect(app).toBeDefined();
     });
   });
 
@@ -237,14 +235,10 @@ describe('Image Annotation Integration (Actual Code)', () => {
         tools
       };
 
-      engine = new Engine(options);
+      app = new App(options);
       
-      // Access ImageViewer through Engine
-      const imageViewer = (engine as any).imageViewer;
-      expect(imageViewer).toBeDefined();
-
-      // Access AnnotationManager
-      const annotationManager = imageViewer.annotationManager;
+      // Access AnnotationManager via App
+      const annotationManager = app.getAnnotationManager();
       expect(annotationManager).toBeDefined();
 
       // Verify style was passed through
