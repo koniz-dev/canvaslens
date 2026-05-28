@@ -48,6 +48,11 @@ export class CanvasLens extends HTMLElement {
 
   connectedCallback(): void {
     if (this.app) return;
+    this.initialiseApp();
+    this.loadInitialImage();
+  }
+
+  private initialiseApp(): void {
     try {
       const container = this.createContainer();
       const options = AttributeBinder.read(this, container);
@@ -55,7 +60,6 @@ export class CanvasLens extends HTMLElement {
       // EventManager's job; removed in Phase 6).
       this.app = new App({ ...options, container, element: this });
       this.ensureCanvasSize();
-      this.loadInitialImage();
     } catch (err) {
       ErrorHandler.handleError(err as Error, { element: this, operation: 'connectedCallback' });
       throw err;
@@ -253,11 +257,23 @@ export class CanvasLens extends HTMLElement {
   private reinitialize(): void {
     if (!this.app) return;
     const currentImageData = this.app.getImageData();
-    this.disconnectedCallback();
-    this.connectedCallback();
+    // Tear down and re-create the App without re-running `loadInitialImage`
+    // — we restore the in-memory image element below instead. This avoids
+    // double-loading the same image (initial src + element).
+    this.app.destroy();
+    this.app = null;
+    this.overlayManager.destroy();
+    this.hasUnsavedChanges = false;
+    this.initialiseApp();
     if (currentImageData && this.app) {
       const app = this.app as App;
-      app.loadImageElement(currentImageData.element, currentImageData.type, currentImageData.fileName);
+      app.loadImageElement(
+        currentImageData.element,
+        currentImageData.type,
+        currentImageData.fileName
+      );
+    } else {
+      this.loadInitialImage();
     }
   }
 }

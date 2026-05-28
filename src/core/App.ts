@@ -71,6 +71,9 @@ export class App {
   /** Host element for DOM CustomEvent dispatch (Web Component path). */
   private readonly element: HTMLElement | undefined;
 
+  /** Stable handler so add/remove on viewStateChange match. */
+  private readonly boundOnViewStateChange: () => void;
+
   private zoomPan: ZoomPanHandler | null = null;
   private annotation: AnnotationManager | null = null;
   private comparison: ComparisonManager | null = null;
@@ -122,6 +125,7 @@ export class App {
     this.canvas = new Renderer(options.container, { width, height });
     this.canvas.imageViewer = this;
 
+    this.boundOnViewStateChange = () => this.render();
     this.scheduler = new RenderScheduler(() => this.renderInternal());
 
     this.initializeModules();
@@ -214,9 +218,12 @@ export class App {
         },
         this.eventHandlers
       );
-
-      this.canvas.getElement().addEventListener('viewStateChange', () => this.render());
     }
+
+    // viewStateChange fires from zoom/pan AND annotation drag/remove AND
+    // tool drawing. Always listen so annotations re-render even when zoom
+    // and pan are disabled.
+    this.canvas.getElement().addEventListener('viewStateChange', this.boundOnViewStateChange);
 
     if (AnnotationToolsConfig.hasAnnotations(tools)) {
       this.annotation = new AnnotationManager(this.canvas, {
@@ -789,12 +796,15 @@ export class App {
     if (this.destroyed) return;
     this.destroyed = true;
 
+    this.canvas.getElement().removeEventListener('viewStateChange', this.boundOnViewStateChange);
+
     this.scheduler.destroy();
     this.bus.emit('destroy', undefined);
     this.bus.clear();
 
     this.zoomPan?.destroy();
     this.annotation?.destroy();
+    this.comparison?.destroy();
     this.canvas.destroy();
     this.store.clear();
 

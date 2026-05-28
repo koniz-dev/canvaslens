@@ -36,7 +36,6 @@ export class AnnotationManager {
   private readonly boundContextMenu: (event: Event) => void;
   private readonly boundMouseDown: (event: Event) => void;
   private readonly boundMouseUp: (event: Event) => void;
-  private readonly boundKeyDown: (event: KeyboardEvent) => void;
   private readonly throttledMouseMove: ((event: MouseEvent) => void) & { cleanup?: () => void };
   private readonly cleanupCallback: () => void;
 
@@ -81,7 +80,6 @@ export class AnnotationManager {
     this.boundContextMenu = this.handleContextMenu.bind(this) as (event: Event) => void;
     this.boundMouseDown = this.handleMouseDown.bind(this) as (event: Event) => void;
     this.boundMouseUp = this.handleMouseUp.bind(this) as (event: Event) => void;
-    this.boundKeyDown = this.handleKeyDown.bind(this);
     this.throttledMouseMove = MemoryManager.throttle(
       this.handleMouseMove.bind(this),
       16
@@ -250,23 +248,10 @@ export class AnnotationManager {
     }
   }
 
-  /**
-   * Handle keyboard shortcuts
-   */
-  private handleKeyDown(event: KeyboardEvent): void {
-    if (!this.enabled) return;
-
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (this.selectedAnnotation) {
-        this.removeAnnotation(this.selectedAnnotation.id);
-        event.preventDefault();
-      }
-    }
-
-    if (event.key === 'Escape') {
-      this.selectAnnotation(null);
-    }
-  }
+  // Delete/Backspace/Escape shortcuts are owned by
+  // `AnnotationToolsEventHandler.handleKeyDown` — it has the full context
+  // (active tool, drawing state) needed to route the key. Don't duplicate
+  // the handler here.
 
   /**
    * Convert screen coordinates to world coordinates
@@ -694,7 +679,9 @@ export class AnnotationManager {
    * Activate a tool
    */
   activateTool(toolType: string): boolean {
-    return this.toolManager.activateTool(toolType);
+    const ok = this.toolManager.activateTool(toolType);
+    if (ok) this.eventHandlers.onToolChange?.(toolType);
+    return ok;
   }
 
   /**
@@ -708,7 +695,9 @@ export class AnnotationManager {
    * Deactivate current tool
    */
   deactivateTool(): void {
+    const wasActive = this.toolManager.isToolActive();
     this.toolManager.deactivateTool();
+    if (wasActive) this.eventHandlers.onToolChange?.(null);
   }
 
 
@@ -807,14 +796,16 @@ export class AnnotationManager {
   }
 
   /**
-   * Check if any annotation tools are enabled
+   * Whether any annotation tool is registered on this manager. Plugin
+   * tools count just as well as the five built-ins.
    */
   private hasEnabledAnnotationTools(): boolean {
     if (!this.toolManager) return false;
-
-    const toolConfig = this.toolManager.getToolConfig();
-    return toolConfig.rect || toolConfig.arrow || toolConfig.text ||
-      toolConfig.circle || toolConfig.line;
+    const cfg = this.toolManager.getToolConfig();
+    for (const enabled of Object.values(cfg)) {
+      if (enabled) return true;
+    }
+    return false;
   }
 
   /**
@@ -849,7 +840,6 @@ export class AnnotationManager {
     this.canvas.removeEventListener('mousedown', this.boundMouseDown, true);
     this.canvas.removeEventListener('mousemove', this.throttledMouseMove as EventListener);
     this.canvas.removeEventListener('mouseup', this.boundMouseUp);
-    document.removeEventListener('keydown', this.boundKeyDown);
 
     this.clearAll();
     this.isDragging = false;

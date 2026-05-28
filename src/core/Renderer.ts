@@ -19,6 +19,7 @@ export class Renderer {
   public annotationManager: AnnotationManager | null = null;
   public imageViewer: CanvasHost | null = null;
   private resizeTimeout: number | null = null;
+  private hasResized = false;
   private renderRequestId: number | null = null;
   private dirtyRegions: Array<Rectangle> = [];
 
@@ -45,16 +46,22 @@ export class Renderer {
   }
 
   /**
-   * Resize canvas to new dimensions with debouncing
-   * Uses 100ms debounce for better stability during window resizing
+   * Resize canvas to new dimensions.
+   *
+   * The very first resize is performed synchronously so the initial render
+   * happens at the right size (otherwise the image would be fit into the
+   * canvas element's default 300×150 box for the first 100ms). Subsequent
+   * resizes are debounced 100ms — useful when a `resize` event from the
+   * window fires many times in quick succession.
    */
   resize(size: Size): void {
-    // Clear existing timeout
-    if (this.resizeTimeout) {
-      clearTimeout(this.resizeTimeout);
+    if (!this.hasResized) {
+      this.hasResized = true;
+      this.performResize(size);
+      return;
     }
 
-    // Debounce resize operations (100ms is standard for resize events)
+    if (this.resizeTimeout) clearTimeout(this.resizeTimeout);
     this.resizeTimeout = window.setTimeout(() => {
       this.performResize(size);
     }, 100);
