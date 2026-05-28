@@ -156,6 +156,84 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#7 — circle stays inside image bounds', () => {
+    it('drawing a circle with a far edge shrinks the radius to fit', () => {
+      app = setupApp();
+      app.activateTool('circle');
+      const canvas = app.getCanvas().getElement();
+      // Centre near top-left, edge clamped to image rect first, then radius shrunk.
+      mouseAt(canvas, 'mousedown', 50, 50);
+      document.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 5000, clientY: 5000 })
+      );
+      document.dispatchEvent(
+        new MouseEvent('mouseup', { bubbles: true, clientX: 5000, clientY: 5000 })
+      );
+
+      const c = app.getAnnotations()[0]!;
+      expect(c.type).toBe('circle');
+      const [center, edge] = c.points;
+      const radius = Math.hypot(edge!.x - center!.x, edge!.y - center!.y);
+      // The maximum radius from (50, 50) inside 0..800 / 0..600 is min(50,750,50,550) = 50.
+      expect(radius).toBeLessThanOrEqual(50 + 0.001);
+      // The whole circle must be inside the image.
+      expect(center!.x - radius).toBeGreaterThanOrEqual(-0.001);
+      expect(center!.y - radius).toBeGreaterThanOrEqual(-0.001);
+      expect(center!.x + radius).toBeLessThanOrEqual(800 + 0.001);
+      expect(center!.y + radius).toBeLessThanOrEqual(600 + 0.001);
+    });
+
+    it('resizing the edge handle past the image clamps the radius', () => {
+      app = setupApp();
+      const a = ann('c', 'circle', [
+        { x: 300, y: 300 },
+        { x: 320, y: 300 }
+      ]);
+      app.addAnnotation(a);
+      app.getAnnotationManager()!.selectAnnotation(a);
+      app.deactivateTool();
+
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', 320, 300); // grab the edge handle
+      canvas.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 5000, clientY: 5000 })
+      );
+      mouseAt(canvas, 'mouseup', 5000, 5000);
+
+      const c = app.getAnnotations()[0]!;
+      const [center, edge] = c.points;
+      const radius = Math.hypot(edge!.x - center!.x, edge!.y - center!.y);
+      // (300,300) in 0..800 / 0..600 → maxRadius = min(300,500,300,300) = 300
+      expect(radius).toBeLessThanOrEqual(300 + 0.001);
+    });
+
+    it('drag-move clamps using the actual circle bbox (centre ± radius)', () => {
+      app = setupApp();
+      const a = ann('c', 'circle', [
+        { x: 400, y: 300 },
+        { x: 500, y: 300 } // radius 100
+      ]);
+      app.addAnnotation(a);
+      app.deactivateTool();
+
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', 400, 300); // grab the centre area (no handle there)
+      canvas.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: -1000, clientY: -1000 })
+      );
+      mouseAt(canvas, 'mouseup', -1000, -1000);
+
+      const c = app.getAnnotations()[0]!;
+      const [center, edge] = c.points;
+      const radius = Math.hypot(edge!.x - center!.x, edge!.y - center!.y);
+      // Whole circle still inside 0..800 / 0..600 after the huge drag.
+      expect(center!.x - radius).toBeGreaterThanOrEqual(-0.001);
+      expect(center!.y - radius).toBeGreaterThanOrEqual(-0.001);
+      expect(center!.x + radius).toBeLessThanOrEqual(800 + 0.001);
+      expect(center!.y + radius).toBeLessThanOrEqual(600 + 0.001);
+    });
+  });
+
   describe('#2 — drag clamps to image bounds', () => {
     it('rect dragged way outside is clamped so it stays in the image', () => {
       app = setupApp();

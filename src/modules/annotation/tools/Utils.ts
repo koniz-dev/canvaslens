@@ -116,4 +116,41 @@ export class AnnotationToolsUtils {
       y: Math.max(bounds.y, Math.min(bounds.y + bounds.height, point.y))
     };
   }
+
+  /**
+   * Clamp the edge point of a circle so the resulting circle stays inside
+   * the image. Clamping just the edge point isn't enough — the radius can
+   * still extend past the image even when both centre and edge are inside.
+   *
+   * The maximum allowable radius is the distance from the centre to the
+   * nearest image edge; if the requested edge is further than that, we
+   * shrink it back along the same direction.
+   */
+  clampCircleEdgeToImageBounds(center: Point, edge: Point): Point {
+    const bounds = this.getImageBounds();
+    if (!bounds) return edge;
+
+    // First clamp the centre into the image so we have a sane base.
+    const cx = Math.max(bounds.x, Math.min(bounds.x + bounds.width, center.x));
+    const cy = Math.max(bounds.y, Math.min(bounds.y + bounds.height, center.y));
+
+    const maxRadius = Math.min(
+      cx - bounds.x,
+      bounds.x + bounds.width - cx,
+      cy - bounds.y,
+      bounds.y + bounds.height - cy
+    );
+
+    const dx = edge.x - cx;
+    const dy = edge.y - cy;
+    const requested = Math.sqrt(dx * dx + dy * dy);
+
+    if (requested <= maxRadius || requested === 0) {
+      // Just clamp the edge point itself to bounds for free.
+      return this.clampPointToImageBounds(edge);
+    }
+
+    const scale = maxRadius / requested;
+    return { x: cx + dx * scale, y: cy + dy * scale };
+  }
 }

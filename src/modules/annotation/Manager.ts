@@ -232,7 +232,16 @@ export class AnnotationManager {
     const handlePoints = this.getHandlePoints(this.selectedAnnotation);
     if (idx < 0 || idx >= handlePoints.length) return;
 
-    const clamped = this.clampPointToImageBounds(worldPoint);
+    // For circle the edge handle must additionally respect the radius —
+    // clamping it just to the image rectangle still allows the circle to
+    // overflow. Use shape-aware clamping for circles.
+    const clamped =
+      this.selectedAnnotation.type === 'circle'
+        ? this.clampCircleEdgeToImageBounds(
+            this.selectedAnnotation.points[0]!,
+            worldPoint
+          )
+        : this.clampPointToImageBounds(worldPoint);
 
     if (this.selectedAnnotation.type === 'rect') {
       // For rect, points = [topLeft, bottomRight]. Corner handles map to
@@ -337,6 +346,29 @@ export class AnnotationManager {
       x: Math.max(imageBounds.x, Math.min(imageBounds.x + imageBounds.width, point.x)),
       y: Math.max(imageBounds.y, Math.min(imageBounds.y + imageBounds.height, point.y))
     };
+  }
+
+  /**
+   * Shrink the proposed edge so that the whole circle stays inside the
+   * image when the centre is held fixed. Used during resize.
+   */
+  private clampCircleEdgeToImageBounds(center: Point, edge: Point): Point {
+    const imageBounds = this.getImageBounds();
+    if (!imageBounds) return edge;
+    const cx = Math.max(imageBounds.x, Math.min(imageBounds.x + imageBounds.width, center.x));
+    const cy = Math.max(imageBounds.y, Math.min(imageBounds.y + imageBounds.height, center.y));
+    const maxRadius = Math.min(
+      cx - imageBounds.x,
+      imageBounds.x + imageBounds.width - cx,
+      cy - imageBounds.y,
+      imageBounds.y + imageBounds.height - cy
+    );
+    const dx = edge.x - cx;
+    const dy = edge.y - cy;
+    const requested = Math.sqrt(dx * dx + dy * dy);
+    if (requested <= maxRadius || requested === 0) return edge;
+    const scale = maxRadius / requested;
+    return { x: cx + dx * scale, y: cy + dy * scale };
   }
 
   private handleDragging(worldPoint: Point, event: MouseEvent): void {
@@ -831,10 +863,29 @@ export class AnnotationManager {
   }
 
   /**
-   * Get annotation bounding box
+   * Get annotation bounding box — shape-aware.
+   *
+   * For most shapes the bbox of the points is correct (rect, line, arrow,
+   * text). For circles the points are (centre, edge); the actual shape
+   * extends ±radius around the centre and would otherwise be reported with
+   * the wrong width/height.
    */
   private getAnnotationBounds(annotation: Annotation): Rectangle | null {
     if (annotation.points.length === 0) return null;
+
+    if (annotation.type === 'circle' && annotation.points.length >= 2) {
+      const center = annotation.points[0]!;
+      const edge = annotation.points[1]!;
+      const radius = Math.sqrt(
+        Math.pow(edge.x - center.x, 2) + Math.pow(edge.y - center.y, 2)
+      );
+      return {
+        x: center.x - radius,
+        y: center.y - radius,
+        width: radius * 2,
+        height: radius * 2
+      };
+    }
 
     const firstPoint = annotation.points[0];
     if (!firstPoint) return null;
@@ -844,7 +895,7 @@ export class AnnotationManager {
     let minY = firstPoint.y;
     let maxY = firstPoint.y;
 
-    annotation.points.forEach(point => {
+    annotation.points.forEach((point) => {
       minX = Math.min(minX, point.x);
       maxX = Math.max(maxX, point.x);
       minY = Math.min(minY, point.y);

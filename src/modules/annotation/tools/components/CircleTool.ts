@@ -1,4 +1,4 @@
-import type { Annotation, Point } from '../../../../types';
+import type { Annotation, Point, Rectangle } from '../../../../types';
 import { BaseTool } from './BaseTool';
 
 export class CircleTool extends BaseTool {
@@ -18,16 +18,19 @@ export class CircleTool extends BaseTool {
   }
 
   /**
-   * Continue drawing circle (update radius)
+   * Continue drawing circle (update radius).
+   *
+   * Clamping the EDGE point to the image bounds isn't enough — the radius
+   * (centre → edge) can still extend past the image even when the edge
+   * itself is inside. We additionally shrink the radius so the whole
+   * circle stays inside.
    */
   continueDrawing(point: Point): void {
     if (!this.isDrawing || !this.startPoint || !this.currentAnnotation) return;
 
-    // Update current points with center and edge point
-    this.currentPoints = [this.startPoint, { ...point }];
-
-    // Update the existing annotation
-    this.currentAnnotation.points = [this.startPoint, { ...point }];
+    const edge = this.clampEdgeToImage(this.startPoint, point);
+    this.currentPoints = [this.startPoint, edge];
+    this.currentAnnotation.points = [this.startPoint, edge];
   }
 
   /**
@@ -36,7 +39,7 @@ export class CircleTool extends BaseTool {
   finishDrawing(point: Point): Annotation | null {
     if (!this.isDrawing || !this.startPoint || !this.currentAnnotation) return null;
 
-    const edgePoint = { ...point };
+    const edgePoint = this.clampEdgeToImage(this.startPoint, point);
     const centerPoint = { ...this.startPoint };
 
     // Calculate radius
@@ -58,6 +61,31 @@ export class CircleTool extends BaseTool {
     this.cancelDrawing();
 
     return finalAnnotation;
+  }
+
+  /**
+   * Constrain the edge of a circle so the whole circle stays inside the
+   * loaded image's bounds. When no image bounds are known the point is
+   * returned unchanged.
+   */
+  private clampEdgeToImage(center: Point, edge: Point): Point {
+    const bounds = this.canvas.imageViewer?.getImageBounds?.() as Rectangle | null | undefined;
+    if (!bounds) return { ...edge };
+
+    const cx = Math.max(bounds.x, Math.min(bounds.x + bounds.width, center.x));
+    const cy = Math.max(bounds.y, Math.min(bounds.y + bounds.height, center.y));
+    const maxRadius = Math.min(
+      cx - bounds.x,
+      bounds.x + bounds.width - cx,
+      cy - bounds.y,
+      bounds.y + bounds.height - cy
+    );
+    const dx = edge.x - cx;
+    const dy = edge.y - cy;
+    const requested = Math.sqrt(dx * dx + dy * dy);
+    if (requested <= maxRadius || requested === 0) return { ...edge };
+    const scale = maxRadius / requested;
+    return { x: cx + dx * scale, y: cy + dy * scale };
   }
 
   /**
