@@ -42,6 +42,12 @@ export interface AppOptions extends CanvasLensOptions {
    * ```
    */
   plugins?: ToolPlugin[];
+  /**
+   * When set, App dispatches DOM CustomEvents on this element (mirroring
+   * the bus). Used by the Web Component to surface events to library users
+   * via standard DOM listeners; safe to omit otherwise.
+   */
+  element?: HTMLElement;
 }
 
 /**
@@ -61,6 +67,9 @@ export class App {
 
   /** Plugin registry shared with the AnnotationManager when it exists. */
   readonly toolRegistry: ToolRegistry;
+
+  /** Host element for DOM CustomEvent dispatch (Web Component path). */
+  private readonly element: HTMLElement | undefined;
 
   private zoomPan: ZoomPanHandler | null = null;
   private annotation: AnnotationManager | null = null;
@@ -84,7 +93,8 @@ export class App {
     };
 
     this.backgroundColor = this.options.backgroundColor ?? DEFAULT_CONFIG.BACKGROUND_COLOR;
-    this.eventHandlers = options.eventHandlers ?? {};
+    this.element = options.element;
+    this.eventHandlers = this.composeEventHandlers(options.eventHandlers);
 
     const width = this.options.width ?? DEFAULT_CONFIG.WIDTH;
     const height = this.options.height ?? DEFAULT_CONFIG.HEIGHT;
@@ -116,6 +126,59 @@ export class App {
 
     this.initializeModules();
     this.render();
+  }
+
+  /**
+   * Wrap the caller-supplied event handlers so each one ALSO dispatches a
+   * DOM CustomEvent on `this.element`. This replaces the dedicated
+   * EventManager that used to live in src/components.
+   *
+   * Event names follow the v1 lowercase scheme (`imageLoad`, `zoomChange`,
+   * …) to keep Web Component listeners working.
+   */
+  private composeEventHandlers(handlers?: EventHandlers): EventHandlers {
+    const passthrough = handlers ?? {};
+    const dispatch = (name: string, detail: unknown): void => {
+      this.element?.dispatchEvent(new CustomEvent(name, { detail }));
+    };
+    return {
+      onImageLoad: (data) => {
+        passthrough.onImageLoad?.(data);
+        dispatch('imageLoad', data);
+      },
+      onImageLoadError: (err) => {
+        passthrough.onImageLoadError?.(err);
+        dispatch('imageLoadError', err);
+      },
+      onZoomChange: (scale) => {
+        passthrough.onZoomChange?.(scale);
+        dispatch('zoomChange', scale);
+      },
+      onPanChange: (offset) => {
+        passthrough.onPanChange?.(offset);
+        dispatch('panChange', offset);
+      },
+      onAnnotationAdd: (annotation) => {
+        passthrough.onAnnotationAdd?.(annotation);
+        dispatch('annotationAdd', annotation);
+      },
+      onAnnotationRemove: (id) => {
+        passthrough.onAnnotationRemove?.(id);
+        dispatch('annotationRemove', id);
+      },
+      onToolChange: (tool) => {
+        passthrough.onToolChange?.(tool);
+        dispatch('toolChange', tool);
+      },
+      onComparisonChange: (position) => {
+        passthrough.onComparisonChange?.(position);
+        dispatch('comparisonChange', position);
+      },
+      onComparisonModeChange: (enabled) => {
+        passthrough.onComparisonModeChange?.(enabled);
+        dispatch('comparisonModeChange', enabled);
+      }
+    };
   }
 
   /** ModuleContext that the App provides to cooperating modules. */

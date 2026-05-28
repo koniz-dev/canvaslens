@@ -1,6 +1,6 @@
-import { AttributeParser } from '../../../components/AttributeParser';
+import { AttributeBinder } from '../../input/AttributeBinder';
 
-describe('AttributeParser', () => {
+describe('AttributeBinder', () => {
   let element: HTMLElement;
   let container: HTMLElement;
 
@@ -16,47 +16,47 @@ describe('AttributeParser', () => {
 
   describe('parseSize', () => {
     it('should return default size when size is null', () => {
-      const result = AttributeParser.parseSize(null, 800);
+      const result = AttributeBinder.parseSize(null, 800);
       expect(result).toBe(800);
     });
 
     it('should parse size with px suffix', () => {
-      const result = AttributeParser.parseSize('1000px', 800);
+      const result = AttributeBinder.parseSize('1000px', 800);
       expect(result).toBe(1000);
     });
 
     it('should parse size with percentage', () => {
-      const result = AttributeParser.parseSize('50%', 800);
+      const result = AttributeBinder.parseSize('50%', 800);
       expect(result).toBe(400);
     });
 
     it('should parse raw number', () => {
-      const result = AttributeParser.parseSize('1200', 800);
+      const result = AttributeBinder.parseSize('1200', 800);
       expect(result).toBe(1200);
     });
 
     it('should return default for invalid percentage (>100)', () => {
-      const result = AttributeParser.parseSize('150%', 800);
+      const result = AttributeBinder.parseSize('150%', 800);
       expect(result).toBe(800);
     });
 
     it('should return default for invalid percentage (<0)', () => {
-      const result = AttributeParser.parseSize('-10%', 800);
+      const result = AttributeBinder.parseSize('-10%', 800);
       expect(result).toBe(800);
     });
 
     it('should return default for NaN values', () => {
-      const result = AttributeParser.parseSize('invalid', 800);
+      const result = AttributeBinder.parseSize('invalid', 800);
       expect(result).toBe(800);
     });
 
     it('should return default for negative values', () => {
-      const result = AttributeParser.parseSize('-100', 800);
+      const result = AttributeBinder.parseSize('-100', 800);
       expect(result).toBe(800);
     });
 
     it('should return default for values exceeding MAX_SIZE', () => {
-      const result = AttributeParser.parseSize('200000', 800);
+      const result = AttributeBinder.parseSize('200000', 800);
       expect(result).toBe(800);
     });
   });
@@ -68,7 +68,7 @@ describe('AttributeParser', () => {
       Object.defineProperty(element, 'clientWidth', { value: 800, writable: true, configurable: true });
       Object.defineProperty(element, 'clientHeight', { value: 600, writable: true, configurable: true });
       
-      const result = AttributeParser.getContainerDimensions(element);
+      const result = AttributeBinder.dimensions(element);
       expect(result.width).toBe(1000);
       expect(result.height).toBe(800);
     });
@@ -77,7 +77,7 @@ describe('AttributeParser', () => {
       Object.defineProperty(element, 'clientWidth', { value: 1200, writable: true, configurable: true });
       Object.defineProperty(element, 'clientHeight', { value: 900, writable: true, configurable: true });
       
-      const result = AttributeParser.getContainerDimensions(element);
+      const result = AttributeBinder.dimensions(element);
       expect(result.width).toBe(1200);
       expect(result.height).toBe(900);
     });
@@ -88,7 +88,7 @@ describe('AttributeParser', () => {
       Object.defineProperty(element, 'offsetWidth', { value: 1000, writable: true, configurable: true });
       Object.defineProperty(element, 'offsetHeight', { value: 750, writable: true, configurable: true });
       
-      const result = AttributeParser.getContainerDimensions(element);
+      const result = AttributeBinder.dimensions(element);
       expect(result.width).toBe(1000);
       expect(result.height).toBe(750);
     });
@@ -99,7 +99,7 @@ describe('AttributeParser', () => {
       Object.defineProperty(element, 'offsetWidth', { value: 0, writable: true, configurable: true });
       Object.defineProperty(element, 'offsetHeight', { value: 0, writable: true, configurable: true });
       
-      const result = AttributeParser.getContainerDimensions(element);
+      const result = AttributeBinder.dimensions(element);
       expect(result.width).toBe(800);
       expect(result.height).toBe(600);
     });
@@ -113,7 +113,7 @@ describe('AttributeParser', () => {
       element.setAttribute('max-zoom', '5');
       element.setAttribute('min-zoom', '0.5');
       
-      const result = AttributeParser.parseAttributes(element, container);
+      const result = AttributeBinder.read(element, container);
       expect(result.width).toBe(1000);
       expect(result.height).toBe(800);
       expect(result.backgroundColor).toBe('#ffffff');
@@ -122,7 +122,7 @@ describe('AttributeParser', () => {
     });
 
     it('should use default values when attributes not set', () => {
-      const result = AttributeParser.parseAttributes(element, container);
+      const result = AttributeBinder.read(element, container);
       expect(result.width).toBe(800);
       expect(result.height).toBe(600);
       expect(result.backgroundColor).toBe('#f0f0f0');
@@ -133,14 +133,14 @@ describe('AttributeParser', () => {
     it('should parse tools configuration', () => {
       element.setAttribute('tools', JSON.stringify({ zoom: true, pan: true }));
       
-      const result = AttributeParser.parseAttributes(element, container);
+      const result = AttributeBinder.read(element, container);
       expect(result.tools).toBeDefined();
     });
 
     it('should handle invalid tools configuration gracefully', () => {
       element.setAttribute('tools', 'invalid json');
       
-      const result = AttributeParser.parseAttributes(element, container);
+      const result = AttributeBinder.read(element, container);
       expect(result).toBeDefined();
     });
   });

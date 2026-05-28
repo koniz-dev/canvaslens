@@ -11,10 +11,9 @@
  * </canvas-lens>
  * ```
  */
-import { AttributeParser } from './components/AttributeParser';
-import { EventManager } from './components/EventManager';
 import { OverlayManager } from './components/OverlayManager';
 import { App } from './core/App';
+import { AttributeBinder } from './input/AttributeBinder';
 import type { Annotation, CustomImageData, Point, ToolConfig } from './types';
 import { ErrorType } from './types';
 import { ErrorHandler } from './utils/core/error-handler';
@@ -34,7 +33,6 @@ const OBSERVED_ATTRIBUTES = [
 
 export class CanvasLens extends HTMLElement {
   private app: App | null = null;
-  private eventManager: EventManager;
   private overlayManager: OverlayManager;
   private hasUnsavedChanges = false;
 
@@ -45,7 +43,6 @@ export class CanvasLens extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
-    this.eventManager = new EventManager(this);
     this.overlayManager = new OverlayManager(this);
   }
 
@@ -53,10 +50,10 @@ export class CanvasLens extends HTMLElement {
     if (this.app) return;
     try {
       const container = this.createContainer();
-      const options = AttributeParser.parseAttributes(this, container);
-      const eventHandlers = this.eventManager.createEventHandlers();
-      this.app = new App({ ...options, container, eventHandlers });
-      this.eventManager.setupEventListeners();
+      const options = AttributeBinder.read(this, container);
+      // App dispatches DOM CustomEvents on `element` directly (used to be
+      // EventManager's job; removed in Phase 6).
+      this.app = new App({ ...options, container, element: this });
       this.ensureCanvasSize();
       this.loadInitialImage();
     } catch (err) {
@@ -68,7 +65,6 @@ export class CanvasLens extends HTMLElement {
   disconnectedCallback(): void {
     this.app?.destroy();
     this.app = null;
-    this.eventManager.destroy();
     this.overlayManager.destroy();
     this.hasUnsavedChanges = false;
   }
@@ -89,7 +85,7 @@ export class CanvasLens extends HTMLElement {
           break;
         case 'width':
         case 'height': {
-          const { width, height } = AttributeParser.getContainerDimensions(this);
+          const { width, height } = AttributeBinder.dimensions(this);
           this.app.resize(width, height);
           break;
         }
@@ -234,7 +230,7 @@ export class CanvasLens extends HTMLElement {
   private ensureCanvasSize(): void {
     requestAnimationFrame(() => {
       if (!this.app || this.app.isDestroyed()) return;
-      const { width, height } = AttributeParser.getContainerDimensions(this);
+      const { width, height } = AttributeBinder.dimensions(this);
       if (width > 0 && height > 0) this.app.resize(width, height);
     });
   }

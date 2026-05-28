@@ -34,11 +34,10 @@ export type {
 } from './ui';
 
 // Components
-export {
-  AttributeParser,
-  EventManager,
-  OverlayManager,
-} from './components';
+export { OverlayManager } from './components';
+
+// Input adapters (attribute parsing, keyboard shortcuts)
+export { AttributeBinder, KeyboardInput } from './input';
 
 // Utilities - Error handling
 export {
