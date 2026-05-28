@@ -23,7 +23,7 @@ This playground contains a full feature demo plus framework smoke tests.
    npm install
    npm run dev
    ```
-   Opens at <http://localhost:3003/>.
+   Opens at <http://localhost:3001/>.
 
 3. (Optional) Smoke tests with React:
    ```bash
@@ -31,6 +31,7 @@ This playground contains a full feature demo plus framework smoke tests.
    npm install
    npm run dev
    ```
+   Runs on <http://localhost:3003/>.
 
 4. (Optional) Smoke tests with Vue:
    ```bash
@@ -38,6 +39,7 @@ This playground contains a full feature demo plus framework smoke tests.
    npm install
    npm run dev
    ```
+   Runs on <http://localhost:3002/>.
 
 ## What the vanilla demo covers
 
