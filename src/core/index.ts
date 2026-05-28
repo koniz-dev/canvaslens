@@ -3,6 +3,7 @@ export { App } from './App';
 export type { AppOptions } from './App';
 export { Renderer } from './Renderer';
 export type { CanvasHost } from './Renderer';
+export type { ModuleContext } from './ModuleContext';
 
 // Phase 1 foundation modules
 export { EventBus } from './EventBus';

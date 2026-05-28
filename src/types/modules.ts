@@ -1,3 +1,4 @@
+import type { ModuleContext } from '../core/ModuleContext';
 import type { EventHandlers, AnnotationStyle, Tool, CustomImageData, Annotation, Point } from './index';
 
 /**
@@ -9,6 +10,7 @@ export interface AnnotationManagerOptions {
   defaultStyle?: AnnotationStyle;
   availableTools?: Tool[];
   eventHandlers?: EventHandlers;
+  ctx?: ModuleContext;
 }
 
 /**
@@ -75,6 +77,7 @@ export interface ComparisonOptions {
   enableSynchronizedPan?: boolean;
   eventHandlers?: EventHandlers;
   comparisonMode?: boolean; // Enable comparison mode (before/after with annotations)
+  ctx?: ModuleContext;
 }
 
 /**
@@ -100,4 +103,5 @@ export interface ZoomPanOptions {
   minZoom?: number;
   zoomSpeed?: number;
   panSpeed?: number;
+  ctx?: ModuleContext;
 }

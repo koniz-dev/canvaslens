@@ -1,10 +1,12 @@
+import type { ModuleContext } from '../../core/ModuleContext';
 import { Renderer } from '../../core/Renderer';
 import type { EventHandlers, Point, ViewState, ZoomPanOptions, Rectangle } from '../../types';
 import { clamp, screenToWorld } from '../../utils/geometry/coordinate';
 
 export class ZoomPanHandler {
   private canvas: Renderer;
-  private options: Required<ZoomPanOptions>;
+  private ctx: ModuleContext | undefined;
+  private options: Required<Omit<ZoomPanOptions, 'ctx'>>;
   private eventHandlers: EventHandlers;
   private isPanning = false;
   private lastPanPoint: Point = { x: 0, y: 0 };
@@ -24,8 +26,11 @@ export class ZoomPanHandler {
     eventHandlers: EventHandlers = {}
   ) {
     this.canvas = canvas;
+    this.ctx = options.ctx;
     this.eventHandlers = eventHandlers;
 
+    const { ctx: _ctx, ...rest } = options;
+    void _ctx;
     this.options = {
       enableZoom: true,
       enablePan: true,
@@ -33,7 +38,7 @@ export class ZoomPanHandler {
       minZoom: 0.1,
       zoomSpeed: 0.1,
       panSpeed: 1,
-      ...options
+      ...rest
     };
 
     this.boundHandleWheel = this.handleWheel.bind(this) as EventListener;
@@ -89,11 +94,26 @@ export class ZoomPanHandler {
   }
 
   /**
-   * Check if image is loaded
+   * Check if image is loaded. Prefer the ModuleContext; fall back to the
+   * legacy `canvas.imageViewer` so stand-alone tests keep working.
    */
   private isImageLoaded(): boolean {
-    const isLoaded = this.canvas.imageViewer ? this.canvas.imageViewer.isImageLoaded() : false;
-    return isLoaded;
+    if (this.ctx) return this.ctx.isImageLoaded();
+    return this.canvas.imageViewer ? this.canvas.imageViewer.isImageLoaded() : false;
+  }
+
+  /** Whether the annotation system currently has an active tool. */
+  private isAnnotationToolActive(): boolean {
+    if (this.ctx) return this.ctx.isAnnotationToolActive();
+    return this.canvas.annotationManager ? this.canvas.annotationManager.isToolActive() : false;
+  }
+
+  /** Whether the annotation system has a selected annotation. */
+  private hasAnnotationSelection(): boolean {
+    if (this.ctx) return this.ctx.hasSelectedAnnotation();
+    return this.canvas.annotationManager
+      ? this.canvas.annotationManager.hasSelectedAnnotation()
+      : false;
   }
 
   /**
@@ -101,7 +121,7 @@ export class ZoomPanHandler {
    */
   private updateCursor(): void {
     // Don't update cursor if annotation tool is active
-    if (this.canvas.annotationManager && this.canvas.annotationManager.isToolActive()) {
+    if (this.isAnnotationToolActive()) {
       return;
     }
 
@@ -169,8 +189,8 @@ export class ZoomPanHandler {
    * Check if annotation system is currently drawing
    */
   private isAnnotationDrawing(): boolean {
-    const isDrawing = this.canvas.annotationManager ? this.canvas.annotationManager.isDrawing() : false;
-    return isDrawing;
+    if (this.ctx) return this.ctx.isAnnotationDrawing();
+    return this.canvas.annotationManager ? this.canvas.annotationManager.isDrawing() : false;
   }
 
   /**
@@ -181,12 +201,8 @@ export class ZoomPanHandler {
       return;
     }
 
-    if (this.canvas.annotationManager) {
-      if (this.canvas.annotationManager.isToolActive() ||
-        this.canvas.annotationManager.isDrawing() ||
-        this.canvas.annotationManager.hasSelectedAnnotation()) {
-        return;
-      }
+    if (this.isAnnotationToolActive() || this.isAnnotationDrawing() || this.hasAnnotationSelection()) {
+      return;
     }
 
     this.isPanning = true;

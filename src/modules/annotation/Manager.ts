@@ -1,3 +1,4 @@
+import type { ModuleContext } from '../../core/ModuleContext';
 import { Renderer } from '../../core/Renderer';
 import type {
   AnnotationStyle,
@@ -18,6 +19,7 @@ import { AnnotationToolsManager } from './tools/Manager';
 
 export class AnnotationManager {
   private canvas: Renderer;
+  private ctx: ModuleContext | undefined;
   private renderer: AnnotationRenderer;
   private toolManager: AnnotationToolsManager;
   private annotations: Map<string, Annotation> = new Map();
@@ -27,11 +29,18 @@ export class AnnotationManager {
   private isDragging = false;
   private dragOffset: Point | null = null;
   private hasUnsavedChanges = false;
-  private throttledMouseMove: ((event: MouseEvent) => void) & { cleanup?: () => void };
-  private cleanupCallback: () => void;
+
+  // Stable bound references so addEventListener / removeEventListener pair correctly.
+  private readonly boundContextMenu: (event: Event) => void;
+  private readonly boundMouseDown: (event: Event) => void;
+  private readonly boundMouseUp: (event: Event) => void;
+  private readonly boundKeyDown: (event: KeyboardEvent) => void;
+  private readonly throttledMouseMove: ((event: MouseEvent) => void) & { cleanup?: () => void };
+  private readonly cleanupCallback: () => void;
 
   constructor(canvas: Renderer, options: AnnotationManagerOptions = {}) {
     this.canvas = canvas;
+    this.ctx = options.ctx;
     this.eventHandlers = options.eventHandlers || {};
     this.enabled = options.enabled !== false;
 
@@ -66,8 +75,14 @@ export class AnnotationManager {
       this.addAnnotation(annotation);
     });
 
-
-    this.throttledMouseMove = MemoryManager.throttle(this.handleMouseMove.bind(this), 16) as ((event: MouseEvent) => void) & { cleanup?: () => void };
+    this.boundContextMenu = this.handleContextMenu.bind(this) as (event: Event) => void;
+    this.boundMouseDown = this.handleMouseDown.bind(this) as (event: Event) => void;
+    this.boundMouseUp = this.handleMouseUp.bind(this) as (event: Event) => void;
+    this.boundKeyDown = this.handleKeyDown.bind(this);
+    this.throttledMouseMove = MemoryManager.throttle(
+      this.handleMouseMove.bind(this),
+      16
+    ) as ((event: MouseEvent) => void) & { cleanup?: () => void };
     this.cleanupCallback = this.cleanup.bind(this);
     MemoryManager.registerCleanup(this.cleanupCallback);
 
@@ -75,15 +90,14 @@ export class AnnotationManager {
   }
 
   /**
-   * Setup event listeners for annotation management
+   * Setup event listeners for annotation management.
+   * Uses stable bound references so removal in destroy() actually matches.
    */
   private setupEventListeners(): void {
-    this.canvas.addEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
-
-    this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
+    this.canvas.addEventListener('contextmenu', this.boundContextMenu);
+    this.canvas.addEventListener('mousedown', this.boundMouseDown, true);
     this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
-    this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
-
+    this.canvas.addEventListener('mouseup', this.boundMouseUp);
   }
 
   /**
@@ -762,12 +776,12 @@ export class AnnotationManager {
   }
 
   /**
-   * Get image bounds from the parent viewer (if available)
+   * Get image bounds from the App when a ModuleContext is available, falling
+   * back to the legacy `canvas.imageViewer` reference for stand-alone tests.
    */
   getImageBounds(): Rectangle | null {
-    if (this.canvas.imageViewer) {
-      return this.canvas.imageViewer.getImageBounds();
-    }
+    if (this.ctx) return this.ctx.getImageBounds();
+    if (this.canvas.imageViewer) return this.canvas.imageViewer.getImageBounds();
     return null;
   }
 
@@ -836,9 +850,12 @@ export class AnnotationManager {
   }
 
   /**
-   * Check if comparison mode is active
+   * Check if comparison mode is active. Prefer the ModuleContext (single source
+   * of truth from the App); fall back to the legacy `canvas.imageViewer` so
+   * stand-alone manager tests keep working until Phase 6 cleans up.
    */
   private isComparisonModeActive(): boolean {
+    if (this.ctx) return this.ctx.isComparisonMode();
     if (this.canvas.imageViewer && typeof this.canvas.imageViewer.isComparisonMode === 'function') {
       return this.canvas.imageViewer.isComparisonMode();
     }
@@ -860,11 +877,11 @@ export class AnnotationManager {
   destroy(): void {
     this.toolManager.destroy();
 
-    this.canvas.removeEventListener('contextmenu', this.handleContextMenu.bind(this) as EventListener);
-    this.canvas.removeEventListener('mousedown', this.handleMouseDown.bind(this) as EventListener, true);
-    this.canvas.removeEventListener('mousemove', this.handleMouseMove.bind(this) as EventListener);
-    this.canvas.removeEventListener('mouseup', this.handleMouseUp.bind(this) as EventListener);
-    document.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    this.canvas.removeEventListener('contextmenu', this.boundContextMenu);
+    this.canvas.removeEventListener('mousedown', this.boundMouseDown, true);
+    this.canvas.removeEventListener('mousemove', this.throttledMouseMove as EventListener);
+    this.canvas.removeEventListener('mouseup', this.boundMouseUp);
+    document.removeEventListener('keydown', this.boundKeyDown);
 
     this.clearAll();
     this.isDragging = false;

@@ -1,3 +1,4 @@
+import type { ModuleContext } from '../../core/ModuleContext';
 import { Renderer } from '../../core/Renderer';
 import type { EventHandlers, Size, ComparisonOptions, ComparisonState, CustomImageData, Rectangle } from '../../types';
 import { error } from '../../utils/core/logger';
@@ -5,7 +6,8 @@ import { loadImage, getImageData } from '../../utils/image/utils';
 
 export class ComparisonManager {
   private canvas: Renderer;
-  private options: Required<ComparisonOptions>;
+  private ctx: ModuleContext | undefined;
+  private options: Required<Omit<ComparisonOptions, 'ctx'>>;
   private state: ComparisonState;
   private eventHandlers: EventHandlers;
   private boundHandlers: {
@@ -17,8 +19,11 @@ export class ComparisonManager {
 
   constructor(canvas: Renderer, options: ComparisonOptions = {}) {
     this.canvas = canvas;
+    this.ctx = options.ctx;
     this.eventHandlers = options.eventHandlers || {};
 
+    const { ctx: _ctx, ...rest } = options;
+    void _ctx;
     this.options = {
       sliderPosition: 50,
       sliderWidth: 4,
@@ -27,7 +32,7 @@ export class ComparisonManager {
       enableSynchronizedPan: true,
       eventHandlers: {},
       comparisonMode: false,
-      ...options
+      ...rest
     };
 
     this.state = {
@@ -132,8 +137,8 @@ export class ComparisonManager {
       }
       
       // Trigger re-render if cursor state changed to update highlight
-      if (wasNearSlider !== this.isCursorNearSlider && this.canvas.imageViewer) {
-        this.canvas.imageViewer.render();
+      if (wasNearSlider !== this.isCursorNearSlider) {
+        this.requestRender();
       }
     }
 
@@ -190,10 +195,31 @@ export class ComparisonManager {
    * Get image bounds for limiting slider movement
    */
   private getImageBounds(): Rectangle | null {
+    if (this.ctx) return this.ctx.getImageBounds();
     if (this.canvas.imageViewer) {
       return (this.canvas.imageViewer as { getImageBounds: () => Rectangle | null }).getImageBounds();
     }
     return null;
+  }
+
+  private requestRender(): void {
+    if (this.ctx) {
+      this.ctx.requestRender();
+    } else if (this.canvas.imageViewer) {
+      this.canvas.imageViewer.render();
+    }
+  }
+
+  private deselectActiveAnnotation(): void {
+    if (this.ctx) {
+      this.ctx.deselectAnnotation();
+      this.ctx.deactivateAnnotationTool();
+      return;
+    }
+    if (this.canvas.annotationManager) {
+      this.canvas.annotationManager.selectAnnotation(null);
+      this.canvas.annotationManager.deactivateTool();
+    }
   }
 
   /**
@@ -241,9 +267,9 @@ export class ComparisonManager {
     const clampedPosition = Math.max(0, Math.min(100, position));
     this.state.sliderPosition = clampedPosition;
 
-    // Trigger re-render through the image viewer
-    if (this.state.comparisonMode && this.canvas.imageViewer) {
-      this.canvas.imageViewer.render();
+    // Trigger re-render through the host
+    if (this.state.comparisonMode) {
+      this.requestRender();
     }
 
     // Trigger event if handler exists
@@ -289,14 +315,8 @@ export class ComparisonManager {
     this.state.comparisonMode = !this.state.comparisonMode;
     this.options.comparisonMode = this.state.comparisonMode;
 
-    // Clear any selected annotations when entering comparison mode
-    if (this.state.comparisonMode && this.canvas.annotationManager) {
-      this.canvas.annotationManager.selectAnnotation(null);
-      // Deactivate any active drawing tool when entering comparison mode
-      const toolManager = this.canvas.annotationManager.getToolManager();
-      if (toolManager) {
-        toolManager.deactivateTool();
-      }
+    if (this.state.comparisonMode) {
+      this.deselectActiveAnnotation();
     }
 
     // Handle cursor state
@@ -319,11 +339,8 @@ export class ComparisonManager {
     this.state.comparisonMode = enabled;
     this.options.comparisonMode = enabled;
 
-    // Clear any selected annotations when entering comparison mode
-    if (enabled && this.canvas.annotationManager) {
-      this.canvas.annotationManager.selectAnnotation(null);
-      // Deactivate any active drawing tool when entering comparison mode
-      this.canvas.annotationManager.deactivateTool();
+    if (enabled) {
+      this.deselectActiveAnnotation();
     }
 
     // Handle cursor state

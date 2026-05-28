@@ -20,6 +20,7 @@ import { getCustomImageDataOverlay, getImageData, loadImage } from '../utils/ima
 import { SecureJsonParser } from '../utils/security/secure-json-parser';
 import type { AppEvents } from './AppEvents';
 import { EventBus } from './EventBus';
+import type { ModuleContext } from './ModuleContext';
 import { Renderer } from './Renderer';
 import { RenderScheduler } from './RenderScheduler';
 import { appReducer, createInitialState } from './state';
@@ -97,8 +98,26 @@ export class App {
     this.render();
   }
 
+  /** ModuleContext that the App provides to cooperating modules. */
+  private createContext(): ModuleContext {
+    return {
+      bus: this.bus,
+      store: this.store,
+      getImageBounds: () => this.getImageBounds(),
+      isImageLoaded: () => this.isImageLoaded(),
+      isComparisonMode: () => this.isComparisonMode(),
+      isAnnotationToolActive: () => this.annotation?.isToolActive() ?? false,
+      isAnnotationDrawing: () => this.annotation?.isDrawing() ?? false,
+      hasSelectedAnnotation: () => this.annotation?.hasSelectedAnnotation() ?? false,
+      deselectAnnotation: () => this.annotation?.selectAnnotation(null),
+      deactivateAnnotationTool: () => this.annotation?.deactivateTool(),
+      requestRender: () => this.render()
+    };
+  }
+
   private initializeModules(): void {
     const tools = this.options.tools ?? AnnotationToolsConfig.DEFAULT_CONFIG;
+    const ctx = this.createContext();
 
     if (AnnotationToolsConfig.hasZoomOrPan(tools)) {
       this.zoomPan = new ZoomPanHandler(
@@ -107,7 +126,8 @@ export class App {
           enableZoom: !!tools.zoom,
           enablePan: !!tools.pan,
           maxZoom: this.options.maxZoom ?? DEFAULT_CONFIG.MAX_ZOOM,
-          minZoom: this.options.minZoom ?? DEFAULT_CONFIG.MIN_ZOOM
+          minZoom: this.options.minZoom ?? DEFAULT_CONFIG.MIN_ZOOM,
+          ctx
         },
         this.eventHandlers
       );
@@ -119,6 +139,7 @@ export class App {
       this.annotation = new AnnotationManager(this.canvas, {
         enabled: true,
         eventHandlers: this.eventHandlers,
+        ctx,
         ...(tools.annotation?.style && { defaultStyle: tools.annotation.style })
       });
       this.canvas.annotationManager = this.annotation;
@@ -127,7 +148,8 @@ export class App {
     if (AnnotationToolsConfig.hasComparison(tools)) {
       this.comparison = new ComparisonManager(this.canvas, {
         comparisonMode: false,
-        eventHandlers: this.eventHandlers
+        eventHandlers: this.eventHandlers,
+        ctx
       });
     }
   }
