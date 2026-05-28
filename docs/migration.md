@@ -17,197 +17,134 @@ This guide helps you migrate your CanvasLens implementation between major versio
 
 ## Version 2.0.0 Migration
 
-### Major Changes
+v2.0.0 is an **architectural refactor**. The `<canvas-lens>` Web Component
+public API (attributes, methods, DOM events) is mostly unchanged — if you
+only used the Web Component tag, your code keeps working. The breaking
+changes are around internal classes and exports that some advanced users
+may have imported directly.
 
-#### 1. New Annotation System
+### TL;DR — what changed under the hood
 
-**Before (v1.x):**
-```javascript
-// Old annotation structure
-const annotation = {
-  id: 'annotation-1',
-  type: 'rect',
-  x: 100,
-  y: 100,
-  width: 200,
-  height: 150,
-  style: {
-    strokeColor: '#ff0000',
-    strokeWidth: 2,
-    fillColor: 'rgba(255, 0, 0, 0.1)'
-  }
+- 5 layers of proxy classes (`CanvasLens → CanvasLensCore → Engine →
+  ImageViewer → Manager`) collapsed into one `App` orchestrator.
+- New centralised state (`Store`), typed pub/sub (`EventBus`), and
+  ramp-coalesced `RenderScheduler` in `src/core/`.
+- New `ToolPlugin` system: register custom annotation tools without
+  modifying the library.
+- DOM-building extracted into `src/ui/` (`ContextMenu`,
+  `ErrorPlaceholder`, `OverlayShell`).
+- Attribute parsing + optional keyboard adapter moved to `src/input/`
+  (`AttributeBinder`, `KeyboardInput`).
+
+### Removed exports (breaking — if you imported these)
+
+| Removed | Replacement |
+|---|---|
+| `Engine` | `App` (same surface, fewer layers) |
+| `CanvasLensCore` | `App` |
+| `ImageViewer` (the `modules/image-viewer/Viewer` class) | `App` |
+| `EventManager` | App now dispatches DOM CustomEvents directly when given an `element` option |
+| `AttributeParser` | `AttributeBinder` |
+
+```ts
+// v1
+import { Engine } from '@koniz-dev/canvaslens';
+const engine = new Engine({ container, tools: {...} });
+
+// v2
+import { App } from '@koniz-dev/canvaslens';
+const app = new App({ container, tools: {...} });
+// Same methods: loadImage, addAnnotation, zoomTo, fitToView, …
+```
+
+```ts
+// v1
+import { AttributeParser } from '@koniz-dev/canvaslens';
+const opts = AttributeParser.parseAttributes(element, container);
+
+// v2
+import { AttributeBinder } from '@koniz-dev/canvaslens';
+const opts = AttributeBinder.read(element, container);
+```
+
+### New: ToolPlugin system
+
+Custom annotation tools can be registered without forking the library:
+
+```ts
+import { App, ToolPlugin } from '@koniz-dev/canvaslens';
+
+const myStarTool: ToolPlugin = {
+  type: 'star',
+  name: 'Star',
+  icon: '⭐',
+  create: (canvas, renderer, options) => new MyStarTool(canvas, renderer, options),
 };
+
+const app = new App({
+  container,
+  plugins: [myStarTool],
+  tools: { annotation: { rect: true } }
+});
+
+app.activateTool('star');
 ```
 
-**After (v2.0.0):**
-```javascript
-// New annotation structure
-const annotation = {
-  id: 'annotation-1',
-  type: 'rect',
-  points: [
-    { x: 100, y: 100 },
-    { x: 300, y: 100 },
-    { x: 300, y: 250 },
-    { x: 100, y: 250 }
-  ],
-  style: {
-    strokeColor: '#ff0000',
-    strokeWidth: 2,
-    fillColor: 'rgba(255, 0, 0, 0.1)',
-    lineStyle: 'solid' // New property
-  },
-  data: { // New optional data property
-    label: 'Important area',
-    metadata: { priority: 'high' }
-  }
-};
+### New: Store + EventBus (advanced)
+
+For applications that need reactive integration with React/Vue/Svelte:
+
+```ts
+const app = new App({ container, tools: { zoom: true, pan: true } });
+
+// Subscribe to slice-level changes
+app.store.select(
+  (s) => s.image.data,
+  (image) => console.log('image changed', image)
+);
+
+// Subscribe to typed events
+app.bus.on('image:loaded', (data) => console.log('loaded', data));
+app.bus.on('annotation:added', (a) => console.log('added', a));
 ```
 
-**Migration Steps:**
-1. Update annotation creation code to use `points` array
-2. Convert existing annotations from `x, y, width, height` to `points`
-3. Add `lineStyle` property to annotation styles
-4. Update annotation rendering code to work with points
+### New: UI helpers
 
-#### 2. Updated API Methods
+Reusable DOM components extracted from the old inline blocks:
 
-**Before (v1.x):**
-```javascript
-// Old method names
-const zoom = viewer.getZoom();
-const pan = viewer.getPan();
-viewer.setPan(x, y);
-```
+```ts
+import { ContextMenu, ErrorPlaceholder, OverlayShell } from '@koniz-dev/canvaslens';
 
-**After (v2.0.0):**
-```javascript
-// New method names
-const zoom = viewer.getZoomLevel();
-const pan = viewer.getPanOffset();
-// setPan is no longer public - use programmatic panning
-```
-
-**Migration Steps:**
-1. Replace `getZoom()` with `getZoomLevel()`
-2. Replace `getPan()` with `getPanOffset()`
-3. Remove direct calls to `setPan()` - use zoom and pan methods instead
-
-#### 3. Enhanced Error Handling
-
-**Before (v1.x):**
-```javascript
-// Basic error handling
-viewer.addEventListener('error', (event) => {
-  console.error('Error:', event.detail);
+ContextMenu.show({
+  x: event.clientX,
+  y: event.clientY,
+  items: [{ label: 'Delete', onClick: () => app.removeAnnotation(id) }]
 });
 ```
 
-**After (v2.0.0):**
-```javascript
-// Enhanced error handling with types
-viewer.addEventListener('error', (event) => {
-  const error = event.detail;
-  console.error('CanvasLens error:', error);
-  
-  switch (error.type) {
-    case 'IMAGE_LOAD':
-      console.error('Image loading failed:', error.message);
-      break;
-    case 'INITIALIZATION':
-      console.error('Initialization failed:', error.message);
-      break;
-    case 'RENDER_ERROR':
-      console.error('Rendering error:', error.message);
-      break;
-    case 'INVALID_TOOL':
-      console.error('Invalid tool:', error.message);
-      break;
-    case 'ANNOTATION_ERROR':
-      console.error('Annotation error:', error.message);
-      break;
-    case 'VIEW_ERROR':
-      console.error('View error:', error.message);
-      break;
-  }
-});
-```
+### Bug fixes
 
-#### 4. New Performance Monitoring
+- AnnotationManager's mouse listener removal previously called
+  `removeEventListener(type, handler.bind(this))`, which creates a new
+  function reference and never matches the registered listener. This
+  caused listeners to accumulate when an AnnotationManager was created
+  and destroyed multiple times. v2.0 saves bound references in fields so
+  add/remove pair correctly.
 
-**New in v2.0.0:**
-```javascript
-import { performanceMonitor } from '@koniz-dev/canvaslens';
+### Did the Web Component API change?
 
-// Enable performance monitoring
-performanceMonitor.enable();
+No — these all work the same in v2:
 
-// Get metrics
-const metrics = performanceMonitor.getMetrics();
-console.log('FPS:', metrics.fps);
-console.log('Memory usage:', metrics.memoryUsage);
+- Attributes: `src`, `width`, `height`, `tools`, `max-zoom`, `min-zoom`,
+  `background-color`, `image-type`, `file-name`.
+- Methods: `loadImage`, `loadImageFromFile`, `zoomIn`/`zoomOut`/`zoomTo`,
+  `fitToView`, `resetView`, `activateTool`/`deactivateTool`,
+  `addAnnotation`/`removeAnnotation`/`clearAnnotations`,
+  `toggleComparisonMode`/`setComparisonMode`, `openOverlay`/`closeOverlay`.
+- DOM events: `imageLoad`, `imageLoadError`, `zoomChange`, `panChange`,
+  `annotationAdd`, `annotationRemove`, `toolChange`, `comparisonChange`.
 
-// Start profiling
-performanceMonitor.startProfiling('my-operation');
-// ... do work ...
-performanceMonitor.stopProfiling('my-operation');
-```
-
-#### 5. New Memory Management
-
-**New in v2.0.0:**
-```javascript
-import { MemoryManager } from '@koniz-dev/canvaslens';
-
-const memoryManager = new MemoryManager();
-memoryManager.enableMonitoring();
-
-// Set thresholds
-memoryManager.setThresholds({
-  warning: 50 * 1024 * 1024, // 50MB
-  critical: 100 * 1024 * 1024 // 100MB
-});
-
-// Handle memory events
-memoryManager.on('warning', (usage) => {
-  console.warn('Memory usage high:', usage);
-  memoryManager.cleanup();
-});
-```
-
-### Migration Script
-
-Here's a utility script to help migrate your existing annotations:
-
-```javascript
-// Migration utility for annotations
-function migrateAnnotation(oldAnnotation) {
-  const { x, y, width, height, ...rest } = oldAnnotation;
-  
-  return {
-    ...rest,
-    points: [
-      { x, y },
-      { x: x + width, y },
-      { x: x + width, y: y + height },
-      { x, y: y + height }
-    ],
-    style: {
-      ...oldAnnotation.style,
-      lineStyle: oldAnnotation.style.lineStyle || 'solid'
-    }
-  };
-}
-
-// Migrate all annotations
-function migrateAnnotations(annotations) {
-  return annotations.map(migrateAnnotation);
-}
-
-// Usage
-const oldAnnotations = viewer.getAnnotations();
-const newAnnotations = migrateAnnotations(oldAnnotations);
-```
+Only users who imported internal classes need to make changes.
 
 ## Version 1.5.0 Migration
 
@@ -296,11 +233,13 @@ import { CanvasLens } from '@koniz-dev/canvaslens';
 
 ### Version 2.0.0 Breaking Changes
 
-1. **Annotation Structure**: Changed from `x, y, width, height` to `points` array
-2. **API Method Names**: `getZoom()` → `getZoomLevel()`, `getPan()` → `getPanOffset()`
-3. **Tool Configuration**: Enhanced tool configuration object structure
-4. **Error Handling**: New error event structure with error types
-5. **Memory Management**: New memory management system replaces manual cleanup
+1. **Removed internal classes**: `Engine`, `CanvasLensCore`, `ImageViewer`,
+   `EventManager`, `AttributeParser` are no longer exported.
+2. **`App` replaces them** with one orchestrator that owns the store,
+   bus, canvas, and sub-modules.
+3. **`AttributeParser` → `AttributeBinder`** (same purpose, new module).
+4. The Web Component public surface (attributes, methods, DOM events) is
+   unchanged.
 
 ### Version 1.5.0 Breaking Changes
 

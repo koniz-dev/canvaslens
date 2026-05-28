@@ -1,6 +1,6 @@
 {
   "name": "@koniz-dev/canvaslens",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "type": "module",
   "description": "A powerful HTML5 Canvas-based image viewing and annotation library",
   "main": "dist/index.js",

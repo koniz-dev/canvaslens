@@ -6,6 +6,11 @@
 
 A powerful HTML5 Canvas-based image viewing and annotation library built with TypeScript. CanvasLens provides a unified Web Component for image viewing, zooming, panning, annotation, and before/after image comparison.
 
+> **v2.0** — Architectural refactor. The `<canvas-lens>` tag works the same;
+> internals are now a single `App` orchestrator with a typed `Store` + `EventBus`,
+> a `ToolPlugin` system for custom annotation tools, and UI helpers split into
+> `src/ui/`. See [docs/migration.md](docs/migration.md#version-200-migration).
+
 ## Features
 
 - 🖼️ **Image Viewer** - Load images with automatic aspect ratio preservation
@@ -268,6 +273,44 @@ function ImageViewer({ src }) {
 ## Browser Support
 
 Chrome 60+, Firefox 55+, Safari 12+, Edge 79+
+
+## Advanced: custom annotation tools (v2.0+)
+
+Register your own tool plugins without forking the library:
+
+```ts
+import { App, ToolPlugin, BaseTool } from '@koniz-dev/canvaslens';
+
+class StarTool extends BaseTool {
+  startDrawing(point) { /* … */ return null; }
+  continueDrawing(point) { /* … */ }
+  finishDrawing(point) { /* … */ return null; }
+  getType() { return 'star'; }
+}
+
+const myStarTool: ToolPlugin = {
+  type: 'star',
+  name: 'Star',
+  icon: '⭐',
+  create: (canvas, renderer, opts) => new StarTool(canvas, renderer, opts),
+};
+
+const app = new App({
+  container: document.getElementById('host'),
+  plugins: [myStarTool],
+  tools: { annotation: { rect: true } },
+});
+
+app.activateTool('star');
+```
+
+The `App` class also exposes a typed event bus and a central state store for
+reactive integration with React/Vue/Svelte:
+
+```ts
+app.store.select(s => s.image.data, image => render(image));
+app.bus.on('annotation:added', a => syncToBackend(a));
+```
 
 ## Documentation
 
