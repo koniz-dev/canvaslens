@@ -1,21 +1,32 @@
 import { App } from '../core/App';
 import type { CanvasLensOptions } from '../types';
+import { OverlayShell } from '../ui/OverlayShell';
 import { error, warn } from '../utils/core/logger';
 
+/**
+ * Owns the full-screen overlay editor instance: shows the modal shell,
+ * spins up a second App for editing, and shuts everything down on close.
+ *
+ * Phase 5 narrowed this to orchestration — the DOM scaffolding now lives
+ * in `ui/OverlayShell.ts`.
+ */
 export class OverlayManager {
   private element: HTMLElement;
-  private overlayContainer: HTMLElement | null = null;
-  private overlayCanvasLens: App | null = null;
+  private shell: OverlayShell | null = null;
+  private overlayApp: App | null = null;
   private overlayOpen = false;
+  /** When provided, used as the seed options for the overlay App. */
   private originalOptions: CanvasLensOptions | null = null;
 
   constructor(element: HTMLElement) {
     this.element = element;
   }
 
-  /**
-   * Open overlay mode (full-screen editor)
-   */
+  /** Override what options the overlay App should be constructed with. */
+  setOriginalOptions(options: CanvasLensOptions): void {
+    this.originalOptions = options;
+  }
+
   openOverlay(): void {
     if (this.overlayOpen) {
       warn('Overlay is already open');
@@ -23,10 +34,14 @@ export class OverlayManager {
     }
 
     try {
-      this.createOverlayContainer();
-      this.createOverlayCanvasLens();
-      this.setupOverlayEventHandlers();
-      this.showOverlay();
+      this.shell = new OverlayShell({ onClose: () => this.closeOverlay() });
+      this.overlayApp = new App({
+        ...this.getOriginalOptions(),
+        container: this.shell.canvasFrame,
+        width: this.shell.canvasFrame.clientWidth || 1200,
+        height: this.shell.canvasFrame.clientHeight || 800
+      });
+      this.shell.show();
       this.overlayOpen = true;
     } catch (err) {
       error('Failed to open overlay:', err);
@@ -34,114 +49,36 @@ export class OverlayManager {
     }
   }
 
-  /**
-   * Close overlay mode
-   */
   closeOverlay(): void {
-    if (!this.overlayOpen) {
-      return;
-    }
-
+    if (!this.overlayOpen) return;
     try {
-      this.hideOverlay();
-      this.destroyOverlayCanvasLens();
-      this.destroyOverlayContainer();
+      this.shell?.hide();
+      this.overlayApp?.destroy();
+      this.overlayApp = null;
+      this.shell?.destroy();
+      this.shell = null;
       this.overlayOpen = false;
     } catch (err) {
       error('Failed to close overlay:', err);
     }
   }
 
-  /**
-   * Check if overlay is currently open
-   */
   isOverlayOpen(): boolean {
     return this.overlayOpen;
   }
 
-  /**
-   * Get overlay CanvasLens instance
-   */
+  /** Access the overlay App (when open) — useful for syncing annotations. */
+  getOverlayApp(): App | null {
+    return this.overlayApp;
+  }
+
+  /** @deprecated alias for getOverlayApp; kept for older callers. */
   getOverlayCanvasLens(): App | null {
-    return this.overlayCanvasLens;
+    return this.overlayApp;
   }
 
-  /**
-   * Create overlay container
-   */
-  private createOverlayContainer(): void {
-    this.overlayContainer = document.createElement('div');
-    this.overlayContainer.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 10000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-
-    const closeButton = document.createElement('button');
-    closeButton.textContent = '✕';
-    closeButton.style.cssText = `
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.2);
-      border: none;
-      color: white;
-      font-size: 24px;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      cursor: pointer;
-      z-index: 10001;
-    `;
-    closeButton.addEventListener('click', () => this.closeOverlay());
-
-    this.overlayContainer.appendChild(closeButton);
-    document.body.appendChild(this.overlayContainer);
-  }
-
-  /**
-   * Create overlay CanvasLens instance
-   */
-  private createOverlayCanvasLens(): void {
-    if (!this.overlayContainer) {
-      throw new Error('Overlay container not created');
-    }
-
-    const canvasContainer = document.createElement('div');
-    canvasContainer.style.cssText = `
-      width: 90vw;
-      height: 90vh;
-      max-width: 1200px;
-      max-height: 800px;
-      background: white;
-      border-radius: 8px;
-      overflow: hidden;
-    `;
-    this.overlayContainer.appendChild(canvasContainer);
-
-    this.originalOptions = this.getOriginalOptions();
-
-    this.overlayCanvasLens = new App({
-      ...this.originalOptions,
-      container: canvasContainer,
-      width: canvasContainer.clientWidth,
-      height: canvasContainer.clientHeight
-    });
-  }
-
-  /**
-   * Get original CanvasLens options
-   */
   private getOriginalOptions(): CanvasLensOptions {
-    // This would need to be passed from the main component
-    // For now, return a basic configuration
+    if (this.originalOptions) return this.originalOptions;
     return {
       container: this.element,
       width: 800,
@@ -162,87 +99,6 @@ export class OverlayManager {
     };
   }
 
-  /**
-   * Set up event handlers for overlay
-   */
-  private setupOverlayEventHandlers(): void {
-    if (!this.overlayContainer) return;
-
-    // Close on escape key
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        this.closeOverlay();
-      }
-    };
-
-    // Close on background click
-    const handleBackgroundClick = (e: MouseEvent) => {
-      if (e.target === this.overlayContainer) {
-        this.closeOverlay();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    this.overlayContainer.addEventListener('click', handleBackgroundClick);
-
-    // Store handlers for cleanup
-    (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._keyHandler = handleKeyDown;
-    (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._clickHandler = handleBackgroundClick;
-  }
-
-  /**
-   * Show overlay
-   */
-  private showOverlay(): void {
-    if (this.overlayContainer) {
-      this.overlayContainer.style.display = 'flex';
-    }
-  }
-
-  /**
-   * Hide overlay
-   */
-  private hideOverlay(): void {
-    if (this.overlayContainer) {
-      this.overlayContainer.style.display = 'none';
-    }
-  }
-
-  /**
-   * Destroy overlay CanvasLens instance
-   */
-  private destroyOverlayCanvasLens(): void {
-    if (this.overlayCanvasLens) {
-      // Copy annotations back to main instance if needed
-      // This would require access to the main CanvasLens instance
-      this.overlayCanvasLens = null;
-    }
-  }
-
-  /**
-   * Destroy overlay container
-   */
-  private destroyOverlayContainer(): void {
-    if (this.overlayContainer) {
-      // Clean up event handlers
-      const keyHandler = (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._keyHandler;
-      const clickHandler = (this.overlayContainer as HTMLElement & { _keyHandler?: (e: KeyboardEvent) => void; _clickHandler?: (e: MouseEvent) => void })._clickHandler;
-
-      if (keyHandler) {
-        document.removeEventListener('keydown', keyHandler);
-      }
-      if (clickHandler) {
-        this.overlayContainer.removeEventListener('click', clickHandler);
-      }
-
-      document.body.removeChild(this.overlayContainer);
-      this.overlayContainer = null;
-    }
-  }
-
-  /**
-   * Clean up resources
-   */
   destroy(): void {
     this.closeOverlay();
   }

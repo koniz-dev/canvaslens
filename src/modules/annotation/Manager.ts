@@ -10,6 +10,7 @@ import type {
   Rectangle,
   ToolManagerOptions
 } from '../../types';
+import { ContextMenu } from '../../ui/ContextMenu';
 import { error } from '../../utils/core/logger';
 import { MemoryManager } from '../../utils/core/memory-manager';
 import { ValidationHelper } from '../../utils/core/validation-helper';
@@ -788,55 +789,20 @@ export class AnnotationManager {
   }
 
   /**
-   * Show context menu for annotation
+   * Show the per-annotation context menu (currently just a Delete option).
+   * DOM construction is delegated to `ui/ContextMenu` so this class is no
+   * longer mixing rendering with annotation state.
    */
   private showContextMenu(event: MouseEvent, annotation: Annotation): void {
-    const contextMenu = document.createElement('div');
-    contextMenu.className = 'annotation-context-menu';
-    contextMenu.style.cssText = `
-      position: fixed;
-      top: ${event.clientY}px;
-      left: ${event.clientX}px;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      z-index: 1000;
-      padding: 4px 0;
-      min-width: 120px;
-    `;
-
-    const deleteOption = document.createElement('div');
-    deleteOption.textContent = 'Delete';
-    deleteOption.style.cssText = `
-      padding: 8px 16px;
-      cursor: pointer;
-      font-size: 14px;
-    `;
-    deleteOption.addEventListener('click', () => {
-      this.removeAnnotation(annotation.id);
-      document.body.removeChild(contextMenu);
-    });
-    deleteOption.addEventListener('mouseenter', () => {
-      deleteOption.style.backgroundColor = '#f0f0f0';
-    });
-    deleteOption.addEventListener('mouseleave', () => {
-      deleteOption.style.backgroundColor = 'transparent';
-    });
-
-    contextMenu.appendChild(deleteOption);
-
-    document.body.appendChild(contextMenu);
-
-    const removeMenu = (e: Event) => {
-      if (!contextMenu.contains(e.target as Node)) {
-        document.body.removeChild(contextMenu);
-        document.removeEventListener('click', removeMenu);
-      }
-    };
-    // Use requestAnimationFrame for better performance and cleanup
-    requestAnimationFrame(() => {
-      document.addEventListener('click', removeMenu);
+    ContextMenu.show({
+      x: event.clientX,
+      y: event.clientY,
+      items: [
+        {
+          label: 'Delete',
+          onClick: () => this.removeAnnotation(annotation.id)
+        }
+      ]
     });
   }
 

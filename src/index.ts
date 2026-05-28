@@ -21,8 +21,17 @@ export type { CanvasLensError } from './types';
 
 // Core application
 export { App, Renderer } from './core';
-export type { AppOptions, AppState, AppAction, AppEvents } from './core';
+export type { AppOptions, AppState, AppAction, AppEvents, ModuleContext } from './core';
 export { EventBus, Store, RenderScheduler, appReducer, createInitialState } from './core';
+
+// UI components (DOM helpers)
+export { ContextMenu, ErrorPlaceholder, OverlayShell } from './ui';
+export type {
+  ContextMenuItem,
+  ContextMenuOptions,
+  ErrorPlaceholderOptions,
+  OverlayShellOptions,
+} from './ui';
 
 // Components
 export {
