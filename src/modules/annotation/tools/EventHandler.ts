@@ -302,12 +302,13 @@ export class AnnotationToolsEventHandler {
    * Update options (for dynamic updates)
    */
   updateOptions(newOptions: Partial<TypedEventHandlerOptions>): void {
-    const wasActive = !!this.options.activeToolType;
+    const previousToolType = this.options.activeToolType;
     this.options = { ...this.options, ...newOptions };
-    const isActive = !!this.options.activeToolType;
-    
-    // Update cursor if tool activation state changed
-    if (wasActive !== isActive || (isActive && this.options.activeToolType !== newOptions.activeToolType)) {
+    // Refresh cursor whenever the active tool type changes — including
+    // tool→tool transitions (e.g. text→rect) where activation state
+    // stays truthy but the cursor needs to switch from 'text' to
+    // 'crosshair'.
+    if (previousToolType !== this.options.activeToolType) {
       this.updateCursor();
     }
   }

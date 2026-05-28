@@ -30,6 +30,10 @@ export class AnnotationManager {
   private enabled = true;
   private isDragging = false;
   private dragOffset: Point | null = null;
+  /** Index of the resize handle currently being dragged, or null when not resizing. */
+  private resizingHandle: number | null = null;
+  /** Last world coordinate from mousemove — used for hover cursor decisions. */
+  private lastWorldPoint: Point | null = null;
   private hasUnsavedChanges = false;
 
   // Stable bound references so addEventListener / removeEventListener pair correctly.
@@ -51,7 +55,7 @@ export class AnnotationManager {
       strokeColor: '#ff0000',
       strokeWidth: 2,
       lineStyle: 'solid',
-      fontSize: 16,
+      fontSize: 20,
       fontFamily: 'Arial, sans-serif',
       ...options.defaultStyle
     };
@@ -121,12 +125,30 @@ export class AnnotationManager {
   }
 
   /**
-   * Handle mouse down for selection and dragging
+   * Handle mouse down for selection / drag / resize.
+   *
+   * Priority:
+   *   1. If a selected annotation has a resize handle under the cursor →
+   *      start resizing.
+   *   2. Otherwise if any annotation is under the cursor → select +
+   *      start dragging.
+   *   3. Otherwise → clear selection.
    */
   private handleMouseDown(event: MouseEvent): void {
     if (!this.canHandleMouseDown(event)) return;
 
     const worldPoint = this.getWorldPointFromEvent(event);
+
+    if (this.selectedAnnotation) {
+      const handleIdx = this.getHandleAt(this.selectedAnnotation, worldPoint);
+      if (handleIdx !== null) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.resizingHandle = handleIdx;
+        return;
+      }
+    }
+
     const annotation = this.getAnnotationAt(worldPoint);
 
     if (annotation) {
@@ -184,6 +206,12 @@ export class AnnotationManager {
     if (!this.enabled) return;
 
     const worldPoint = this.getWorldPointFromEvent(event);
+    this.lastWorldPoint = worldPoint;
+
+    if (this.resizingHandle !== null && this.selectedAnnotation) {
+      this.handleResize(worldPoint, event);
+      return;
+    }
 
     if (this.isDragging && this.selectedAnnotation && this.dragOffset) {
       this.handleDragging(worldPoint, event);
@@ -193,11 +221,130 @@ export class AnnotationManager {
     this.handleHoverDetection(worldPoint);
   }
 
+  /**
+   * Update the resized annotation by replacing the dragged handle's point.
+   * Handles are always at indices in `getHandlePoints()`, which mirror
+   * `annotation.points` for rect/circle/line/arrow.
+   */
+  private handleResize(worldPoint: Point, event: MouseEvent): void {
+    if (!this.selectedAnnotation || this.resizingHandle === null) return;
+    const idx = this.resizingHandle;
+    const handlePoints = this.getHandlePoints(this.selectedAnnotation);
+    if (idx < 0 || idx >= handlePoints.length) return;
+
+    const clamped = this.clampPointToImageBounds(worldPoint);
+
+    if (this.selectedAnnotation.type === 'rect') {
+      // For rect, points = [topLeft, bottomRight]. Corner handles map to
+      // indices 0–3 in handlePoints (TL, TR, BR, BL). Adjust the matching
+      // corner of the rect.
+      const p0 = this.selectedAnnotation.points[0]!;
+      const p1 = this.selectedAnnotation.points[1]!;
+      const tlx = Math.min(p0.x, p1.x);
+      const tly = Math.min(p0.y, p1.y);
+      const brx = Math.max(p0.x, p1.x);
+      const bry = Math.max(p0.y, p1.y);
+      let next: [Point, Point];
+      switch (idx) {
+        case 0: // top-left
+          next = [clamped, { x: brx, y: bry }];
+          break;
+        case 1: // top-right
+          next = [{ x: tlx, y: clamped.y }, { x: clamped.x, y: bry }];
+          break;
+        case 2: // bottom-right
+          next = [{ x: tlx, y: tly }, clamped];
+          break;
+        case 3: // bottom-left
+          next = [{ x: clamped.x, y: tly }, { x: brx, y: clamped.y }];
+          break;
+        default:
+          next = [p0, p1];
+      }
+      this.selectedAnnotation.points = next;
+    } else {
+      // Map handle index → point index per annotation type.
+      const next = [...this.selectedAnnotation.points];
+      let pointIdx: number;
+      if (this.selectedAnnotation.type === 'circle') {
+        pointIdx = 1; // the only handle is the edge
+      } else if (this.selectedAnnotation.type === 'line' || this.selectedAnnotation.type === 'arrow') {
+        pointIdx = idx === 0 ? 0 : next.length - 1;
+      } else {
+        pointIdx = idx;
+      }
+      next[pointIdx] = clamped;
+      this.selectedAnnotation.points = next;
+    }
+
+    this.triggerViewStateChange();
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  /**
+   * World-coordinate positions of resize handles for the given annotation.
+   * Returns empty when the annotation type doesn't support resize (text).
+   */
+  getHandlePoints(annotation: Annotation): Point[] {
+    if (annotation.type === 'rect' && annotation.points.length >= 2) {
+      const p0 = annotation.points[0]!;
+      const p1 = annotation.points[1]!;
+      const minX = Math.min(p0.x, p1.x);
+      const maxX = Math.max(p0.x, p1.x);
+      const minY = Math.min(p0.y, p1.y);
+      const maxY = Math.max(p0.y, p1.y);
+      return [
+        { x: minX, y: minY },
+        { x: maxX, y: minY },
+        { x: maxX, y: maxY },
+        { x: minX, y: maxY }
+      ];
+    }
+    if (annotation.type === 'circle' && annotation.points.length >= 2) {
+      // One handle on the edge.
+      return [annotation.points[1]!];
+    }
+    if ((annotation.type === 'line' || annotation.type === 'arrow') && annotation.points.length >= 2) {
+      return [annotation.points[0]!, annotation.points[annotation.points.length - 1]!];
+    }
+    return [];
+  }
+
+  /**
+   * Index of the resize handle near `worldPoint`, or null if the point
+   * isn't on any handle. Tolerance is scaled by the current zoom so the
+   * hit area is roughly 8 screen pixels at any zoom level.
+   */
+  private getHandleAt(annotation: Annotation, worldPoint: Point): number | null {
+    const handles = this.getHandlePoints(annotation);
+    if (handles.length === 0) return null;
+    const viewState = this.canvas.getViewState();
+    const tolerance = 8 / Math.max(viewState.scale, 0.01);
+    for (let i = 0; i < handles.length; i++) {
+      const h = handles[i]!;
+      if (Math.abs(worldPoint.x - h.x) <= tolerance && Math.abs(worldPoint.y - h.y) <= tolerance) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  private clampPointToImageBounds(point: Point): Point {
+    const imageBounds = this.getImageBounds();
+    if (!imageBounds) return point;
+    return {
+      x: Math.max(imageBounds.x, Math.min(imageBounds.x + imageBounds.width, point.x)),
+      y: Math.max(imageBounds.y, Math.min(imageBounds.y + imageBounds.height, point.y))
+    };
+  }
+
   private handleDragging(worldPoint: Point, event: MouseEvent): void {
     if (!this.selectedAnnotation) return;
-    
+
     const newCenter = this.calculateNewCenter(worldPoint);
-    this.moveAnnotation(this.selectedAnnotation, newCenter);
+    const clampedCenter = this.clampCenterToImageBounds(this.selectedAnnotation, newCenter);
+    this.moveAnnotation(this.selectedAnnotation, clampedCenter);
     this.triggerViewStateChange();
 
     event.preventDefault();
@@ -211,6 +358,31 @@ export class AnnotationManager {
     return {
       x: worldPoint.x - this.dragOffset.x,
       y: worldPoint.y - this.dragOffset.y
+    };
+  }
+
+  /**
+   * Clamp the proposed center so the dragged annotation's bounding box stays
+   * inside the loaded image. Falls through when no image bounds are known.
+   */
+  private clampCenterToImageBounds(annotation: Annotation, newCenter: Point): Point {
+    const imageBounds = this.getImageBounds();
+    if (!imageBounds) return newCenter;
+
+    const currentBounds = this.getAnnotationBounds(annotation);
+    if (!currentBounds || currentBounds.width === 0 || currentBounds.height === 0) {
+      // Single-point annotations (e.g. text): just clamp the point.
+      return {
+        x: Math.max(imageBounds.x, Math.min(imageBounds.x + imageBounds.width, newCenter.x)),
+        y: Math.max(imageBounds.y, Math.min(imageBounds.y + imageBounds.height, newCenter.y))
+      };
+    }
+
+    const halfW = currentBounds.width / 2;
+    const halfH = currentBounds.height / 2;
+    return {
+      x: Math.max(imageBounds.x + halfW, Math.min(imageBounds.x + imageBounds.width - halfW, newCenter.x)),
+      y: Math.max(imageBounds.y + halfH, Math.min(imageBounds.y + imageBounds.height - halfH, newCenter.y))
     };
   }
 
@@ -231,18 +403,46 @@ export class AnnotationManager {
       return;
     }
 
-    const cursor = hoveredAnnotation ? 'move' : 'default';
+    let cursor = 'default';
+    if (this.selectedAnnotation) {
+      // Higher priority: resize handle hover.
+      const worldPoint = this.lastWorldPoint;
+      if (worldPoint) {
+        const idx = this.getHandleAt(this.selectedAnnotation, worldPoint);
+        if (idx !== null) {
+          cursor = this.cursorForHandle(this.selectedAnnotation, idx);
+          this.canvas.getElement().style.cursor = cursor;
+          return;
+        }
+      }
+    }
+    if (hoveredAnnotation) cursor = 'move';
     this.canvas.getElement().style.cursor = cursor;
   }
 
+  /** Return a CSS cursor name appropriate for the given handle. */
+  private cursorForHandle(annotation: Annotation, idx: number): string {
+    if (annotation.type === 'rect') {
+      // Handles 0/2 are diagonals (TL/BR → nwse), 1/3 are antidiagonals (TR/BL → nesw).
+      return idx === 0 || idx === 2 ? 'nwse-resize' : 'nesw-resize';
+    }
+    if (annotation.type === 'circle') return 'ew-resize';
+    return 'crosshair';
+  }
+
   /**
-   * Handle mouse up to stop dragging
+   * Handle mouse up to stop dragging or resizing
    */
   private handleMouseUp(event: MouseEvent): void {
+    if (this.resizingHandle !== null) {
+      this.resizingHandle = null;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (this.isDragging) {
       this.isDragging = false;
       this.dragOffset = null;
-
       event.preventDefault();
       event.stopPropagation();
     }
@@ -450,13 +650,39 @@ export class AnnotationManager {
   }
 
   /**
-   * Render selection highlight
+   * Render selection highlight + resize handles on top.
    */
   private renderSelectionHighlight(annotation: Annotation): void {
     const ctx = this.canvas.getContext();
 
     this.setupSelectionContext(ctx);
     this.renderSelectionByType(annotation, ctx);
+    ctx.restore();
+
+    this.renderResizeHandles(annotation);
+  }
+
+  /**
+   * Draw small filled squares at each resize handle's world position.
+   * Handles are rendered in screen-pixel-equivalent size so they stay
+   * visible at any zoom level.
+   */
+  private renderResizeHandles(annotation: Annotation): void {
+    const handles = this.getHandlePoints(annotation);
+    if (handles.length === 0) return;
+    const ctx = this.canvas.getContext();
+    const viewState = this.canvas.getViewState();
+    const size = 8 / Math.max(viewState.scale, 0.01); // ~8 screen px
+    const half = size / 2;
+
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.strokeStyle = '#00aa00';
+    ctx.lineWidth = 1 / Math.max(viewState.scale, 0.01);
+    for (const h of handles) {
+      ctx.fillRect(h.x - half, h.y - half, size, size);
+      ctx.strokeRect(h.x - half, h.y - half, size, size);
+    }
     ctx.restore();
   }
 

@@ -87,7 +87,7 @@ export const DEFAULT_ANNOTATION_STYLE: AnnotationStyle = {
   strokeColor: '#ff0000',
   strokeWidth: 2,
   lineStyle: 'solid',
-  fontSize: 16,
+  fontSize: 20,
   fontFamily: 'Arial, sans-serif'
 };
 

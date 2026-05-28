@@ -1,0 +1,242 @@
+/**
+ * Regression tests for the four annotation bugs reported in the v2.0.x audit:
+ *   1. Annotations couldn't be resized — no handles existed.
+ *   2. Annotations could be dragged outside the loaded image's bounds.
+ *   3a. Text annotations rendered with default fontSize 16 were nearly
+ *       invisible on busy backgrounds.
+ *   3b. After activating the text tool the cursor stayed as "text" when
+ *       the user switched to another tool.
+ */
+import { App } from '../../core/App';
+import { Renderer } from '../../core/Renderer';
+import type { Annotation, Point } from '../../types';
+
+function bound(canvas: HTMLCanvasElement, w = 800, h = 600): void {
+  canvas.getBoundingClientRect = () =>
+    ({
+      left: 0,
+      top: 0,
+      right: w,
+      bottom: h,
+      width: w,
+      height: h,
+      x: 0,
+      y: 0,
+      toJSON: () => ({})
+    }) as DOMRect;
+}
+
+function mouseAt(target: EventTarget, type: string, x: number, y: number, button = 0): void {
+  target.dispatchEvent(
+    new MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y, button })
+  );
+}
+
+function setupApp(opts: { tools?: any } = {}): App {
+  const container = document.createElement('div');
+  document.body.appendChild(container);
+  const app = new App({
+    container,
+    width: 800,
+    height: 600,
+    tools: opts.tools ?? {
+      annotation: {
+        rect: true,
+        arrow: true,
+        text: true,
+        circle: true,
+        line: true,
+        style: { strokeColor: '#000', strokeWidth: 2 }
+      }
+    }
+  });
+  const img = new Image();
+  Object.defineProperty(img, 'naturalWidth', { value: 800 });
+  Object.defineProperty(img, 'naturalHeight', { value: 600 });
+  Object.defineProperty(img, 'complete', { value: true });
+  app.loadImageElement(img);
+  bound(app.getCanvas().getElement());
+  return app;
+}
+
+const ann = (id: string, type: Annotation['type'], pts: Point[]): Annotation => ({
+  id,
+  type,
+  points: pts,
+  style: { strokeColor: '#000', strokeWidth: 2 }
+});
+
+describe('Annotation bug fixes', () => {
+  let app: App;
+  afterEach(() => {
+    app?.destroy();
+    document.body.innerHTML = '';
+  });
+
+  describe('#1 — resize handles', () => {
+    it('rect: 4 corner handles, drag bottom-right to grow', () => {
+      app = setupApp();
+      const a = ann('r', 'rect', [
+        { x: 100, y: 100 },
+        { x: 200, y: 200 }
+      ]);
+      app.addAnnotation(a);
+      app.getAnnotationManager()!.selectAnnotation(a);
+      app.deactivateTool();
+
+      const am = app.getAnnotationManager()!;
+      const handles = am.getHandlePoints(a);
+      expect(handles).toHaveLength(4);
+      // Corners in order: TL, TR, BR, BL
+      expect(handles[0]).toEqual({ x: 100, y: 100 });
+      expect(handles[2]).toEqual({ x: 200, y: 200 });
+
+      // Grab the BR handle and drag it.
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', 200, 200);
+      canvas.dispatchEvent(
+        new MouseEvent('mousemove', {
+          bubbles: true,
+          clientX: 300,
+          clientY: 280
+        })
+      );
+      mouseAt(canvas, 'mouseup', 300, 280);
+
+      const updated = app.getAnnotations()[0]!;
+      expect(updated.points[1]).toEqual({ x: 300, y: 280 });
+    });
+
+    it('circle: single edge handle resizes radius', () => {
+      app = setupApp();
+      const a = ann('c', 'circle', [
+        { x: 200, y: 200 }, // centre
+        { x: 250, y: 200 } // edge (radius 50)
+      ]);
+      app.addAnnotation(a);
+      app.getAnnotationManager()!.selectAnnotation(a);
+      app.deactivateTool();
+
+      const handles = app.getAnnotationManager()!.getHandlePoints(a);
+      expect(handles).toEqual([{ x: 250, y: 200 }]);
+
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', 250, 200);
+      canvas.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 200 })
+      );
+      mouseAt(canvas, 'mouseup', 300, 200);
+
+      const updated = app.getAnnotations()[0]!;
+      expect(updated.points[1]).toEqual({ x: 300, y: 200 });
+    });
+
+    it('line/arrow: 2 endpoint handles', () => {
+      app = setupApp();
+      const a = ann('l', 'arrow', [
+        { x: 100, y: 100 },
+        { x: 200, y: 200 }
+      ]);
+      app.addAnnotation(a);
+      app.getAnnotationManager()!.selectAnnotation(a);
+      app.deactivateTool();
+
+      const handles = app.getAnnotationManager()!.getHandlePoints(a);
+      expect(handles).toHaveLength(2);
+      expect(handles[0]).toEqual({ x: 100, y: 100 });
+      expect(handles[1]).toEqual({ x: 200, y: 200 });
+    });
+
+    it('text annotations expose no handles (no meaningful resize)', () => {
+      app = setupApp();
+      const a = ann('t', 'text', [{ x: 100, y: 100 }]);
+      // text annotations need data.text to render but it's not required for handles
+      app.addAnnotation(a);
+      expect(app.getAnnotationManager()!.getHandlePoints(a)).toEqual([]);
+    });
+  });
+
+  describe('#2 — drag clamps to image bounds', () => {
+    it('rect dragged way outside is clamped so it stays in the image', () => {
+      app = setupApp();
+      const a = ann('r', 'rect', [
+        { x: 400, y: 300 },
+        { x: 500, y: 400 }
+      ]);
+      app.addAnnotation(a);
+      app.deactivateTool();
+
+      const canvas = app.getCanvas().getElement();
+      // mousedown inside the rect to start drag
+      mouseAt(canvas, 'mousedown', 450, 350);
+      // huge drag to top-left, far off canvas
+      canvas.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: -500, clientY: -500 })
+      );
+      mouseAt(canvas, 'mouseup', -500, -500);
+
+      const moved = app.getAnnotations()[0]!;
+      // Image bounds: (0,0)-(800,600) for an 800x600 canvas + loaded image.
+      // The rectangle should be inside.
+      for (const p of moved.points) {
+        expect(p.x).toBeGreaterThanOrEqual(0);
+        expect(p.y).toBeGreaterThanOrEqual(0);
+        expect(p.x).toBeLessThanOrEqual(800);
+        expect(p.y).toBeLessThanOrEqual(600);
+      }
+    });
+  });
+
+  describe('#3a — text annotation rendering', () => {
+    it('default fontSize bumped from 16 to 20 for visibility', () => {
+      app = setupApp();
+      const a = app.getAnnotationManager()!;
+      // Triggering activateTool('text') wires the default style; we read the
+      // store-level default.
+      expect(app.store.getState().annotation.defaultStyle.fontSize).toBe(20);
+    });
+
+    it('AnnotationRenderer applies a contrast outline before fill', () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const canvas = new Renderer(container, { width: 800, height: 600 });
+      const ctx = canvas.getContext();
+      const strokeSpy = jest.spyOn(ctx, 'strokeText');
+      const fillSpy = jest.spyOn(ctx, 'fillText');
+
+      // Render a text annotation directly via the renderer.
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { AnnotationRenderer } = require('../../modules/annotation/Renderer');
+      const r = new AnnotationRenderer(canvas);
+      r.render({
+        id: 't',
+        type: 'text',
+        points: [{ x: 50, y: 50 }],
+        data: { text: 'Hi' },
+        style: { strokeColor: '#e63946', strokeWidth: 2, fontSize: 20 }
+      });
+      expect(strokeSpy).toHaveBeenCalledWith('Hi', 50, 50);
+      expect(fillSpy).toHaveBeenCalledWith('Hi', 50, 50);
+      canvas.destroy();
+    });
+  });
+
+  describe('#3b — cursor updates on tool switch', () => {
+    it('cursor changes from text to crosshair when switching text→rect', () => {
+      app = setupApp();
+      const canvasEl = app.getCanvas().getElement();
+      app.activateTool('text');
+      expect(canvasEl.style.cursor).toBe('text');
+      app.activateTool('rect');
+      expect(canvasEl.style.cursor).toBe('crosshair');
+    });
+
+    it('cursor clears on deactivateTool', () => {
+      app = setupApp();
+      const canvasEl = app.getCanvas().getElement();
+      app.activateTool('text');
+      app.deactivateTool();
+      expect(canvasEl.style.cursor).toBe('');
+    });
+  });
+});

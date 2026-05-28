@@ -27,6 +27,7 @@ HTMLCanvasElement.prototype.getContext = jest.fn().mockImplementation(() => ({
   fill: jest.fn(),
   measureText: jest.fn(() => ({ width: 0 })),
   fillText: jest.fn(),
+  strokeText: jest.fn(),
   transform: jest.fn(),
   translate: jest.fn(),
   scale: jest.fn(),

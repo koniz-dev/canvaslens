@@ -2,6 +2,33 @@ import { Renderer } from '../../core/Renderer';
 import type { Annotation, AnnotationStyle, Point, Rectangle } from '../../types';
 import { performanceMonitor } from '../../utils/performance/performance';
 
+/** Pick black or white based on the perceived luminance of `color`. */
+function pickContrastColor(color: string): string {
+  // Parse #rrggbb / #rgb / rgb()/rgba(). Default to black on parse failure.
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  if (color.startsWith('#')) {
+    const h = color.slice(1);
+    const expand = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+    if (/^[\da-fA-F]{6}$/.test(expand)) {
+      r = parseInt(expand.slice(0, 2), 16);
+      g = parseInt(expand.slice(2, 4), 16);
+      b = parseInt(expand.slice(4, 6), 16);
+    }
+  } else {
+    const m = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+    if (m) {
+      r = Number(m[1]);
+      g = Number(m[2]);
+      b = Number(m[3]);
+    }
+  }
+  // Standard luminance formula
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.9)';
+}
+
 export class AnnotationRenderer {
   private ctx: CanvasRenderingContext2D;
   private canvas: Renderer;
@@ -385,15 +412,22 @@ export class AnnotationRenderer {
 
     const position = annotation.points[0]!;
     const text = annotation.data.text as string;
-    const fontSize = annotation.style.fontSize || 16;
+    const fontSize = annotation.style.fontSize || 20;
     const fontFamily = annotation.style.fontFamily || 'Arial, sans-serif';
 
-    // Set font properties
+    this.ctx.save();
     this.ctx.font = `${fontSize}px ${fontFamily}`;
-    this.ctx.fillStyle = annotation.style.strokeColor;
+    this.ctx.textBaseline = 'alphabetic';
 
-    // Draw text
+    // Thin contrasting stroke for legibility on busy backgrounds.
+    this.ctx.lineWidth = Math.max(2, fontSize * 0.12);
+    this.ctx.lineJoin = 'round';
+    this.ctx.strokeStyle = pickContrastColor(annotation.style.strokeColor);
+    this.ctx.strokeText(text, position.x, position.y);
+
+    this.ctx.fillStyle = annotation.style.strokeColor;
     this.ctx.fillText(text, position.x, position.y);
+    this.ctx.restore();
   }
 
   /**
