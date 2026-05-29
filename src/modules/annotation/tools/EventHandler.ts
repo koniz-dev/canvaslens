@@ -62,6 +62,17 @@ export class AnnotationToolsEventHandler {
 
     document.addEventListener('keydown', this.boundKeyDown, true);
 
+    // Suppress the browser's native context menu while a tool is active —
+    // otherwise a right-click that triggers the tool would also pop the
+    // OS-level menu on top of our text input / drag handles.
+    canvas.getElement().addEventListener(
+      'contextmenu',
+      (e: Event) => {
+        if (this.options.activeToolType) e.preventDefault();
+      },
+      true
+    );
+
     // Set initial cursor
     this.updateCursor();
   }
@@ -71,15 +82,19 @@ export class AnnotationToolsEventHandler {
    */
   private handleMouseDown(event: MouseEvent): void {
     const currentTool = this.options.currentTool;
-    if (!currentTool || event.button !== 0) {
-      return; // Only left mouse button
+    // Accept primary (0) and secondary (2) buttons. Some trackpads /
+    // mouse configurations (Mac two-finger tap, certain Magic Mouse
+    // setups, browser extensions) report normal clicks as button 2;
+    // requiring button 0 only made tools feel dead for those users.
+    // Middle (1) is reserved for scroll, so we skip it.
+    if (!currentTool || event.button === 1) {
+      return;
     }
 
     if (!this.options.activeToolType) {
       return;
     }
 
-    // Check flag - if false, tool might not be ready yet (race condition)
     if (!this.options.toolActivatedByKeyboard) {
       return;
     }
