@@ -35,7 +35,15 @@ export class AnnotationToolsManager {
   }
   private utils: AnnotationToolsUtils;
   private onAnnotationCreate?: (annotation: Annotation) => void;
+  /** Callback fired whenever activation state actually flips. Routed to
+   *  `AnnotationManager.eventHandlers.onToolChange` so the DOM toolChange
+   *  event fires from EVERY deactivation path, including Esc. */
+  private onToolChangeCb?: (type: string | null) => void;
   private toolManagerDrawing = false; // Track if we're currently drawing
+
+  setOnToolChange(cb: (type: string | null) => void): void {
+    this.onToolChangeCb = cb;
+  }
 
   constructor(
     canvas: Renderer,
@@ -68,11 +76,14 @@ export class AnnotationToolsManager {
         // Update options synchronously to ensure flag is set immediately
         // This is critical for the first click to work properly
         this.updateEventHandlerOptions();
+        if (result) this.onToolChangeCb?.(toolType);
         return result;
       },
       onDeactivateTool: () => {
+        const wasActive = !!this.controller.getActiveToolType();
         this.controller.deactivateTool();
         this.updateEventHandlerOptions();
+        if (wasActive) this.onToolChangeCb?.(null);
       },
       onScreenToWorld: (screenPoint: Point) => this.utils.screenToWorld(screenPoint),
       onIsPointInImageBounds: (point: Point) => this.utils.isPointInImageBounds(point),

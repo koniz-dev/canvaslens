@@ -80,6 +80,13 @@ export class AnnotationManager {
     this.toolManager.setOnAnnotationCreate((annotation) => {
       this.addAnnotation(annotation);
     });
+    // Route Manager-internal activation flips (e.g. Esc-triggered
+    // deactivation from EventHandler) through the same onToolChange
+    // callback as the public AnnotationManager.activateTool path so the
+    // DOM toolChange event fires consistently.
+    this.toolManager.setOnToolChange((type) => {
+      this.eventHandlers.onToolChange?.(type);
+    });
 
     this.boundContextMenu = this.handleContextMenu.bind(this) as (event: Event) => void;
     this.boundMouseDown = this.handleMouseDown.bind(this) as (event: Event) => void;
