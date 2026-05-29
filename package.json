@@ -51,7 +51,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/koniz-dev/canvaslens.git"
+    "url": "git+https://github.com/koniz-dev/canvaslens.git"
   },
   "bugs": {
     "url": "https://github.com/koniz-dev/canvaslens/issues"
