@@ -204,9 +204,19 @@ export class CanvasLens extends HTMLElement {
     return this.app?.isComparisonMode() ?? false;
   }
 
-  openOverlay(): void {
+  /**
+   * Open the full-screen overlay editor.
+   * @param options.background Background applied to the overlay frame AND
+   *   the overlay canvas. Defaults to `'white'`; pass `'transparent'` to
+   *   remove the white card entirely so the dark backdrop shows directly
+   *   around the image.
+   */
+  openOverlay(options: { background?: string | null } = {}): void {
     if (!this.app) return;
-    this.overlayManager.openOverlay({ sourceApp: this.app });
+    this.overlayManager.openOverlay({
+      sourceApp: this.app,
+      ...(options && 'background' in options ? { background: options.background } : {})
+    });
   }
   closeOverlay(): void {
     this.overlayManager.closeOverlay();

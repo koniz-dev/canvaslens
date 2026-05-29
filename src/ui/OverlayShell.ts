@@ -7,6 +7,12 @@ export interface OverlayShellOptions {
   /** Called when the user requests to close the overlay (Esc key, backdrop
    * click, or close button). */
   onClose: () => void;
+  /**
+   * Background of the inner canvas frame. Defaults to `'white'`. Pass
+   * `'transparent'`, `'none'`, `null`, or `''` to skip the white card and
+   * let the backdrop show through behind the canvas.
+   */
+  frameBackground?: string | null;
 }
 
 const BACKDROP_STYLE = `
@@ -37,15 +43,18 @@ const CLOSE_BUTTON_STYLE = `
   z-index: 10001;
 `;
 
-const CANVAS_FRAME_STYLE = `
+const CANVAS_FRAME_BASE_STYLE = `
   width: 90vw;
   height: 90vh;
   max-width: 1200px;
   max-height: 800px;
-  background: white;
   border-radius: 8px;
   overflow: hidden;
 `;
+
+function isTransparentBg(bg: string | null | undefined): boolean {
+  return bg === null || bg === undefined || bg === '' || bg === 'transparent' || bg === 'none';
+}
 
 export class OverlayShell {
   readonly backdrop: HTMLDivElement;
@@ -71,7 +80,9 @@ export class OverlayShell {
 
     this.canvasFrame = document.createElement('div');
     this.canvasFrame.className = 'canvaslens-overlay-frame';
-    this.canvasFrame.style.cssText = CANVAS_FRAME_STYLE;
+    const bg = options.frameBackground === undefined ? 'white' : options.frameBackground;
+    const bgRule = isTransparentBg(bg) ? '' : `background: ${bg};`;
+    this.canvasFrame.style.cssText = CANVAS_FRAME_BASE_STYLE + bgRule;
     this.backdrop.appendChild(this.canvasFrame);
 
     this.keyHandler = (e) => {

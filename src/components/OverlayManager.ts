@@ -10,6 +10,16 @@ export interface OverlayOpenOptions {
   /** Mirror annotation changes from the overlay back to the source App
    *  whenever annotationAdd/Remove fires in the overlay. Default: true. */
   syncAnnotations?: boolean;
+  /**
+   * Background colour applied to BOTH the overlay's inner frame card and
+   * the overlay's canvas. Defaults to `'white'` (the classic editor card).
+   * Pass `'transparent'` / `'none'` / `''` / `null` to remove the white
+   * card AND make the canvas transparent — the dark backdrop then shows
+   * directly around the image with no white margins.
+   */
+  background?: string | null;
+  /** @deprecated Use `background` instead. */
+  frameBackground?: string | null;
 }
 
 /**
@@ -56,7 +66,17 @@ export class OverlayManager {
       this.sourceApp = options?.sourceApp ?? null;
       this.syncAnnotations = options?.syncAnnotations ?? true;
 
-      this.shell = new OverlayShell({ onClose: () => this.closeOverlay() });
+      const background =
+        options && 'background' in options
+          ? options.background
+          : options && 'frameBackground' in options
+            ? options.frameBackground
+            : 'white';
+
+      this.shell = new OverlayShell({
+        onClose: () => this.closeOverlay(),
+        frameBackground: background
+      });
 
       const seed = this.buildSeedOptions();
       // Reflow first so canvasFrame.clientWidth / clientHeight settle.
@@ -67,7 +87,11 @@ export class OverlayManager {
         ...seed,
         container: this.shell.canvasFrame,
         width: frameW > 0 ? frameW : 1200,
-        height: frameH > 0 ? frameH : 800
+        height: frameH > 0 ? frameH : 800,
+        // The canvas itself also follows the chosen background so a
+        // 'transparent' overlay shows the dark backdrop around the image
+        // (otherwise the canvas's own default fill would paint a margin).
+        backgroundColor: background ?? 'transparent'
       });
 
       // Seed the overlay with the source's loaded image (if any).

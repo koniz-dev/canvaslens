@@ -152,7 +152,10 @@ $('btn-comparison').addEventListener('click', () => {
   cl.toggleComparisonMode();
   $('status-comparison').textContent = cl.isComparisonMode() ? 'on' : 'off';
 });
-$('btn-overlay-open').addEventListener('click', () => cl.openOverlay());
+$('btn-overlay-open').addEventListener('click', () => {
+  const useFrame = $('overlay-frame-bg').checked;
+  cl.openOverlay({ background: useFrame ? 'white' : 'transparent' });
+});
 $('btn-overlay-close').addEventListener('click', () => cl.closeOverlay());
 
 // ─── Annotation list ──────────────────────────────────────────────────────

@@ -14,6 +14,34 @@ describe('OverlayShell', () => {
     shell.destroy();
   });
 
+  it('frame background defaults to white', () => {
+    const shell = new OverlayShell({ onClose: jest.fn() });
+    // jsdom normalises `background: white;` to either 'white' or 'rgb(...)' depending
+    // on parsing — both are accepted as 'has-bg'.
+    expect(shell.canvasFrame.style.background).toMatch(/white|rgb\(255,\s*255,\s*255\)/);
+    shell.destroy();
+  });
+
+  it('frameBackground="transparent" leaves the inner frame see-through', () => {
+    const shell = new OverlayShell({ onClose: jest.fn(), frameBackground: 'transparent' });
+    expect(shell.canvasFrame.style.background).toBe('');
+    shell.destroy();
+  });
+
+  it('frameBackground=null / "" / "none" also skip the frame fill', () => {
+    for (const v of [null, '', 'none'] as const) {
+      const shell = new OverlayShell({ onClose: jest.fn(), frameBackground: v });
+      expect(shell.canvasFrame.style.background).toBe('');
+      shell.destroy();
+    }
+  });
+
+  it('custom frame background is honoured', () => {
+    const shell = new OverlayShell({ onClose: jest.fn(), frameBackground: '#123456' });
+    expect(shell.canvasFrame.style.background).toMatch(/#123456|rgb\(18,\s*52,\s*86\)/);
+    shell.destroy();
+  });
+
   it('close button click invokes onClose', () => {
     const onClose = jest.fn();
     const shell = new OverlayShell({ onClose });
