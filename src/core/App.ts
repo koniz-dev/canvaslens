@@ -129,6 +129,15 @@ export class App {
     this.boundOnViewStateChange = () => this.render();
     this.scheduler = new RenderScheduler(() => this.renderInternal());
 
+    // When a drawing tool is activated the AnnotationManager asks the App
+    // to leave comparison mode (the slider conflicts with drawing).
+    this.bus.on('comparison:exit-request', () => {
+      if (this.comparison?.isComparisonMode()) {
+        this.comparison.setComparisonMode(false);
+        this.render();
+      }
+    });
+
     this.initializeModules();
     this.render();
   }

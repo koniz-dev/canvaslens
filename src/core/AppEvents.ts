@@ -28,6 +28,7 @@ export type AppEvents = {
   'tool:changed': string | null;
   'comparison:changed': number;
   'comparison:slider-moved': number;
+  'comparison:exit-request': undefined;
   'overlay:opened': undefined;
   'overlay:closed': undefined;
   'pointer:down': PointerEventPayload;

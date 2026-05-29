@@ -953,12 +953,25 @@ export class AnnotationManager {
   }
 
   /**
-   * Activate a tool
+   * Activate a tool. If comparison mode is active it gets turned off first
+   * — comparison uses a canvas-wide slider that conflicts with drawing, so
+   * activating a tool implicitly means "leave comparison mode".
    */
   activateTool(toolType: string): boolean {
+    if (this.ctx?.isComparisonMode()) {
+      // Route through the App so the comparison slice + ComparisonManager
+      // state stay in sync.
+      this.bus?.emit('comparison:exit-request', undefined);
+    }
     const ok = this.toolManager.activateTool(toolType);
     if (ok) this.eventHandlers.onToolChange?.(toolType);
     return ok;
+  }
+
+  private get bus(): { emit: (e: 'comparison:exit-request', v: undefined) => void } | undefined {
+    return this.ctx?.bus as
+      | { emit: (e: 'comparison:exit-request', v: undefined) => void }
+      | undefined;
   }
 
   /**

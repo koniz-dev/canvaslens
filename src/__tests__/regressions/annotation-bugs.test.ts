@@ -810,6 +810,60 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#13 — activating a tool while comparison is on auto-exits comparison', () => {
+    // Bug from the demo: user turns on comparison, then clicks the Text
+    // tool. The toolChange event fires but clicking the canvas does nothing
+    // because the EventHandler bails when comparison is active. The tool
+    // looks broken even though it's "active". Fix: activating ANY tool
+    // implicitly leaves comparison mode (they conflict on the same canvas).
+
+    it('text tool activation turns comparison off', () => {
+      app = setupApp({
+        tools: {
+          comparison: true,
+          annotation: { text: true, style: { strokeColor: '#000', strokeWidth: 1 } }
+        }
+      });
+      app.setComparisonMode(true);
+      expect(app.isComparisonMode()).toBe(true);
+
+      app.activateTool('text');
+
+      expect(app.isComparisonMode()).toBe(false);
+      expect(app.getActiveTool()).toBe('text');
+    });
+
+    it('rect tool activation also exits comparison', () => {
+      app = setupApp({
+        comparison: true,
+        annotation: { rect: true, style: { strokeColor: '#000', strokeWidth: 1 } }
+      });
+      app.setComparisonMode(true);
+      app.activateTool('rect');
+      expect(app.isComparisonMode()).toBe(false);
+    });
+
+    it('after auto-exit, the text tool actually creates an input on click', (done) => {
+      app = setupApp({
+        tools: {
+          comparison: true,
+          annotation: { text: true, style: { strokeColor: '#000', strokeWidth: 1 } }
+        }
+      });
+      app.setComparisonMode(true);
+      app.activateTool('text');
+
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', 200, 200);
+      setTimeout(() => {
+        const input = document.querySelector('input[type="text"]');
+        expect(input).toBeTruthy();
+        app.destroy();
+        done();
+      }, 30);
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();
