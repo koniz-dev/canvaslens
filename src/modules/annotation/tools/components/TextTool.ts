@@ -96,26 +96,34 @@ export class TextTool extends BaseTool {
     input.addEventListener('click', stop);
     input.addEventListener('pointerdown', stop);
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
+    // Make ALL key events on the input stay there. Without this the
+    // document-level keydown listener registered by AnnotationToolsEventHandler
+    // (capture phase) would steal keys like Backspace (treated as "delete
+    // selected annotation") and Esc (treated as "deactivate tool") — and
+    // could even preventDefault on character keys depending on the path.
+    input.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          this.completeTextInput();
+          return;
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          this.cancelTextInput();
+          return;
+        }
+        // For every other key, stop the event from reaching the document's
+        // capture-phase listener so the input actually receives the
+        // character. The browser still gets the keystroke for the input
+        // itself because preventDefault is NOT called.
         e.stopPropagation();
-        this.completeTextInput();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        this.cancelTextInput();
-      }
-    });
-
-    // Commit on blur — keeps the user's typed text if they click away.
-    input.addEventListener('blur', () => {
-      // Defer one frame so a re-focus (e.g. switching app windows) doesn't
-      // immediately destroy the input.
-      requestAnimationFrame(() => {
-        if (this.textInput === input) this.completeTextInput();
-      });
-    });
+      },
+      true // capture on the input — runs before any document listener
+    );
 
     const canvasElement = this.canvas.getElement();
     const container = canvasElement.parentElement;
@@ -129,12 +137,11 @@ export class TextTool extends BaseTool {
     this.textInput = input;
     this.committed = false;
 
-    // Focus on the next microtask so the focus call wins the race against
-    // the browser's own click-to-focus retargeting for the still-bubbling
-    // mousedown that opened this input.
-    Promise.resolve().then(() => {
-      if (this.textInput === input) input.focus();
-    });
+    // Focus synchronously after appendChild. The mousedown that opened
+    // this input has already done its work; further events on the canvas
+    // won't move focus away because the input now sits above it.
+    input.focus();
+    input.select();
   }
 
   private completeTextInput(): void {
