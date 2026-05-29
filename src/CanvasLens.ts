@@ -194,7 +194,8 @@ export class CanvasLens extends HTMLElement {
   }
 
   openOverlay(): void {
-    this.overlayManager.openOverlay();
+    if (!this.app) return;
+    this.overlayManager.openOverlay({ sourceApp: this.app });
   }
   closeOverlay(): void {
     this.overlayManager.closeOverlay();

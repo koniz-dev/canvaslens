@@ -418,6 +418,100 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#8 — overlay opens with the source App\'s image + annotations', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { OverlayManager } = require('../../components/OverlayManager');
+
+    it('seeds the overlay App with the source image element', () => {
+      app = setupApp();
+      const mgr = new OverlayManager(document.createElement('div'));
+      mgr.openOverlay({ sourceApp: app });
+      const ov = mgr.getOverlayApp();
+      expect(ov).toBeDefined();
+      expect(ov.isImageLoaded()).toBe(true);
+      mgr.closeOverlay();
+    });
+
+    it('copies source annotations into the overlay on open', () => {
+      app = setupApp();
+      app.addAnnotation(
+        ann('a', 'rect', [
+          { x: 10, y: 10 },
+          { x: 50, y: 50 }
+        ])
+      );
+      app.addAnnotation(
+        ann('b', 'circle', [
+          { x: 200, y: 200 },
+          { x: 220, y: 200 }
+        ])
+      );
+      const mgr = new OverlayManager(document.createElement('div'));
+      mgr.openOverlay({ sourceApp: app });
+      const ov = mgr.getOverlayApp();
+      expect(ov.getAnnotations()).toHaveLength(2);
+      const types = ov.getAnnotations().map((x: Annotation) => x.type).sort();
+      expect(types).toEqual(['circle', 'rect']);
+      mgr.closeOverlay();
+    });
+
+    it('syncs annotation edits in the overlay back to the source on close', () => {
+      app = setupApp();
+      app.addAnnotation(
+        ann('original', 'rect', [
+          { x: 10, y: 10 },
+          { x: 50, y: 50 }
+        ])
+      );
+      const mgr = new OverlayManager(document.createElement('div'));
+      mgr.openOverlay({ sourceApp: app });
+      const ov = mgr.getOverlayApp();
+      // Add a new annotation inside the overlay.
+      ov.addAnnotation(
+        ann('added-in-overlay', 'arrow', [
+          { x: 100, y: 100 },
+          { x: 200, y: 200 }
+        ])
+      );
+      mgr.closeOverlay();
+
+      // The source App should now reflect the overlay's edits.
+      const ids = app.getAnnotations().map((x) => x.id).sort();
+      expect(ids).toEqual(['added-in-overlay', 'original']);
+    });
+
+    it('mutating the overlay copy does not affect the source until close', () => {
+      app = setupApp();
+      const orig = ann('a', 'rect', [
+        { x: 10, y: 10 },
+        { x: 50, y: 50 }
+      ]);
+      app.addAnnotation(orig);
+      const mgr = new OverlayManager(document.createElement('div'));
+      mgr.openOverlay({ sourceApp: app });
+      const ov = mgr.getOverlayApp();
+      // Tweak the overlay's copy.
+      const copy = ov.getAnnotations()[0];
+      copy.points[1].x = 9999;
+      // Source untouched while overlay is open.
+      expect(app.getAnnotations()[0].points[1].x).toBe(50);
+      mgr.closeOverlay();
+      // After close, source mirrors the overlay (= 9999 in our case).
+      expect(app.getAnnotations()[0].points[1].x).toBe(9999);
+    });
+
+    it('open + close is idempotent', () => {
+      app = setupApp();
+      const mgr = new OverlayManager(document.createElement('div'));
+      mgr.openOverlay({ sourceApp: app });
+      expect(mgr.isOverlayOpen()).toBe(true);
+      mgr.openOverlay({ sourceApp: app }); // no-op when already open
+      mgr.closeOverlay();
+      expect(mgr.isOverlayOpen()).toBe(false);
+      mgr.closeOverlay(); // safe second close
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();
