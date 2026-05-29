@@ -27,6 +27,12 @@ type TypedToolManagerOptions = ToolManagerOptions<AnnotationManager | undefined,
 export class AnnotationToolsManager {
   private eventHandler: AnnotationToolsEventHandler;
   private controller: AnnotationToolsController;
+
+  /** Access the underlying tool controller — used by ShapeDrawingController
+   *  in core/ to drive shape tools directly. */
+  getController(): AnnotationToolsController {
+    return this.controller;
+  }
   private utils: AnnotationToolsUtils;
   private onAnnotationCreate?: (annotation: Annotation) => void;
   private toolManagerDrawing = false; // Track if we're currently drawing

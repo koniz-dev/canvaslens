@@ -29,6 +29,7 @@ import { RenderScheduler } from './RenderScheduler';
 import { appReducer, createInitialState } from './state';
 import type { AppAction, AppState } from './state';
 import { Store } from './Store';
+import { ShapeDrawingController } from './ShapeDrawingController';
 import { TextInputController } from './TextInputController';
 
 export interface AppOptions extends CanvasLensOptions {
@@ -80,6 +81,7 @@ export class App {
   private annotation: AnnotationManager | null = null;
   private comparison: ComparisonManager | null = null;
   private textInputController: TextInputController;
+  private shapeDrawingController: ShapeDrawingController;
 
   private customImageData: CustomImageData | null = null;
   private originalCustomImageData: CustomImageData | null = null;
@@ -138,6 +140,24 @@ export class App {
       getActiveTool: () => this.getActiveTool(),
       getImageBounds: () => this.getImageBounds(),
       addAnnotation: (a) => this.addAnnotation(a)
+    });
+
+    // Shape drawing (rect/arrow/circle/line) follows the same pattern
+    // as TextInputController — one place owns the whole interaction.
+    this.shapeDrawingController = new ShapeDrawingController({
+      canvas: this.canvas,
+      store: this.store,
+      getActiveTool: () => this.getActiveTool(),
+      getShapeTool: (type) => {
+        const am = this.annotation;
+        if (!am) return null;
+        const mgr = am.getToolManager();
+        return mgr.getController().getToolByType(type) ?? null;
+      },
+      getImageBounds: () => this.getImageBounds(),
+      getDefaultStyle: () => this.store.getState().annotation.defaultStyle,
+      addAnnotation: (a) => this.addAnnotation(a),
+      requestRender: () => this.render()
     });
 
     this.boundOnViewStateChange = () => this.render();
@@ -853,6 +873,7 @@ export class App {
     this.bus.clear();
 
     this.textInputController.destroy();
+    this.shapeDrawingController.destroy();
     this.zoomPan?.destroy();
     this.annotation?.destroy();
     this.comparison?.destroy();

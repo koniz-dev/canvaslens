@@ -53,6 +53,13 @@ export class AnnotationToolsController {
     return this.registry;
   }
 
+  /** Direct access to a tool instance by type — used by
+   *  ShapeDrawingController to drive shape tools without going through
+   *  EventHandler. */
+  getToolByType(type: string): BaseTool | undefined {
+    return this.tools.get(type);
+  }
+
   /**
    * Activate a tool (click on tool button)
    */
