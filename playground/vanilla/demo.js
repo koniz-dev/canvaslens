@@ -51,6 +51,28 @@ for (const name of [
   cl.addEventListener(name, (e) => logEvent(name, e.detail));
 }
 
+// ─── Diagnostics: surface what's happening on canvas clicks ───────────────
+// (lets us spot if mousedown reaches the canvas at all, and if the text tool
+// path is being entered)
+const inspectCanvas = () => cl.shadowRoot?.querySelector('canvas');
+function instrumentCanvas() {
+  const c = inspectCanvas();
+  if (!c) { setTimeout(instrumentCanvas, 50); return; }
+  c.addEventListener('mousedown', (e) => {
+    const tool = cl.getActiveTool();
+    const inputs = document.querySelectorAll('input[data-canvaslens-text-input]').length;
+    logEvent('canvas.mousedown', `tool=${tool} button=${e.button} input-existing=${inputs}`);
+    // Schedule a check 100ms later to see if an input appeared
+    setTimeout(() => {
+      const now = document.querySelectorAll('input[data-canvaslens-text-input]').length;
+      if (tool === 'text') {
+        logEvent('text→after-100ms', `inputs-in-doc=${now}`);
+      }
+    }, 100);
+  }, true); // capture so we see it before the library's listeners
+}
+instrumentCanvas();
+
 $('btn-clear-log').addEventListener('click', () => {
   eventsEl.innerHTML = '';
   logCount = 0;
