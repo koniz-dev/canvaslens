@@ -61,15 +61,18 @@ function instrumentCanvas() {
   c.addEventListener('mousedown', (e) => {
     const tool = cl.getActiveTool();
     const inputs = document.querySelectorAll('input[data-canvaslens-text-input]').length;
-    logEvent('canvas.mousedown', `tool=${tool} button=${e.button} input-existing=${inputs}`);
-    // Schedule a check 100ms later to see if an input appeared
+    const r = c.getBoundingClientRect();
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    const bounds = cl.getApp()?.getImageBounds();
+    const inside = bounds ? (px >= bounds.x && px <= bounds.x + bounds.width && py >= bounds.y && py <= bounds.y + bounds.height) : 'no-img';
+    logEvent('canvas.mousedown', `tool=${tool} btn=${e.button} canvas(${px.toFixed(0)},${py.toFixed(0)}) inside-image=${inside}`);
     setTimeout(() => {
       const now = document.querySelectorAll('input[data-canvaslens-text-input]').length;
-      if (tool === 'text') {
-        logEvent('text→after-100ms', `inputs-in-doc=${now}`);
-      }
+      const allInputsInDoc = document.querySelectorAll('input').length;
+      const inShadow = cl.shadowRoot?.querySelectorAll('input').length ?? 0;
+      logEvent('  → 100ms', `text-inputs=${now} all-inputs-doc=${allInputsInDoc} in-shadow=${inShadow}`);
     }, 100);
-  }, true); // capture so we see it before the library's listeners
+  }, true);
 }
 instrumentCanvas();
 
