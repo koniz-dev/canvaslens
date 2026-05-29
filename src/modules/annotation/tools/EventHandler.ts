@@ -225,6 +225,13 @@ export class AnnotationToolsEventHandler {
    * Handle keyboard shortcuts
    */
   private handleKeyDown(event: KeyboardEvent): void {
+    // Ignore keys originating from our own text input — that controller
+    // handles them itself (Enter/Escape commit/cancel; regular keys type
+    // into the input).
+    const target = event.target as HTMLElement | null;
+    if (target?.tagName === 'INPUT' && target.dataset?.canvaslensTextInput === '1') {
+      return;
+    }
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
       const annotationManager = this.options.annotationManager;

@@ -29,6 +29,7 @@ import { RenderScheduler } from './RenderScheduler';
 import { appReducer, createInitialState } from './state';
 import type { AppAction, AppState } from './state';
 import { Store } from './Store';
+import { TextInputController } from './TextInputController';
 
 export interface AppOptions extends CanvasLensOptions {
   container: HTMLElement;
@@ -78,6 +79,7 @@ export class App {
   private zoomPan: ZoomPanHandler | null = null;
   private annotation: AnnotationManager | null = null;
   private comparison: ComparisonManager | null = null;
+  private textInputController: TextInputController;
 
   private customImageData: CustomImageData | null = null;
   private originalCustomImageData: CustomImageData | null = null;
@@ -125,6 +127,18 @@ export class App {
 
     this.canvas = new Renderer(options.container, { width, height });
     this.canvas.imageViewer = this;
+
+    // Attach the text-input controller FIRST so its mousedown listener
+    // wins the capture phase and consumes text-tool clicks before any
+    // other module (EventHandler / AnnotationManager / ComparisonManager
+    // / ZoomPanHandler) can interfere.
+    this.textInputController = new TextInputController({
+      canvas: this.canvas,
+      store: this.store,
+      getActiveTool: () => this.getActiveTool(),
+      getImageBounds: () => this.getImageBounds(),
+      addAnnotation: (a) => this.addAnnotation(a)
+    });
 
     this.boundOnViewStateChange = () => this.render();
     this.scheduler = new RenderScheduler(() => this.renderInternal());
@@ -838,6 +852,7 @@ export class App {
     this.bus.emit('destroy', undefined);
     this.bus.clear();
 
+    this.textInputController.destroy();
     this.zoomPan?.destroy();
     this.annotation?.destroy();
     this.comparison?.destroy();
