@@ -95,10 +95,15 @@ export class Renderer {
   }
 
   /**
-   * Clear with background color
+   * Clear the canvas and optionally fill it with a background colour.
+   * Passing `'transparent'`, `'none'`, an empty string, or `null`/`undefined`
+   * leaves the canvas pixel-cleared (transparent) so the underlying page
+   * background shows through.
    */
-  clearWithBackground(color: string): void {
+  clearWithBackground(color: string | null | undefined): void {
     const size = this.getSize();
+    this.ctx.clearRect(0, 0, size.width, size.height);
+    if (!color || color === 'transparent' || color === 'none') return;
     this.ctx.fillStyle = color;
     this.ctx.fillRect(0, 0, size.width, size.height);
   }

@@ -96,6 +96,11 @@ export class CanvasLens extends HTMLElement {
         case 'tools':
           if (newValue !== null) this.app.updateToolConfigFromAttribute(newValue);
           break;
+        case 'background-color':
+          // `transparent` / `none` / empty leave the canvas pixel-cleared so
+          // the page background shows through.
+          this.app.setBackgroundColor(newValue ?? '');
+          break;
         case 'max-zoom':
         case 'min-zoom':
           this.reinitialize();
@@ -118,6 +123,12 @@ export class CanvasLens extends HTMLElement {
 
   resize(width: number, height: number): void {
     this.app?.resize(width, height);
+  }
+
+  /** Update the canvas background. `'transparent'` / `'none'` / `''` /
+   *  `null` leave it pixel-cleared so the page background shows through. */
+  setBackgroundColor(color: string | null | undefined): void {
+    this.app?.setBackgroundColor(color);
   }
 
   zoomIn(factor?: number): void {

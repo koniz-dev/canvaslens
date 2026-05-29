@@ -512,6 +512,53 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#9 — transparent background option', () => {
+    it('setBackgroundColor("transparent") only clears, does not fill', () => {
+      app = setupApp();
+      const ctx = app.getCanvas().getContext();
+      const clearSpy = jest.spyOn(ctx, 'clearRect');
+      const fillSpy = jest.spyOn(ctx, 'fillRect');
+      clearSpy.mockClear();
+      fillSpy.mockClear();
+
+      app.setBackgroundColor('transparent');
+
+      expect(clearSpy).toHaveBeenCalled();
+      // fillRect should NOT be called for transparent (only clearRect).
+      const fillCalls = fillSpy.mock.calls.filter(
+        (c) => c[0] === 0 && c[1] === 0 // background fill calls land at (0,0)
+      );
+      expect(fillCalls.length).toBe(0);
+    });
+
+    it('setBackgroundColor("#ff0000") clears + fills with the colour', () => {
+      app = setupApp();
+      const ctx = app.getCanvas().getContext();
+      const clearSpy = jest.spyOn(ctx, 'clearRect');
+      const fillSpy = jest.spyOn(ctx, 'fillRect');
+      clearSpy.mockClear();
+      fillSpy.mockClear();
+
+      app.setBackgroundColor('#ff0000');
+
+      expect(clearSpy).toHaveBeenCalled();
+      expect(fillSpy).toHaveBeenCalled();
+    });
+
+    it('treats "", null, "none" the same as transparent', () => {
+      app = setupApp();
+      const ctx = app.getCanvas().getContext();
+      const fillSpy = jest.spyOn(ctx, 'fillRect');
+
+      for (const value of ['', null, 'none'] as const) {
+        fillSpy.mockClear();
+        app.setBackgroundColor(value);
+        const fillCalls = fillSpy.mock.calls.filter((c) => c[0] === 0 && c[1] === 0);
+        expect(fillCalls.length).toBe(0);
+      }
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();

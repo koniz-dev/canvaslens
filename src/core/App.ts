@@ -62,6 +62,7 @@ export class App {
   private readonly canvas: Renderer;
   private readonly scheduler: RenderScheduler;
   private options: CanvasLensOptions;
+  /** Empty string / 'transparent' / 'none' = leave canvas pixel-cleared. */
   private backgroundColor: string;
   private eventHandlers: EventHandlers;
 
@@ -367,6 +368,17 @@ export class App {
   }
 
   // ─── View / zoom / pan ────────────────────────────────────────────────────
+
+  /**
+   * Update the canvas background colour. Pass `'transparent'`, `'none'`,
+   * `null`, or an empty string to leave the canvas pixel-cleared so the
+   * page background shows through.
+   */
+  setBackgroundColor(color: string | null | undefined): void {
+    if (this.destroyed) return;
+    this.backgroundColor = color ?? '';
+    this.render();
+  }
 
   resize(width: number, height: number): void {
     if (this.destroyed) return;

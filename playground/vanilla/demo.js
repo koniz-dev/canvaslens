@@ -91,6 +91,14 @@ cl.addEventListener('toolChange', (e) => {
 });
 
 // ─── Style ────────────────────────────────────────────────────────────────
+// ─── Canvas background ────────────────────────────────────────────────────
+function applyBackground() {
+  const on = $('bg-enabled').checked;
+  cl.setBackgroundColor(on ? $('bg-color').value : 'transparent');
+}
+$('bg-enabled').addEventListener('change', applyBackground);
+$('bg-color').addEventListener('input', applyBackground);
+
 $('btn-apply-style').addEventListener('click', () => {
   const style = {
     strokeColor: $('stroke-color').value,
