@@ -1,9 +1,8 @@
 import type { Annotation, AnnotationStyle, Point, Rectangle } from '../types';
 import { TextSanitizer } from '../utils/security/text-sanitizer';
-
 import type { Renderer } from './Renderer';
-import type { Store } from './Store';
 import type { AppAction, AppState } from './state';
+import type { Store } from './Store';
 
 export interface TextInputControllerDeps {
   canvas: Renderer;

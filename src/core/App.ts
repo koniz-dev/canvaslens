@@ -26,10 +26,10 @@ import { EventBus } from './EventBus';
 import type { ModuleContext } from './ModuleContext';
 import { Renderer } from './Renderer';
 import { RenderScheduler } from './RenderScheduler';
+import { ShapeDrawingController } from './ShapeDrawingController';
 import { appReducer, createInitialState } from './state';
 import type { AppAction, AppState } from './state';
 import { Store } from './Store';
-import { ShapeDrawingController } from './ShapeDrawingController';
 import { TextInputController } from './TextInputController';
 
 export interface AppOptions extends CanvasLensOptions {

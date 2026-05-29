@@ -4,10 +4,9 @@ import type { CircleTool } from '../modules/annotation/tools/components/CircleTo
 import type { LineTool } from '../modules/annotation/tools/components/LineTool';
 import type { RectangleTool } from '../modules/annotation/tools/components/RectangleTool';
 import type { Annotation, AnnotationStyle, Point, Rectangle } from '../types';
-
 import type { Renderer } from './Renderer';
-import type { Store } from './Store';
 import type { AppAction, AppState } from './state';
+import type { Store } from './Store';
 
 export type DrawableTool = RectangleTool | ArrowTool | CircleTool | LineTool;
 

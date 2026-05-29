@@ -417,16 +417,8 @@ export class AnnotationManager {
     if (!imageBounds) return newCenter;
 
     const currentBounds = this.getAnnotationBounds(annotation);
-    if (!currentBounds || currentBounds.width === 0 || currentBounds.height === 0) {
-      // Single-point annotations (e.g. text): just clamp the point.
-      return {
-        x: Math.max(imageBounds.x, Math.min(imageBounds.x + imageBounds.width, newCenter.x)),
-        y: Math.max(imageBounds.y, Math.min(imageBounds.y + imageBounds.height, newCenter.y))
-      };
-    }
-
-    const halfW = currentBounds.width / 2;
-    const halfH = currentBounds.height / 2;
+    const halfW = currentBounds ? currentBounds.width / 2 : 0;
+    const halfH = currentBounds ? currentBounds.height / 2 : 0;
     return {
       x: Math.max(imageBounds.x + halfW, Math.min(imageBounds.x + imageBounds.width - halfW, newCenter.x)),
       y: Math.max(imageBounds.y + halfH, Math.min(imageBounds.y + imageBounds.height - halfH, newCenter.y))
@@ -574,24 +566,19 @@ export class AnnotationManager {
   private getAnnotationCenter(annotation: Annotation): Point {
     if (annotation.points.length === 0) return { x: 0, y: 0 };
 
-    if (annotation.type === 'rect' && annotation.points.length >= 2) {
-      const point1 = annotation.points[0];
-      const point2 = annotation.points[1];
-      if (!point1 || !point2) return { x: 0, y: 0 };
+    if (annotation.type === 'circle' && annotation.points.length >= 2) {
+      return annotation.points[0]!;
+    }
 
-      const minX = Math.min(point1.x, point2.x);
-      const maxX = Math.max(point1.x, point2.x);
-      const minY = Math.min(point1.y, point2.y);
-      const maxY = Math.max(point1.y, point2.y);
-
+    const bounds = this.getAnnotationBounds(annotation);
+    if (bounds) {
       return {
-        x: (minX + maxX) / 2,
-        y: (minY + maxY) / 2
+        x: bounds.x + bounds.width / 2,
+        y: bounds.y + bounds.height / 2
       };
     }
 
-    const firstPoint = annotation.points[0];
-    return firstPoint || { x: 0, y: 0 };
+    return annotation.points[0] || { x: 0, y: 0 };
   }
 
   /**
