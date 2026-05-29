@@ -1,3 +1,38 @@
+## [2.0.0](https://github.com/koniz-dev/canvaslens/compare/v1.3.0...v2.0.0) (2026-05-29)
+
+### ⚠ BREAKING CHANGES
+
+Full architecture rewrite (v1 → v2). Internal module layout, event bus,
+store, and tool plugin system are all new. The Web Component surface
+(`<canvas-lens>` attributes + methods) is preserved where practical,
+but anything that reached into private internals will break. See
+`docs/migration.md` for details.
+
+### Features
+
+* **core:** introduce Store, EventBus, RenderScheduler foundation (Phase 1)
+* **core:** flatten Core/Engine/ImageViewer into single `App` (Phase 2)
+* **modules:** wire modules via `ModuleContext`, fix `bind(this)` listener leak (Phase 3)
+* **tools:** ToolPlugin / ToolRegistry plugin system — built-ins + user-registered tools (Phase 4)
+* **ui:** extract context menu, error placeholder, overlay shell into `ui/` (Phase 5)
+* **input:** centralise pointer + keyboard input, drop EventManager (Phase 6)
+* **overlay:** seed overlay with host image, tools, and annotations; isolate host interactions while overlay is open; in-overlay toolbar
+* **canvas:** optional transparent background (`backgroundColor: 'transparent'`)
+* **playground:** new full-feature vanilla demo
+
+### Bug Fixes
+
+* **annotations:** drag clamp uses geometric center, not points[0] — line/arrow can now reach both image edges symmetrically
+* **annotations:** drag continues off-canvas in all 8 directions (document-level pointer move/up)
+* **annotations:** circle stays inside image bounds when drawing, resizing, and dragging
+* **annotations:** resize handles per shape; drag clamp; cursor switching during hover/resize
+* **annotations:** export/import via `<canvas-lens>` API; JSON size cap raised to 1 MB
+* **text:** input mounts to `document.body` with synchronous focus — survives shadow-DOM races, mouse-button quirks, and tool switches
+* **tools:** accept secondary mouse button (`button=2`) for tool actions (Mac trackpad)
+* **tools:** activating a tool auto-exits comparison mode
+* **events:** Esc fires `toolChange` correctly; full input event audit
+* **style:** `updateTools(style)` synchronously propagates to the store and subsequent draws
+
 ## [1.3.0](https://github.com/koniz-dev/canvaslens/compare/v1.2.2...v1.3.0) (2025-11-08)
 
 ### Features
