@@ -102,6 +102,16 @@ canvas-lens {
   color: #555;
 }
 .row label.checkbox { gap: 2px; }
+.row.status-row {
+  margin-top: 2px;
+  margin-bottom: 2px;
+  gap: 12px;
+}
+.separator {
+  height: 1px;
+  background: #eee;
+  margin: 8px -12px;
+}
 .row input[type="text"] {
   flex: 1;
   min-width: 0;

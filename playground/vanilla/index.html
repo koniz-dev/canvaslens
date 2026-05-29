@@ -45,8 +45,10 @@
           <button id="btn-deactivate-tool">✕ Off</button>
         </div>
         <p class="hint">
-          Drag inside the image to draw. Right-click an annotation to delete.
-          Alt+R/A/T/C/L are keyboard shortcuts. Esc clears the tool.
+          Drag inside the image to draw (text = click to place input). Esc
+          cancels the in-progress draw, or deactivates the tool when idle.
+          Alt+R/A/T/C/L are keyboard shortcuts. Right-click an annotation
+          to delete.
         </p>
       </section>
 
@@ -80,24 +82,6 @@
         <button id="btn-apply-style">Apply</button>
       </section>
 
-      <!-- Canvas background -->
-      <section class="panel">
-        <h2>Canvas background</h2>
-        <div class="row">
-          <label class="checkbox">
-            <input type="checkbox" id="bg-enabled" checked />
-            show background
-          </label>
-          <label>
-            <input type="color" id="bg-color" value="#f0f3f5" />
-          </label>
-        </div>
-        <p class="hint">
-          Off = transparent canvas (the page colour shows through outside the
-          image).
-        </p>
-      </section>
-
       <!-- View -->
       <section class="panel">
         <h2>4. View</h2>
@@ -113,10 +97,21 @@
           </label>
           <button id="btn-zoom-to">Go</button>
         </div>
-        <div class="row">
+        <div class="row status-row">
           <span id="status-zoom">zoom 1.000×</span>
           <span id="status-pan">pan (0,0)</span>
         </div>
+        <div class="separator"></div>
+        <div class="row">
+          <label class="checkbox">
+            <input type="checkbox" id="bg-enabled" checked />
+            canvas background
+          </label>
+          <label>
+            <input type="color" id="bg-color" value="#f0f3f5" />
+          </label>
+        </div>
+        <p class="hint">Off → transparent canvas; the page colour shows through outside the image.</p>
       </section>
 
       <!-- Modes -->
@@ -126,6 +121,7 @@
           <button id="btn-comparison">🔄 Toggle Comparison</button>
           <span id="status-comparison">off</span>
         </div>
+        <div class="separator"></div>
         <div class="row">
           <button id="btn-overlay-open">⤢ Open overlay</button>
           <button id="btn-overlay-close">⤡ Close</button>
