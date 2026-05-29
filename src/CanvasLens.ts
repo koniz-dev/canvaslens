@@ -178,6 +178,21 @@ export class CanvasLens extends HTMLElement {
   getAnnotations(): Annotation[] {
     return this.app?.getAnnotations() ?? [];
   }
+  /** Serialize the current annotation list to a JSON string. */
+  exportAnnotations(): string {
+    return this.app?.exportAnnotations() ?? '[]';
+  }
+  /**
+   * Replace the current annotation list with the ones parsed from `json`.
+   * Invalid annotations are skipped (logged via the error handler).
+   * Pretty-printed JSON is fine; the input goes through SecureJsonParser
+   * so prototype-pollution / function payloads are rejected.
+   */
+  importAnnotations(json: string): void {
+    if (!this.app) return;
+    this.app.importAnnotations(json);
+    this.hasUnsavedChanges = true;
+  }
   getSelectedAnnotation(): Annotation | null {
     return this.app?.getSelectedAnnotation() ?? null;
   }

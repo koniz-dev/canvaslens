@@ -18,8 +18,8 @@ describe('Security Utilities', () => {
         expect(result).toBeNull();
       });
 
-      it('should reject JSON that is too large', () => {
-        const largeJson = JSON.stringify({ data: 'x'.repeat(15000) });
+      it('should reject JSON that is too large (over the 1 MB cap)', () => {
+        const largeJson = JSON.stringify({ data: 'x'.repeat(1_100_000) });
         const result = SecureJsonParser.parseToolConfig(largeJson);
         expect(result).toBeNull();
       });

@@ -7,7 +7,9 @@ import { ValidationHelper } from '../core/validation-helper';
  * Prevents prototype pollution, DoS attacks, and type confusion
  */
 export class SecureJsonParser {
-  private static readonly MAX_JSON_SIZE = 10000;
+  /** 1 MB — comfortably fits 1000+ annotations pretty-printed. The cap is
+   *  here to short-circuit DoS, not to constrain legitimate use. */
+  private static readonly MAX_JSON_SIZE = 1_000_000;
   private static readonly MAX_DEPTH = 32;
 
   /**

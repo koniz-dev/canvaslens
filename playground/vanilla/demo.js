@@ -190,32 +190,59 @@ cl.addEventListener('imageLoad', refreshAnnotationList);
 refreshAnnotationList();
 
 $('btn-clear').addEventListener('click', () => cl.clearAnnotations());
+
 $('btn-export').addEventListener('click', () => {
-  const json = JSON.stringify(cl.getAnnotations(), null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
+  const count = cl.getAnnotations().length;
+  if (count === 0) {
+    logEvent('export', 'no annotations to export');
+    return;
+  }
+  // Pretty-print for human readability when opening the file.
+  const raw = cl.exportAnnotations();
+  const pretty = JSON.stringify(JSON.parse(raw), null, 2);
+  const blob = new Blob([pretty], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
+  // Some browsers (Safari) require the link to be in the DOM for click()
+  // to trigger a download. Revoke after a small delay so the download
+  // actually starts.
   const a = document.createElement('a');
   a.href = url;
   a.download = 'annotations.json';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => {
+    a.remove();
+    URL.revokeObjectURL(url);
+  }, 0);
+  logEvent('export', `${count} annotation${count === 1 ? '' : 's'}`);
 });
-$('btn-import').addEventListener('click', async () => {
+
+$('btn-import').addEventListener('click', () => {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = 'application/json';
+  input.accept = 'application/json,.json';
+  input.style.display = 'none';
+  document.body.appendChild(input);
+
   input.addEventListener('change', async () => {
     const file = input.files?.[0];
-    if (!file) return;
-    const text = await file.text();
+    if (!file) {
+      input.remove();
+      return;
+    }
     try {
-      const data = JSON.parse(text);
-      cl.clearAnnotations();
-      data.forEach((a) => cl.addAnnotation(a));
+      const text = await file.text();
+      const before = cl.getAnnotations().length;
+      cl.importAnnotations(text);
+      const after = cl.getAnnotations().length;
+      logEvent('import', `${after} loaded (was ${before})`);
     } catch (err) {
-      logEvent('importError', err.message);
+      logEvent('importError', err.message ?? String(err));
+    } finally {
+      input.remove();
     }
   });
+
   input.click();
 });
 

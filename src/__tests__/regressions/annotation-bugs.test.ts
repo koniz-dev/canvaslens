@@ -559,6 +559,94 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#10 — export / import round-trip', () => {
+    it('exportAnnotations + importAnnotations round-trip', () => {
+      app = setupApp();
+      app.addAnnotation(
+        ann('r', 'rect', [
+          { x: 10, y: 10 },
+          { x: 100, y: 100 }
+        ])
+      );
+      app.addAnnotation(
+        ann('c', 'circle', [
+          { x: 200, y: 200 },
+          { x: 250, y: 200 }
+        ])
+      );
+
+      const json = app.exportAnnotations();
+      const before = app.getAnnotations();
+      app.clearAnnotations();
+      expect(app.getAnnotations()).toHaveLength(0);
+
+      app.importAnnotations(json);
+      const after = app.getAnnotations();
+      expect(after).toHaveLength(before.length);
+      for (let i = 0; i < before.length; i++) {
+        expect(after[i]!.id).toBe(before[i]!.id);
+        expect(after[i]!.type).toBe(before[i]!.type);
+        expect(after[i]!.points).toEqual(before[i]!.points);
+        expect(after[i]!.style.strokeColor).toBe(before[i]!.style.strokeColor);
+      }
+    });
+
+    it('importAnnotations accepts large JSON (1000 annotations)', () => {
+      app = setupApp();
+      const list = [];
+      for (let i = 0; i < 1000; i++) {
+        list.push(
+          ann(`id-${i}`, 'rect', [
+            { x: i, y: i },
+            { x: i + 5, y: i + 5 }
+          ])
+        );
+      }
+      const json = JSON.stringify(list);
+      // Roughly ~250 KB for 1000 rects — well under the 1 MB cap.
+      expect(json.length).toBeGreaterThan(100_000);
+      app.importAnnotations(json);
+      expect(app.getAnnotations()).toHaveLength(1000);
+    });
+
+    it('CanvasLens exposes exportAnnotations / importAnnotations', async () => {
+      const { CanvasLens } = await import('../../CanvasLens');
+      if (!customElements.get('canvas-lens')) {
+        customElements.define('canvas-lens', CanvasLens);
+      }
+      const el = document.createElement('canvas-lens') as HTMLElement & {
+        exportAnnotations: () => string;
+        importAnnotations: (json: string) => void;
+        getAnnotations: () => Annotation[];
+        addAnnotation: (a: Annotation) => void;
+        clearAnnotations: () => void;
+      };
+      el.setAttribute('width', '800');
+      el.setAttribute('height', '600');
+      el.setAttribute('tools', '{"annotation":{"rect":true}}');
+      document.body.appendChild(el);
+      await new Promise((r) => setTimeout(r, 30));
+
+      el.addAnnotation(
+        ann('a', 'rect', [
+          { x: 0, y: 0 },
+          { x: 10, y: 10 }
+        ])
+      );
+      const json = el.exportAnnotations();
+      expect(typeof json).toBe('string');
+      expect(JSON.parse(json)).toHaveLength(1);
+
+      el.clearAnnotations();
+      expect(el.getAnnotations()).toHaveLength(0);
+
+      el.importAnnotations(json);
+      expect(el.getAnnotations()).toHaveLength(1);
+
+      document.body.removeChild(el);
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();
