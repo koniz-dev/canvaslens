@@ -108,7 +108,15 @@ export class AnnotationManager {
   private setupEventListeners(): void {
     this.canvas.addEventListener('contextmenu', this.boundContextMenu);
     this.canvas.addEventListener('mousedown', this.boundMouseDown, true);
+    // Canvas-only mousemove drives hover detection (cursor change over
+    // a handle, etc.).
     this.canvas.addEventListener('mousemove', this.throttledMouseMove as EventListener);
+    // Document-wide mousemove + mouseup so an in-progress drag or resize
+    // continues even when the cursor leaves the canvas. Without this the
+    // annotation would freeze the instant the pointer crossed the canvas
+    // edge — visually "can only move in some directions".
+    document.addEventListener('mousemove', this.throttledMouseMove as EventListener);
+    document.addEventListener('mouseup', this.boundMouseUp);
     this.canvas.addEventListener('mouseup', this.boundMouseUp);
   }
 
@@ -1160,6 +1168,8 @@ export class AnnotationManager {
     this.canvas.removeEventListener('mousedown', this.boundMouseDown, true);
     this.canvas.removeEventListener('mousemove', this.throttledMouseMove as EventListener);
     this.canvas.removeEventListener('mouseup', this.boundMouseUp);
+    document.removeEventListener('mousemove', this.throttledMouseMove as EventListener);
+    document.removeEventListener('mouseup', this.boundMouseUp);
 
     this.clearAll();
     this.isDragging = false;

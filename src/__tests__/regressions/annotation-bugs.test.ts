@@ -907,6 +907,66 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#15 — annotation drag works in any direction, including off-canvas', () => {
+    function drag(app: App, start: Point, end: Point): void {
+      const canvas = app.getCanvas().getElement();
+      canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: start.x, clientY: start.y, button: 0 }));
+      // Crucial: dispatch mousemove on the DOCUMENT to simulate the user
+      // dragging past the canvas edge. Before the fix, AnnotationManager
+      // only listened on the canvas, so this would be a no-op and the
+      // annotation would freeze.
+      document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: end.x, clientY: end.y }));
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: end.x, clientY: end.y }));
+    }
+
+    function setup(): { app: App; a: Annotation } {
+      const app = setupApp();
+      const a = ann('a', 'rect', [
+        { x: 300, y: 200 },
+        { x: 400, y: 280 }
+      ]);
+      app.addAnnotation(a);
+      app.deactivateTool();
+      return { app, a };
+    }
+
+    it.each<[string, Point]>([
+      ['North (up)', { x: 350, y: 100 }],
+      ['South (down)', { x: 350, y: 500 }],
+      ['West (left)', { x: 100, y: 240 }],
+      ['East (right)', { x: 600, y: 240 }],
+      ['NE diagonal', { x: 600, y: 100 }],
+      ['NW diagonal', { x: 100, y: 100 }],
+      ['SE diagonal', { x: 600, y: 500 }],
+      ['SW diagonal', { x: 100, y: 500 }]
+    ])('drags in direction: %s', (_label, end) => {
+      const { app } = setup();
+      const before = app.getAnnotations()[0]!.points.map((p) => ({ ...p }));
+      drag(app, { x: 350, y: 240 }, end);
+      const after = app.getAnnotations()[0]!.points;
+      // Annotation should have moved (points differ from before).
+      const moved = before.some((p, i) => p.x !== after[i]!.x || p.y !== after[i]!.y);
+      expect(moved).toBe(true);
+      app.destroy();
+    });
+
+    it('release outside the canvas stops the drag', () => {
+      const { app } = setup();
+      const canvas = app.getCanvas().getElement();
+      canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 350, clientY: 240, button: 0 }));
+      // Move outside the canvas, then release outside.
+      document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: -200, clientY: -200 }));
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: -200, clientY: -200 }));
+      // Another mousemove should NOT keep the annotation following the cursor.
+      const afterUp = app.getAnnotations()[0]!.points.map((p) => ({ ...p }));
+      document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 700, clientY: 100 }));
+      const later = app.getAnnotations()[0]!.points;
+      expect(later[0]).toEqual(afterUp[0]);
+      expect(later[1]).toEqual(afterUp[1]);
+      app.destroy();
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();
