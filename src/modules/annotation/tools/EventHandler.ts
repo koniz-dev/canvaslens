@@ -81,7 +81,6 @@ export class AnnotationToolsEventHandler {
 
     // Check flag - if false, tool might not be ready yet (race condition)
     if (!this.options.toolActivatedByKeyboard) {
-      // Give it a moment for the flag to be set if tool was just activated
       return;
     }
 
@@ -101,11 +100,16 @@ export class AnnotationToolsEventHandler {
     const point = canvas.getMousePosition(event);
     const worldPoint = this.options.onScreenToWorld(point);
 
-    if (!this.options.onIsPointInImageBounds(worldPoint)) {
-      return;
-    }
+    // Clamp the starting point to the image so tools always begin at a
+    // valid location, even if the user clicks slightly outside the image
+    // (e.g. in the canvas margin when the image is smaller than the canvas).
+    // For shapes this keeps the drag inside; for text it places the input
+    // at the nearest valid spot.
+    const startPoint = this.options.onIsPointInImageBounds(worldPoint)
+      ? worldPoint
+      : this.options.onClampPointToImageBounds(worldPoint);
 
-    const annotation = currentTool.startDrawing(worldPoint);
+    const annotation = currentTool.startDrawing(startPoint);
 
     if (canvas.annotationManager) {
       canvas.annotationManager.selectAnnotation(null);
@@ -221,9 +225,16 @@ export class AnnotationToolsEventHandler {
 
     if (event.key === 'Escape') {
       const currentTool = this.options.currentTool;
-      if (currentTool && this.options.toolManagerDrawing) {
+      // If the tool is mid-draw (shape drag, text input open, …) cancel
+      // just the current drawing — the tool stays active so the user can
+      // start another one. Only when no draw is in progress does Escape
+      // deactivate the tool entirely.
+      if (currentTool && currentTool.isCurrentlyDrawing()) {
         currentTool.cancelDrawing();
-      } else if (this.options.activeToolType) {
+        event.preventDefault();
+        return;
+      }
+      if (this.options.activeToolType) {
         this.options.onDeactivateTool();
         this.updateCursor();
       } else if (this.options.annotationManager) {

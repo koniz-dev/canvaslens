@@ -647,6 +647,169 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#11 — clicks in canvas margins clamp instead of bailing', () => {
+    // Previously: EventHandler.handleMouseDown returned early if the click
+    // landed outside the image's bounding rect, so when the canvas was
+    // larger than the image (any flex / responsive layout) clicking near
+    // the edges did nothing — most visibly: the text tool felt broken.
+
+    it('text tool: click outside image area clamps to a valid start point', (done) => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const a = new App({
+        container,
+        width: 800,
+        height: 600,
+        tools: { annotation: { text: true, style: { strokeColor: '#000', strokeWidth: 1 } } }
+      });
+      // Stub a loaded image at (100, 79) – (700, 479).
+      const img = new Image();
+      Object.defineProperty(img, 'naturalWidth', { value: 600 });
+      Object.defineProperty(img, 'naturalHeight', { value: 400 });
+      Object.defineProperty(img, 'complete', { value: true });
+      a.loadImageElement(img);
+      bound(a.getCanvas().getElement(), 800, 600);
+      a.activateTool('text');
+
+      const canvas = a.getCanvas().getElement();
+      // Click in the top-left margin (outside image bounds 100..700, 79..479).
+      mouseAt(canvas, 'mousedown', 30, 20);
+      setTimeout(() => {
+        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+        expect(input).toBeTruthy();
+        input.value = 'in margin';
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        setTimeout(() => {
+          const list = a.getAnnotations();
+          expect(list).toHaveLength(1);
+          // Point should have been clamped into the image rect.
+          const [p] = list[0]!.points;
+          const b = a.getImageBounds()!;
+          expect(p!.x).toBeGreaterThanOrEqual(b.x);
+          expect(p!.y).toBeGreaterThanOrEqual(b.y);
+          a.destroy();
+          done();
+        }, 30);
+      }, 30);
+    });
+
+    it('rect tool: starting outside the image clamps the start, drag draws normally', () => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const a = new App({
+        container,
+        width: 800,
+        height: 600,
+        tools: { annotation: { rect: true, style: { strokeColor: '#000', strokeWidth: 1 } } }
+      });
+      const img = new Image();
+      Object.defineProperty(img, 'naturalWidth', { value: 600 });
+      Object.defineProperty(img, 'naturalHeight', { value: 400 });
+      Object.defineProperty(img, 'complete', { value: true });
+      a.loadImageElement(img);
+      bound(a.getCanvas().getElement(), 800, 600);
+      a.activateTool('rect');
+
+      const canvas = a.getCanvas().getElement();
+      // mousedown in the top-left margin
+      mouseAt(canvas, 'mousedown', 30, 20);
+      document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 300 }));
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 300, clientY: 300 }));
+
+      expect(a.getAnnotations()).toHaveLength(1);
+      a.destroy();
+    });
+  });
+
+  describe('#12 — text tool reliability', () => {
+    function clickAndType(app: App, x: number, y: number, value: string, done: () => void): void {
+      const canvas = app.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', x, y);
+      setTimeout(() => {
+        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+        if (!input) {
+          done();
+          return;
+        }
+        input.value = value;
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+        setTimeout(done, 30);
+      }, 20);
+    }
+
+    it('creates many text annotations in sequence (10×)', (done) => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const a = new App({
+        container,
+        width: 800,
+        height: 600,
+        tools: { annotation: { text: true, style: { strokeColor: '#000', strokeWidth: 1 } } }
+      });
+      const img = new Image();
+      Object.defineProperty(img, 'naturalWidth', { value: 600 });
+      Object.defineProperty(img, 'naturalHeight', { value: 400 });
+      Object.defineProperty(img, 'complete', { value: true });
+      a.loadImageElement(img);
+      bound(a.getCanvas().getElement(), 800, 600);
+      a.activateTool('text');
+
+      let i = 0;
+      const next = (): void => {
+        if (i === 10) {
+          expect(a.getAnnotations()).toHaveLength(10);
+          a.destroy();
+          done();
+          return;
+        }
+        clickAndType(a, 200 + (i % 5) * 50, 200 + Math.floor(i / 5) * 60, `t${i}`, () => {
+          i++;
+          next();
+        });
+      };
+      next();
+    });
+
+    it('Escape cancels without saving and the tool stays active', (done) => {
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      const a = new App({
+        container,
+        width: 800,
+        height: 600,
+        tools: { annotation: { text: true, style: { strokeColor: '#000', strokeWidth: 1 } } }
+      });
+      const img = new Image();
+      Object.defineProperty(img, 'naturalWidth', { value: 600 });
+      Object.defineProperty(img, 'naturalHeight', { value: 400 });
+      Object.defineProperty(img, 'complete', { value: true });
+      a.loadImageElement(img);
+      bound(a.getCanvas().getElement(), 800, 600);
+      a.activateTool('text');
+
+      const canvas = a.getCanvas().getElement();
+      mouseAt(canvas, 'mousedown', 200, 200);
+      setTimeout(() => {
+        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+        expect(input).toBeTruthy();
+        input.value = 'discard me';
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        setTimeout(() => {
+          expect(a.getAnnotations()).toHaveLength(0);
+          expect(a.getActiveTool()).toBe('text');
+          // Next click should still spawn an input.
+          mouseAt(canvas, 'mousedown', 300, 300);
+          setTimeout(() => {
+            const input2 = document.querySelector('input[type="text"]');
+            expect(input2).toBeTruthy();
+            a.destroy();
+            done();
+          }, 30);
+        }, 30);
+      }, 30);
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();

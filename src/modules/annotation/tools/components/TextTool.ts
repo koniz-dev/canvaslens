@@ -3,82 +3,100 @@ import { worldToScreen } from '../../../../utils/geometry/coordinate';
 import { TextSanitizer } from '../../../../utils/security/text-sanitizer';
 import { BaseTool } from './BaseTool';
 
+/**
+ * Text annotation tool.
+ *
+ * Flow on a click:
+ * 1. Mousedown spawns an HTML <input> positioned at the click point and
+ *    focuses it synchronously so the user can start typing immediately.
+ * 2. Enter commits the text as an annotation and removes the input.
+ * 3. Escape cancels without saving.
+ * 4. Clicking outside (blur) commits when there is text, otherwise cancels.
+ *
+ * Multiple text annotations can be created in sequence — each click spawns
+ * a fresh input. The previous input (if any) is committed first.
+ */
 export class TextTool extends BaseTool {
   private textInput: HTMLInputElement | null = null;
-  private timeoutIds: ReturnType<typeof setTimeout>[] = [];
-  private blurTimeoutId: ReturnType<typeof setTimeout> | null = null;
-  private isSettingUp = false; // Flag to prevent blur during setup
+  private currentStart: Point | null = null;
+  private committed = false;
 
-  /**
-   * Start drawing text (show input dialog)
-   */
   startDrawing(point: Point): Annotation | null {
+    // If a previous input is still open, commit it before starting a new one
+    // so click-to-add-multiple-texts works.
+    if (this.textInput) this.completeTextInput();
+
     this.isDrawing = true;
     this.startPoint = { ...point };
+    this.currentStart = { ...point };
     this.showTextInput(point);
-    return null; // Text tool doesn't create annotation immediately
-  }
-
-  /**
-   * Continue drawing - not applicable for text tool
-   */
-  continueDrawing(_point: Point): void {
-    // Text tool doesn't have continuous drawing
-  }
-
-  /**
-   * Finish drawing - handled by text input
-   */
-  finishDrawing(_point: Point): Annotation | null {
-    // This is handled by the text input completion
     return null;
   }
 
-  /**
-   * Show text input dialog
-   */
+  continueDrawing(_point: Point): void {
+    /* text tool has no continuous drawing */
+  }
+
+  finishDrawing(_point: Point): Annotation | null {
+    return null;
+  }
+
+  cancelDrawing(): void {
+    super.cancelDrawing();
+    this.removeTextInput();
+    this.currentStart = null;
+  }
+
+  destroy(): void {
+    this.removeTextInput();
+    this.currentStart = null;
+  }
+
+  getPreviewPoints(): Point[] {
+    return [];
+  }
+
+  getType(): Annotation['type'] {
+    return 'text';
+  }
+
+  // ─── Internals ────────────────────────────────────────────────────────────
+
   private showTextInput(point: Point): void {
-    // Clear any existing blur timeout
-    if (this.blurTimeoutId) {
-      clearTimeout(this.blurTimeoutId);
-      this.blurTimeoutId = null;
-    }
-
-    // Set flag to prevent blur during setup
-    this.isSettingUp = true;
-
-    // Convert world coordinates to screen coordinates for positioning
     const viewState = this.canvas.getViewState();
-    const screenPoint = worldToScreen(point, viewState);
+    const screen = worldToScreen(point, viewState);
 
-    // Create text input element
-    this.textInput = document.createElement('input');
-    this.textInput.type = 'text';
-    this.textInput.placeholder = 'Enter text...';
-    this.textInput.setAttribute('aria-label', 'Enter annotation text');
-    this.textInput.style.position = 'absolute';
-    this.textInput.style.left = `${screenPoint.x}px`;
-    this.textInput.style.top = `${screenPoint.y}px`;
-    this.textInput.style.zIndex = '1000';
-    this.textInput.style.padding = '4px 8px';
-    this.textInput.style.border = '2px solid #007bff';
-    this.textInput.style.borderRadius = '4px';
-    this.textInput.style.fontSize = `${this.options.style?.fontSize || 16}px`;
-    this.textInput.style.fontFamily = this.options.style?.fontFamily || 'Arial, sans-serif';
-    this.textInput.style.backgroundColor = 'white';
-    this.textInput.style.color = this.options.style?.strokeColor || '#000000';
-    this.textInput.style.minWidth = '100px';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Enter text…';
+    input.setAttribute('aria-label', 'Enter annotation text');
+    const fontSize = this.options.style?.fontSize ?? 20;
+    const fontFamily = this.options.style?.fontFamily ?? 'Arial, sans-serif';
+    input.style.cssText = `
+      position: absolute;
+      left: ${screen.x}px;
+      top: ${screen.y - fontSize}px;
+      z-index: 1000;
+      padding: 4px 8px;
+      border: 2px solid #007bff;
+      border-radius: 4px;
+      background-color: white;
+      color: ${this.options.style?.strokeColor ?? '#000'};
+      font-size: ${fontSize}px;
+      font-family: ${fontFamily};
+      min-width: 100px;
+      outline: none;
+    `;
 
-    // Add to canvas container
-    const canvasElement = this.canvas.getElement();
-    const container = canvasElement.parentElement;
-    if (container) {
-      container.style.position = 'relative';
-      container.appendChild(this.textInput);
-    }
+    // Keep clicks INSIDE the input from bubbling to the canvas (which would
+    // otherwise be interpreted by the canvas's other listeners).
+    const stop = (e: Event) => e.stopPropagation();
+    input.addEventListener('mousedown', stop);
+    input.addEventListener('mouseup', stop);
+    input.addEventListener('click', stop);
+    input.addEventListener('pointerdown', stop);
 
-    // Handle input events - add BEFORE focus to prevent blur issues
-    this.textInput.addEventListener('keydown', (e) => {
+    input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
@@ -90,168 +108,73 @@ export class TextTool extends BaseTool {
       }
     });
 
-    // Only complete on blur if we're not in setup phase
-    this.textInput.addEventListener('blur', () => {
-      // Ignore blur if we're still setting up
-      if (this.isSettingUp) {
-        return;
-      }
-
-      // Clear any existing blur timeout
-      if (this.blurTimeoutId) {
-        clearTimeout(this.blurTimeoutId);
-      }
-      // Delay to allow for click events and prevent conflicts
-      this.blurTimeoutId = setTimeout(() => {
-        if (this.textInput && !this.isSettingUp) {
-          this.completeTextInput();
-        }
-        this.blurTimeoutId = null;
-      }, 200);
-    });
-
-    // Prevent text input from being removed when clicking on it
-    this.textInput.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-    });
-
-    this.textInput.addEventListener('click', (e) => {
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-    });
-
-    // Prevent blur when clicking inside the input
-    this.textInput.addEventListener('mouseup', (e) => {
-      e.stopPropagation();
-    });
-
-    // Focus after a delay to ensure setup is complete
-    requestAnimationFrame(() => {
+    // Commit on blur — keeps the user's typed text if they click away.
+    input.addEventListener('blur', () => {
+      // Defer one frame so a re-focus (e.g. switching app windows) doesn't
+      // immediately destroy the input.
       requestAnimationFrame(() => {
-        if (this.textInput) {
-          this.textInput.focus();
-          this.textInput.select();
-          // Clear setup flag after focus is complete
-          setTimeout(() => {
-            this.isSettingUp = false;
-          }, 100);
-        }
+        if (this.textInput === input) this.completeTextInput();
       });
     });
+
+    const canvasElement = this.canvas.getElement();
+    const container = canvasElement.parentElement;
+    if (!container) {
+      // No container to mount into — abort gracefully.
+      return;
+    }
+    container.style.position = container.style.position || 'relative';
+    container.appendChild(input);
+
+    this.textInput = input;
+    this.committed = false;
+
+    // Focus on the next microtask so the focus call wins the race against
+    // the browser's own click-to-focus retargeting for the still-bubbling
+    // mousedown that opened this input.
+    Promise.resolve().then(() => {
+      if (this.textInput === input) input.focus();
+    });
   }
 
-  /**
-   * Complete text input and create annotation
-   */
   private completeTextInput(): void {
-    if (!this.textInput) return;
+    if (!this.textInput || this.committed) return;
+    this.committed = true;
 
-    // Sanitize text input to prevent XSS attacks
-    const rawText = this.textInput.value.trim();
-    const text = TextSanitizer.sanitize(rawText);
-    let annotation: Annotation | null = null;
+    const raw = this.textInput.value.trim();
+    const text = TextSanitizer.sanitize(raw);
+    const start = this.currentStart;
 
-    if (text && this.startPoint) {
-      annotation = this.createAnnotation(
-        [this.startPoint],
-        { text }
-      );
-    }
-
-    // Clean up
     this.removeTextInput();
-
-    // Reset drawing state but keep tool active for next text input
     this.isDrawing = false;
     this.currentPoints = [];
     this.startPoint = null;
+    this.currentStart = null;
 
-    // Trigger annotation creation if we have a valid annotation
-    if (annotation) {
-      // We need to notify the tool manager about the new annotation
-      // This will be handled by the tool manager's event system
-      const timeoutId = setTimeout(() => {
-        // Trigger a custom event or use a callback mechanism
-        const event = new CustomEvent('annotationCreated', { detail: annotation });
-        this.canvas.getElement().dispatchEvent(event);
-      }, 0);
-      this.timeoutIds.push(timeoutId);
+    if (text && start) {
+      const annotation = this.createAnnotation([start], { text });
+      // Notify the EventHandler via a CustomEvent on the canvas so the
+      // ToolManager / AnnotationManager pipeline picks it up.
+      this.canvas
+        .getElement()
+        .dispatchEvent(new CustomEvent('annotationCreated', { detail: annotation }));
     }
   }
 
-  /**
-   * Cancel text input
-   */
   private cancelTextInput(): void {
+    if (!this.textInput) return;
+    this.committed = true; // suppress blur-driven completion
     this.removeTextInput();
-    // Don't call cancelDrawing() here to avoid infinite loop
     this.isDrawing = false;
     this.currentPoints = [];
     this.startPoint = null;
+    this.currentStart = null;
   }
 
-  /**
-   * Remove text input element
-   */
   private removeTextInput(): void {
-    // Clear blur timeout if it exists
-    if (this.blurTimeoutId) {
-      clearTimeout(this.blurTimeoutId);
-      this.blurTimeoutId = null;
-    }
-
-    // Reset setup flag
-    this.isSettingUp = false;
-
-    if (this.textInput && this.textInput.parentElement) {
+    if (this.textInput?.parentElement) {
       this.textInput.parentElement.removeChild(this.textInput);
     }
     this.textInput = null;
-  }
-
-  /**
-   * Get current preview points for rendering
-   */
-  getPreviewPoints(): Point[] {
-    return []; // Text tool doesn't have preview
-  }
-
-  /**
-   * Get tool type
-   */
-  getType(): Annotation['type'] {
-    return 'text';
-  }
-
-  /**
-   * Cancel current text input if active
-   */
-  cancelDrawing(): void {
-    super.cancelDrawing();
-    if (this.textInput) {
-      this.cancelTextInput();
-    }
-  }
-
-  /**
-   * Clean up resources and timers
-   */
-  destroy(): void {
-    // Clear all pending timeouts
-    this.timeoutIds.forEach(id => clearTimeout(id));
-    this.timeoutIds = [];
-
-    // Clear blur timeout
-    if (this.blurTimeoutId) {
-      clearTimeout(this.blurTimeoutId);
-      this.blurTimeoutId = null;
-    }
-
-    // Remove text input if it exists
-    if (this.textInput && this.textInput.parentNode) {
-      this.textInput.parentNode.removeChild(this.textInput);
-      this.textInput = null;
-    }
   }
 }
