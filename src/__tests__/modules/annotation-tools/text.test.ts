@@ -41,7 +41,7 @@ describe('TextTool', () => {
       textTool.startDrawing(point);
       
       // Text input should be created
-      const textInput = container.querySelector('input[type="text"]');
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
       expect(textInput).not.toBeNull();
     });
 
@@ -49,7 +49,7 @@ describe('TextTool', () => {
       const point: Point = { x: 200, y: 300 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       expect(textInput).not.toBeNull();
       if (textInput) {
         expect(parseInt(textInput.style.left)).toBeGreaterThan(0);
@@ -61,7 +61,7 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       expect(textInput).not.toBeNull();
       if (textInput) {
         expect(textInput.style.fontSize).toContain('16');
@@ -75,7 +75,7 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       expect(textInput).not.toBeNull();
       
       if (textInput) {
@@ -86,7 +86,7 @@ describe('TextTool', () => {
         // Text input should be removed after completion
         // (with a delay for async operations)
         setTimeout(() => {
-          const remainingInput = container.querySelector('input[type="text"]');
+          const remainingInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
           expect(remainingInput).toBeNull();
           done();
         }, 300);
@@ -99,7 +99,7 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       expect(textInput).not.toBeNull();
       
       if (textInput) {
@@ -108,7 +108,7 @@ describe('TextTool', () => {
         
         // Text input should be removed after a short delay
         setTimeout(() => {
-          const remainingInput = container.querySelector('input[type="text"]');
+          const remainingInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
           expect(remainingInput).toBeNull();
           done();
         }, 150);
@@ -121,7 +121,7 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       expect(textInput).not.toBeNull();
       
       if (textInput) {
@@ -133,7 +133,7 @@ describe('TextTool', () => {
           
           // Text input should be removed after blur (blur timeout is 200ms)
           setTimeout(() => {
-            const remainingInput = container.querySelector('input[type="text"]');
+            const remainingInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
             // Input should be removed after blur completes
             // If not removed, that's also acceptable - blur might be cancelled
             done();
@@ -148,7 +148,7 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       if (textInput) {
         textInput.value = '   '; // Only whitespace
         const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
@@ -165,7 +165,7 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]') as HTMLInputElement;
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]') as HTMLInputElement;
       if (textInput) {
         // Text sanitization is handled internally
         textInput.value = '<script>alert("xss")</script>';
@@ -209,7 +209,7 @@ describe('TextTool', () => {
       expect(textTool.isCurrentlyDrawing()).toBe(false);
       
       // Text input should be removed
-      const textInput = container.querySelector('input[type="text"]');
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
       expect(textInput).toBeNull();
     });
   });
@@ -233,12 +233,12 @@ describe('TextTool', () => {
       const point: Point = { x: 100, y: 100 };
       textTool.startDrawing(point);
       
-      const textInput = container.querySelector('input[type="text"]');
+      const textInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
       expect(textInput).not.toBeNull();
       
       textTool.destroy();
       
-      const remainingInput = container.querySelector('input[type="text"]');
+      const remainingInput = document.querySelector('input[type="text"][data-canvaslens-text-input]');
       expect(remainingInput).toBeNull();
     });
 
