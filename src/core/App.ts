@@ -527,6 +527,19 @@ export class App {
       this.annotation.updateToolConfig(toolConfig.annotation);
     }
 
+    // Keep the store's default style in sync with the latest annotation
+    // style so consumers reading from the store (e.g. TextInputController)
+    // pick up the new colour / stroke width / line style immediately.
+    if (toolConfig.annotation?.style) {
+      this.store.dispatch({
+        type: 'annotation/set-default-style',
+        payload: {
+          ...this.store.getState().annotation.defaultStyle,
+          ...toolConfig.annotation.style
+        }
+      });
+    }
+
     this.store.dispatch({ type: 'tool/update-config', payload: toolConfig });
   }
 

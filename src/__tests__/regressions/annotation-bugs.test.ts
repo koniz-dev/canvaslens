@@ -864,6 +864,49 @@ describe('Annotation bug fixes', () => {
     });
   });
 
+  describe('#14 — updateTools(style) propagates to text via the store', () => {
+    // The text path reads style from `store.annotation.defaultStyle` but
+    // before this fix nothing dispatched `annotation/set-default-style`,
+    // so the colour picker only affected shapes — text annotations kept
+    // the initial colour. Verify both shape and text now pick up the
+    // new colour.
+
+    it('next text annotation uses the new colour after updateTools', () => {
+      app = setupApp({
+        tools: {
+          annotation: { rect: true, text: true, style: { strokeColor: '#ff0000', strokeWidth: 2 } }
+        }
+      });
+      app.updateTools({
+        annotation: { rect: true, text: true, style: { strokeColor: '#00ff00', strokeWidth: 5 } }
+      });
+      const ds = app.store.getState().annotation.defaultStyle;
+      expect(ds.strokeColor).toBe('#00ff00');
+      expect(ds.strokeWidth).toBe(5);
+    });
+
+    it('next rect drawn after updateTools also picks up the new colour', () => {
+      app = setupApp({
+        tools: {
+          annotation: { rect: true, style: { strokeColor: '#ff0000', strokeWidth: 2 } }
+        }
+      });
+      app.updateTools({
+        annotation: { rect: true, style: { strokeColor: '#1234ab', strokeWidth: 7, lineStyle: 'dashed' } }
+      });
+      app.activateTool('rect');
+      const canvas = app.getCanvas().getElement();
+      canvas.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 200, clientY: 200, button: 0 }));
+      document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 300, clientY: 280 }));
+      document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 300, clientY: 280 }));
+      const list = app.getAnnotations();
+      expect(list).toHaveLength(1);
+      expect(list[0]!.style.strokeColor).toBe('#1234ab');
+      expect(list[0]!.style.strokeWidth).toBe(7);
+      expect(list[0]!.style.lineStyle).toBe('dashed');
+    });
+  });
+
   describe('#3b — cursor updates on tool switch', () => {
     it('cursor changes from text to crosshair when switching text→rect', () => {
       app = setupApp();
