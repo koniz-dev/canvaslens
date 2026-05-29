@@ -88,6 +88,10 @@ export class App {
   private previousImage: HTMLImageElement | null = null;
 
   private destroyed = false;
+  /** When `false`, mouse + keyboard handlers everywhere in this App
+   *  bail early. Used by OverlayManager to pause the host while the
+   *  overlay editor owns the canvas + keyboard. */
+  private interactionEnabled = true;
 
   constructor(options: AppOptions) {
     this.options = {
@@ -137,6 +141,7 @@ export class App {
     this.textInputController = new TextInputController({
       canvas: this.canvas,
       store: this.store,
+      isEnabled: () => this.isInteractionEnabled(),
       getActiveTool: () => this.getActiveTool(),
       getImageBounds: () => this.getImageBounds(),
       addAnnotation: (a) => this.addAnnotation(a)
@@ -147,6 +152,7 @@ export class App {
     this.shapeDrawingController = new ShapeDrawingController({
       canvas: this.canvas,
       store: this.store,
+      isEnabled: () => this.isInteractionEnabled(),
       getActiveTool: () => this.getActiveTool(),
       getShapeTool: (type) => {
         const am = this.annotation;
@@ -411,6 +417,18 @@ export class App {
   }
 
   // ─── View / zoom / pan ────────────────────────────────────────────────────
+
+  /** Pause / resume all mouse + keyboard interactions on this App.
+   *  Used by OverlayManager to keep tool state isolated between the
+   *  main App and the overlay editor (otherwise document-level keys
+   *  like Alt+R would activate the rect tool in BOTH apps). */
+  setInteractionEnabled(enabled: boolean): void {
+    this.interactionEnabled = enabled;
+  }
+
+  isInteractionEnabled(): boolean {
+    return this.interactionEnabled && !this.destroyed;
+  }
 
   /**
    * Update the canvas background colour. Pass `'transparent'`, `'none'`,

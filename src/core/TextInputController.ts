@@ -8,6 +8,9 @@ import type { AppAction, AppState } from './state';
 export interface TextInputControllerDeps {
   canvas: Renderer;
   store: Store<AppState, AppAction>;
+  /** When `false`, every event handler in this controller bails. Used
+   *  to pause the main App while the overlay editor is open. */
+  isEnabled: () => boolean;
   /** Current active tool — read live each time the controller fires. */
   getActiveTool: () => string | null;
   getImageBounds: () => Rectangle | null;
@@ -45,6 +48,7 @@ export class TextInputController {
   private readonly boundMouseDown: (e: MouseEvent) => void;
   private readonly canvas: Renderer;
   private readonly store: Store<AppState, AppAction>;
+  private readonly isEnabled: () => boolean;
   private readonly getActiveTool: () => string | null;
   private readonly getImageBounds: () => Rectangle | null;
   private readonly addAnnotation: (a: Annotation) => void;
@@ -53,6 +57,7 @@ export class TextInputController {
   constructor(deps: TextInputControllerDeps) {
     this.canvas = deps.canvas;
     this.store = deps.store;
+    this.isEnabled = deps.isEnabled;
     this.getActiveTool = deps.getActiveTool;
     this.getImageBounds = deps.getImageBounds;
     this.addAnnotation = deps.addAnnotation;
@@ -63,7 +68,7 @@ export class TextInputController {
   }
 
   private onCanvasMouseDown(e: MouseEvent): void {
-    if (this.destroyed) return;
+    if (this.destroyed || !this.isEnabled()) return;
     if (this.getActiveTool() !== 'text') return;
     if (e.button === 1) return; // skip middle-click
 

@@ -225,6 +225,13 @@ export class AnnotationToolsEventHandler {
    * Handle keyboard shortcuts
    */
   private handleKeyDown(event: KeyboardEvent): void {
+    // Skip everything when this App's interaction is paused (the overlay
+    // editor is open, etc.) — otherwise document.keydown listeners on
+    // two simultaneously-mounted Apps would both react to the same
+    // shortcut.
+    const host = this.options.canvas.imageViewer as { isInteractionEnabled?: () => boolean } | null;
+    if (host?.isInteractionEnabled && !host.isInteractionEnabled()) return;
+
     // Ignore keys originating from our own text input — that controller
     // handles them itself (Enter/Escape commit/cancel; regular keys type
     // into the input).

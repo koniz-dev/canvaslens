@@ -75,7 +75,22 @@ export class OverlayManager {
 
       this.shell = new OverlayShell({
         onClose: () => this.closeOverlay(),
-        frameBackground: background
+        frameBackground: background,
+        toolButtons: [
+          { type: 'rect', label: '⬜', title: 'Rectangle (Alt+R)' },
+          { type: 'arrow', label: '↗', title: 'Arrow (Alt+A)' },
+          { type: 'text', label: 'T', title: 'Text (Alt+T)' },
+          { type: 'circle', label: '⭕', title: 'Circle (Alt+C)' },
+          { type: 'line', label: '📏', title: 'Line (Alt+L)' }
+        ],
+        onToolClick: (type) => {
+          const ov = this.overlayApp;
+          if (!ov) return;
+          if (ov.getActiveTool() === type) ov.deactivateTool();
+          else ov.activateTool(type);
+          this.shell?.refreshToolbarActive();
+        },
+        getActiveTool: () => this.overlayApp?.getActiveTool() ?? null
       });
 
       const seed = this.buildSeedOptions();
@@ -112,6 +127,12 @@ export class OverlayManager {
         }
       }
 
+      // Pause the host App's listeners — the overlay editor now owns
+      // the mouse + keyboard. Otherwise `Alt+R` etc. would activate
+      // the rect tool on BOTH apps because both register document-level
+      // keydown listeners.
+      this.sourceApp?.setInteractionEnabled(false);
+
       this.shell.show();
       this.overlayOpen = true;
     } catch (err) {
@@ -135,6 +156,8 @@ export class OverlayManager {
       this.overlayApp = null;
       this.shell?.destroy();
       this.shell = null;
+      // Resume the host App's listeners now that the overlay is gone.
+      this.sourceApp?.setInteractionEnabled(true);
       this.sourceApp = null;
       this.overlayOpen = false;
     } catch (err) {

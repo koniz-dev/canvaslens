@@ -14,6 +14,9 @@ export type DrawableTool = RectangleTool | ArrowTool | CircleTool | LineTool;
 export interface ShapeDrawingControllerDeps {
   canvas: Renderer;
   store: Store<AppState, AppAction>;
+  /** When `false`, every event handler in this controller bails. Used
+   *  to pause the main App while the overlay editor is open. */
+  isEnabled: () => boolean;
   /** Active tool string from the App (e.g. 'rect', 'arrow', …, or null). */
   getActiveTool: () => string | null;
   /** Resolve a tool string to a tool instance — null if not a shape tool. */
@@ -51,6 +54,7 @@ export class ShapeDrawingController {
 
   private readonly canvas: Renderer;
   private readonly store: Store<AppState, AppAction>;
+  private readonly isEnabled: () => boolean;
   private readonly getActiveTool: () => string | null;
   private readonly getShapeTool: (type: string) => BaseTool | null;
   private readonly getImageBounds: () => Rectangle | null;
@@ -65,6 +69,7 @@ export class ShapeDrawingController {
   constructor(deps: ShapeDrawingControllerDeps) {
     this.canvas = deps.canvas;
     this.store = deps.store;
+    this.isEnabled = deps.isEnabled;
     this.getActiveTool = deps.getActiveTool;
     this.getShapeTool = deps.getShapeTool;
     this.getImageBounds = deps.getImageBounds;
@@ -102,7 +107,7 @@ export class ShapeDrawingController {
   }
 
   private onMouseDown(e: MouseEvent): void {
-    if (this.destroyed) return;
+    if (this.destroyed || !this.isEnabled()) return;
     if (e.button === 1) return; // skip middle-click
     const toolType = this.getActiveTool();
     if (!this.isShapeTool(toolType)) return;
@@ -138,7 +143,7 @@ export class ShapeDrawingController {
   }
 
   private onKeyDown(e: KeyboardEvent): void {
-    if (this.destroyed) return;
+    if (this.destroyed || !this.isEnabled()) return;
     if (!this.active) return;
     // Don't hijack keys typed into form inputs.
     const target = e.target as HTMLElement | null;
